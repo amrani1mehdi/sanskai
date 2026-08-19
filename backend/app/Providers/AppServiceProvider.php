@@ -29,5 +29,14 @@ class AppServiceProvider extends ServiceProvider
         if ($root = config('app.url')) {
             URL::forceRootUrl($root);
         }
+
+        /*
+         * Behind the proxy Laravel sees plain HTTP even when the browser is on
+         * HTTPS, so links and form actions would be generated as http:// and
+         * downgrade the connection. Local stays untouched — it really is HTTP.
+         */
+        if (! $this->app->environment('local')) {
+            URL::forceScheme('https');
+        }
     }
 }

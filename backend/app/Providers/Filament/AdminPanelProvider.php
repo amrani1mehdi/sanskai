@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\SecurityHeaders;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -30,6 +32,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
+            // TOTP, so it needs no mail server. Set ADMIN_REQUIRE_MFA=true to
+            // force every admin to enrol before they can reach the panel.
+            ->multiFactorAuthentication(
+                AppAuthentication::make()
+                    ->recoverable()
+                    ->regenerableRecoveryCodes(),
+                isRequired: (bool) env('ADMIN_REQUIRE_MFA', false),
+            )
             ->brandName('Sansekai Solution')
             // Matches the site's accent, hsl(36 40% 45%).
             ->colors([
@@ -55,6 +66,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                SecurityHeaders::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

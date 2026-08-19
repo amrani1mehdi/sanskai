@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // The panel's security headers are set by Laravel middleware, not here —
+  // `headers()` does not apply to externally rewritten routes.
   async rewrites() {
     return [
       ...BACKEND_PATHS.flatMap((path) => [

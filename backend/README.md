@@ -45,12 +45,44 @@ Laravel builds its URLs against `APP_URL` — keep that pointing at the public
 origin, or asset tags and redirects will send people off it.
 
 Credentials come from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`, which
-`AdminUserSeeder` reads. The committed defaults are
-`admin@sansekaisolution.com` / `password` — **local development only, change
-them before this is deployed anywhere.**
+`AdminUserSeeder` reads. No password is committed: leave `ADMIN_PASSWORD` blank
+and the seeder generates one and prints it once (local only).
 
 Re-running `php artisan db:seed` updates the existing account rather than
-creating a second one, so it is safe to run after changing the password.
+creating a second one, and only touches the password when `ADMIN_PASSWORD` is
+set — so re-seeding never silently resets a password you chose.
+
+## Security
+
+- **Panel access is gated.** `User::canAccessPanel()` requires `is_admin`, so a
+  future non-admin user — a customer account, a seeded row — cannot reach
+  `/admin` just by existing. Without this, Filament lets any authenticated user
+  into the panel.
+- **Multi-factor is available** via an authenticator app (TOTP, so it needs no
+  mail server). Enrol from the user menu. Set `ADMIN_REQUIRE_MFA=true` to force
+  every admin to enrol before they can use the panel. Recovery codes are issued
+  at enrolment and can be regenerated.
+- **Login is rate limited** to 5 attempts, after which even the correct password
+  is refused until the lockout expires.
+- **Secrets are encrypted at rest** — the authenticator secret and recovery
+  codes use encrypted casts, and session payloads are encrypted
+  (`SESSION_ENCRYPT`).
+- **Sessions last 60 minutes**, with an http-only, same-site-lax cookie.
+- **Security headers** — `X-Frame-Options: DENY`, `frame-ancestors 'none'`,
+  `nosniff`, `noindex`, and HSTS over HTTPS — are set by
+  `App\Http\Middleware\SecurityHeaders`. They live in Laravel rather than on the
+  Next.js proxy because Next does not apply its `headers()` config to
+  externally rewritten routes.
+
+Before deploying:
+
+1. Set a real `ADMIN_PASSWORD` and re-seed.
+2. Set `SESSION_SECURE_COOKIE=true` once the panel is on HTTPS.
+3. Set `APP_DEBUG=false` and `APP_ENV=production` — debug pages leak
+   configuration and stack traces. `APP_ENV` also switches URL generation to
+   HTTPS.
+4. Consider `ADMIN_REQUIRE_MFA=true`.
+
 
 ## Not built yet
 
