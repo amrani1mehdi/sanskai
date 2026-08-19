@@ -12,9 +12,8 @@ import { CookieBanner } from "@/components/site/cookie-banner";
 import { CryptoMarket } from "@/components/site/crypto-market";
 import { CryptoForm } from "@/components/site/crypto-form";
 import { MotionReveal } from "@/components/ui/motion-reveal";
-import { siteContent } from "@/lib/content";
-
-const { cryptoPage } = siteContent;
+import { getSiteContent } from "@/lib/content";
+import { getLocale } from "@/lib/i18n/server";
 
 const CARD_ICONS = {
   wallet: Wallet,
@@ -22,24 +21,31 @@ const CARD_ICONS = {
   trade: ArrowLeftRight,
 } as const;
 
-export const metadata: Metadata = {
-  title: cryptoPage.meta.title,
-  description: cryptoPage.meta.description,
-  alternates: { canonical: "/crypto-monnaie" },
-  openGraph: {
+export async function generateMetadata(): Promise<Metadata> {
+  const { cryptoPage } = getSiteContent(await getLocale());
+
+  return {
     title: cryptoPage.meta.title,
     description: cryptoPage.meta.description,
-    url: "/crypto-monnaie",
-    type: "website",
-  },
-};
+    alternates: { canonical: "/crypto-monnaie" },
+    openGraph: {
+      title: cryptoPage.meta.title,
+      description: cryptoPage.meta.description,
+      url: "/crypto-monnaie",
+      type: "website",
+    },
+  };
+}
 
-export default function CryptoMonnaiePage() {
+export default async function CryptoMonnaiePage() {
+  const locale = await getLocale();
+  const content = getSiteContent(locale);
+  const { cryptoPage } = content;
   const { interview } = cryptoPage;
 
   return (
     <>
-      <Navbar />
+      <Navbar content={content} locale={locale} />
 
       <main className="flex-1">
         <section className="hero-gradient pt-28 pb-16">
@@ -97,7 +103,7 @@ export default function CryptoMonnaiePage() {
           </div>
         </section>
 
-        <CryptoMarket />
+        <CryptoMarket content={content} />
 
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
@@ -145,15 +151,15 @@ export default function CryptoMonnaiePage() {
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto">
               <MotionReveal y={20}>
-                <CryptoForm />
+                <CryptoForm content={content} />
               </MotionReveal>
             </div>
           </div>
         </section>
       </main>
 
-      <Footer />
-      <CookieBanner />
+      <Footer content={content} />
+      <CookieBanner content={content} />
     </>
   );
 }

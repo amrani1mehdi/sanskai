@@ -19,30 +19,16 @@ import {
   type Coin,
   type Currency,
 } from "@/lib/crypto";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Sparkline } from "@/components/site/sparkline";
 import { CoinDetail } from "@/components/site/coin-detail";
 
-const { crypto } = siteContent;
-
 const REFRESH_MS = 45_000;
 const PER_PAGE = 25;
 const TICKER_COUNT = 8;
-
-const COLUMNS = [
-  "#",
-  "NAME",
-  "PRICE",
-  "24H",
-  "7D",
-  "MARKET CAP",
-  "24H VOLUME",
-  "CIRCULATING",
-  "LAST 7 DAYS",
-];
 
 function Change({ value }: { value: number | null }) {
   if (value === null || !Number.isFinite(value)) {
@@ -62,7 +48,10 @@ function Change({ value }: { value: number | null }) {
   );
 }
 
-export function CryptoMarket() {
+export function CryptoMarket({ content }: { content: SiteContent }) {
+  const { crypto } = content;
+  const COLUMNS = crypto.columns;
+
   const [currency, setCurrency] = useState<Currency>("eur");
   const [coins, setCoins] = useState<Coin[]>([]);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
@@ -103,7 +92,7 @@ export function CryptoMarket() {
         })
         .catch(() => {
           if (!cancelled) {
-            setError("Market data is temporarily unavailable. Retrying shortly.");
+            setError(crypto.error);
           }
         })
         .finally(() => {
@@ -122,7 +111,7 @@ export function CryptoMarket() {
       cancelled = true;
       clearInterval(id);
     };
-  }, [currency]);
+  }, [currency, crypto.error]);
 
   // A once-per-second clock; "Updated Ns ago" is derived from it below so the
   // label ticks without an effect writing state on every render pass.
@@ -164,8 +153,7 @@ export function CryptoMarket() {
             <SectionHeading
               className="text-left lg:max-w-2xl"
               eyebrow={crypto.eyebrow}
-              titleLead={crypto.titleLead}
-              titleAccent={crypto.titleAccent}
+              titleLead={crypto.title}
               subtitle={crypto.subtitle}
             />
 
@@ -203,7 +191,9 @@ export function CryptoMarket() {
                   className={cn("size-3.5", loading && "animate-spin")}
                   aria-hidden
                 />
-                {updatedAt ? `Updated ${secondsAgo}s ago` : "Loading…"}
+                {updatedAt
+                  ? crypto.updated.replace("{{n}}", String(secondsAgo))
+                  : "…"}
               </span>
             </Reveal>
           </div>
@@ -428,7 +418,7 @@ export function CryptoMarket() {
                         colSpan={COLUMNS.length}
                         className="px-4 py-10 text-center text-sm text-muted-foreground"
                       >
-                        No coin matches “{query}”.
+                        {crypto.noResults}
                       </td>
                     </tr>
                   ) : null}
@@ -451,7 +441,10 @@ export function CryptoMarket() {
               </button>
 
               <span className="text-xs text-muted-foreground">
-                Page {currentPage} of {totalPages} · {filtered.length} coins
+                {crypto.pageInfo
+                  .replace("{{page}}", String(currentPage))
+                  .replace("{{total}}", String(totalPages))
+                  .replace("{{count}}", String(filtered.length))}
               </span>
 
               <button
@@ -474,6 +467,7 @@ export function CryptoMarket() {
 
       {selected ? (
         <CoinDetail
+          content={content}
           coin={selected}
           currency={currency}
           onClose={() => setSelected(null)}

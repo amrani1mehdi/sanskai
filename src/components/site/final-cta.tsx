@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 
-const { finalCta } = siteContent;
+export function FinalCta({ content }: { content: SiteContent }) {
+  const { finalCta } = content;
 
-export function FinalCta() {
   return (
     <section className="section-padding hero-gradient relative overflow-hidden">
       {/* Soft gold bloom behind the copy. */}

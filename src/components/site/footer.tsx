@@ -1,9 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
-import { siteContent } from "@/lib/content";
-
-const { brand, footer } = siteContent;
+import type { SiteContent } from "@/lib/content";
 
 /** lucide-react no longer ships brand marks, so this one is inline. */
 function InstagramIcon({ className }: { className?: string }) {
@@ -25,7 +23,9 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-export function Footer() {
+export function Footer({ content }: { content: SiteContent }) {
+  const { brand, footer } = content;
+
   return (
     <footer className="bg-secondary">
       <div className="container mx-auto px-4">

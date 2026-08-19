@@ -1,17 +1,17 @@
 import Link from "next/link";
 import { ArrowRight, Bitcoin, TrendingUp } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
-
-const { solutions, solutionsSection } = siteContent;
 
 const icons = {
   "trending-up": TrendingUp,
   bitcoin: Bitcoin,
 } as const;
 
-export function Solutions() {
+export function Solutions({ content }: { content: SiteContent }) {
+  const { solutions, solutionsSection } = content;
+
   return (
     <section id="solutions" className="section-padding bg-background">
       <div className="container mx-auto px-4">

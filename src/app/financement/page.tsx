@@ -11,26 +11,33 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { MotionReveal } from "@/components/ui/motion-reveal";
-import { siteContent } from "@/lib/content";
+import { getSiteContent } from "@/lib/content";
+import { getLocale } from "@/lib/i18n/server";
 
-const { financing, common } = siteContent;
+export async function generateMetadata(): Promise<Metadata> {
+  const { financing } = getSiteContent(await getLocale());
 
-export const metadata: Metadata = {
-  title: financing.meta.title,
-  description: financing.meta.description,
-  alternates: { canonical: "/financement" },
-  openGraph: {
+  return {
     title: financing.meta.title,
     description: financing.meta.description,
-    url: "/financement",
-    type: "website",
-  },
-};
+    alternates: { canonical: "/financement" },
+    openGraph: {
+      title: financing.meta.title,
+      description: financing.meta.description,
+      url: "/financement",
+      type: "website",
+    },
+  };
+}
 
-export default function FinancementPage() {
+export default async function FinancementPage() {
+  const locale = await getLocale();
+  const content = getSiteContent(locale);
+  const { financing, common } = content;
+
   return (
     <>
-      <Navbar />
+      <Navbar content={content} locale={locale} />
 
       <main className="flex-1">
         <section className="hero-gradient pt-28 pb-16">
@@ -118,15 +125,15 @@ export default function FinancementPage() {
               </MotionReveal>
 
               <MotionReveal x={20}>
-                <FinancingForm />
+                <FinancingForm content={content} />
               </MotionReveal>
             </div>
           </div>
         </section>
       </main>
 
-      <Footer />
-      <CookieBanner />
+      <Footer content={content} />
+      <CookieBanner content={content} />
     </>
   );
 }

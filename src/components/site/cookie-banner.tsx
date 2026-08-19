@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 
 const STORAGE_KEY = "sansekai.cookie-consent";
 
-export function CookieBanner() {
+export function CookieBanner({ content }: { content: SiteContent }) {
   // `null` until the stored choice has been read; the banner stays hidden until
   // then so the server render and the first client render agree.
   const [consent, setConsent] = useState<string | null | undefined>(undefined);
@@ -40,7 +40,7 @@ export function CookieBanner() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center gap-3 py-4 sm:flex-row sm:justify-between">
           <p className="text-center text-xs text-muted-foreground sm:text-left">
-            {siteContent.cookieBanner.text}
+            {content.cookieBanner.text}
           </p>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -49,14 +49,14 @@ export function CookieBanner() {
               onClick={() => decide("declined")}
               className="rounded-md border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              {siteContent.cookieBanner.decline}
+              {content.cookieBanner.decline}
             </button>
             <button
               type="button"
               onClick={() => decide("accepted")}
               className="gold-gradient rounded-md px-4 py-2 text-xs font-semibold text-accent-foreground transition-opacity hover:opacity-90"
             >
-              {siteContent.cookieBanner.accept}
+              {content.cookieBanner.accept}
             </button>
           </div>
         </div>

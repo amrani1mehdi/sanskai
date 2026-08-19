@@ -1,17 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Bitcoin, TrendingUp } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
-
-const { hero, solutions } = siteContent;
 
 const cardIcons = {
   "trending-up": TrendingUp,
   bitcoin: Bitcoin,
 } as const;
 
-export function Hero() {
+export function Hero({ content }: { content: SiteContent }) {
+  const { hero, solutions } = content;
+
   return (
     <section className="relative flex min-h-screen items-center overflow-hidden">
       {/* Background photo + dark wash, mirroring the live site's stacked overlays. */}

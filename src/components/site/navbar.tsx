@@ -3,13 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Globe, Menu, X } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import { Menu, X } from "lucide-react";
+import type { SiteContent } from "@/lib/content";
+import type { Locale } from "@/lib/i18n/config";
+import { LanguageSwitcher } from "@/components/site/language-switcher";
 import { cn } from "@/lib/utils";
 
-const { brand, nav } = siteContent;
+export function Navbar({
+  content,
+  locale,
+}: {
+  content: SiteContent;
+  locale: Locale;
+}) {
+  const { brand, nav } = content;
 
-export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -57,16 +65,7 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-
-            <button
-              type="button"
-              className="flex items-center gap-1.5 text-sm text-foreground/70 transition-colors hover:text-accent"
-              aria-label="Change language"
-            >
-              <Globe className="size-4" aria-hidden />
-              <span aria-hidden>{nav.locale.flag}</span>
-              <span className="font-medium">{nav.locale.code}</span>
-            </button>
+            <LanguageSwitcher locale={locale} />
 
             <Link
               href={nav.cta.href}
@@ -103,14 +102,9 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-md px-2 py-3 text-left text-sm text-foreground/70"
-            >
-              <Globe className="size-4" aria-hidden />
-              <span aria-hidden>{nav.locale.flag}</span>
-              <span className="font-medium">{nav.locale.code}</span>
-            </button>
+            <div className="px-2 py-3">
+              <LanguageSwitcher locale={locale} />
+            </div>
             <Link
               href={nav.cta.href}
               onClick={() => setOpen(false)}

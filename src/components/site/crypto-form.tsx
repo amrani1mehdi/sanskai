@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { Lock, Send, Shield } from "lucide-react";
-import { siteContent } from "@/lib/content";
-
-const { form, common, cryptoPage } = siteContent;
+import type { SiteContent } from "@/lib/content";
 
 /** Same field styling as the financing form; selects drop the native arrow. */
 const inputClass =
@@ -22,7 +20,9 @@ const EMPTY = {
   message: "",
 };
 
-export function CryptoForm() {
+export function CryptoForm({ content }: { content: SiteContent }) {
+  const { form, common, cryptoPage } = content;
+
   const [values, setValues] = useState(EMPTY);
   const [sent, setSent] = useState(false);
 

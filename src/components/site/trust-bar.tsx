@@ -1,5 +1,5 @@
 import { Award, Clock, Lock, Shield, Users } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 
 const icons = {
@@ -10,12 +10,12 @@ const icons = {
   award: Award,
 } as const;
 
-export function TrustBar() {
+export function TrustBar({ content }: { content: SiteContent }) {
   return (
     <section className="border-y border-border bg-card py-12">
       <div className="container mx-auto px-4">
         <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-          {siteContent.trustBar.map((item, i) => {
+          {content.trustBar.map((item, i) => {
             const Icon = icons[item.icon];
             return (
               <Reveal

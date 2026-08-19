@@ -1,11 +1,11 @@
 import { Quote, Star } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 
-const { testimonials } = siteContent;
+export function Testimonials({ content }: { content: SiteContent }) {
+  const { testimonials } = content;
 
-export function Testimonials() {
   return (
     <section id="testimonials" className="section-padding bg-secondary">
       <div className="container mx-auto px-4">

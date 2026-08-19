@@ -1,11 +1,11 @@
 import { ExternalLink } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 
-const { registries } = siteContent;
+export function Registries({ content }: { content: SiteContent }) {
+  const { registries } = content;
 
-export function Registries() {
   return (
     <section id="registries" className="section-padding bg-secondary">
       <div className="container mx-auto px-4">

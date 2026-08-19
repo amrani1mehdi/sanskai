@@ -1,11 +1,11 @@
 import { CircleCheck } from "lucide-react";
-import { siteContent } from "@/lib/content";
+import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 
-const { advantages } = siteContent;
+export function Advantages({ content }: { content: SiteContent }) {
+  const { advantages } = content;
 
-export function Advantages() {
   return (
     <section id="why-us" className="section-padding hero-gradient">
       <div className="container mx-auto px-4">

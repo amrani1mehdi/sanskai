@@ -19,9 +19,7 @@ import {
   type Coin,
   type Currency,
 } from "@/lib/crypto";
-import { siteContent } from "@/lib/content";
-
-const { crypto } = siteContent;
+import type { SiteContent } from "@/lib/content";
 
 /** Ranges offered by the timeframe switcher; 7D is the default. */
 const TIMEFRAMES = [
@@ -40,11 +38,15 @@ export function CoinDetail({
   coin,
   currency,
   onClose,
+  content,
 }: {
   coin: Coin;
   currency: Currency;
   onClose: () => void;
+  content: SiteContent;
 }) {
+  const { crypto } = content;
+
   const [timeframe, setTimeframe] = useState<Timeframe>(TIMEFRAMES[2]);
   const [points, setPoints] = useState<Point[]>([]);
   const [loading, setLoading] = useState(true);

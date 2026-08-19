@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
-import { siteContent } from "@/lib/content";
-
-const { form } = siteContent;
+import type { SiteContent } from "@/lib/content";
 
 /** Shared by every field on the live site's financing form. */
 const inputClass =
@@ -25,7 +23,9 @@ const EMPTY = {
   message: "",
 };
 
-export function FinancingForm() {
+export function FinancingForm({ content }: { content: SiteContent }) {
+  const { form } = content;
+
   const [values, setValues] = useState(EMPTY);
   const [sent, setSent] = useState(false);
 
