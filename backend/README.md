@@ -35,7 +35,14 @@ provision locally. Switch to MySQL by changing `DB_CONNECTION` in `.env`.
 ## Admin panel
 
 Built with [Filament](https://filamentphp.com). Sign in at
-**http://127.0.0.1:8000/admin**.
+**http://localhost:3000/admin**.
+
+The panel is reached through the Next.js site, which proxies `/admin`, Filament's
+assets and Livewire to this app (see `next.config.ts`), so the whole product
+sits on one origin. Both servers need to be running: `php artisan serve` here
+and `npm run dev` in the parent folder. Port 8000 still works directly, but
+Laravel builds its URLs against `APP_URL` — keep that pointing at the public
+origin, or asset tags and redirects will send people off it.
 
 Credentials come from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`, which
 `AdminUserSeeder` reads. The committed defaults are
