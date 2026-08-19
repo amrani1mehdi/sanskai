@@ -17,8 +17,10 @@ export function Advantages({ content }: { content: SiteContent }) {
         />
 
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {/* Keyed by position: the last two entries repeat the first two, and
+              in French and German they are word-for-word identical. */}
           {advantages.items.map((item, i) => (
-            <Reveal key={item.title} delay={(i % 3) * 90}>
+            <Reveal key={i} delay={(i % 3) * 90}>
               <article className="h-full rounded-lg border border-border/70 bg-secondary/60 p-6 transition-colors hover:border-accent/40">
                 <CircleCheck className="size-5 text-accent" aria-hidden />
                 <h3 className="mt-4 font-display text-base text-foreground">
