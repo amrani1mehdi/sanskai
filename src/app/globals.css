@@ -1,26 +1,217 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Sansekai Solution — design tokens
+   Mirrors the live site (https://sansekaisolution.com) token set.
+   Values are raw HSL triplets so they can be reused with alpha modifiers.
+   ========================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: 30 25% 95%;
+  --foreground: 30 10% 15%;
+
+  --card: 30 20% 98%;
+  --card-foreground: 30 10% 15%;
+
+  --popover: 30 20% 98%;
+  --popover-foreground: 30 10% 15%;
+
+  --primary: 30 15% 92%;
+  --primary-foreground: 30 10% 20%;
+
+  --secondary: 30 18% 90%;
+  --secondary-foreground: 30 10% 15%;
+
+  --muted: 30 12% 88%;
+  --muted-foreground: 30 8% 45%;
+
+  --accent: 36 40% 45%;
+  --accent-foreground: 30 25% 97%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 30 15% 85%;
+  --input: 30 15% 85%;
+  --ring: 36 40% 45%;
+
+  --brand-brown: 36 40% 45%;
+  --brand-cream: 30 25% 95%;
+  --brand-beige: 30 18% 90%;
+  --brand-gold: 36 35% 50%;
+  --brand-dark: 30 10% 20%;
+
+  --success: 142 60% 38%;
+  --danger: 0 72% 51%;
+
+  --radius: 0.5rem;
+
+  --hero-gradient: linear-gradient(
+    135deg,
+    hsl(30 20% 93%) 0%,
+    hsl(30 25% 96%) 50%,
+    hsl(30 18% 91%) 100%
+  );
+  --gold-gradient: linear-gradient(
+    135deg,
+    hsl(36 40% 45%) 0%,
+    hsl(36 35% 50%) 50%,
+    hsl(36 40% 45%) 100%
+  );
+  --shadow-soft: 0 2px 12px -2px hsl(30 20% 20% / 0.08);
+  --shadow-gold: 0 8px 24px -8px hsl(36 40% 45% / 0.45);
+}
+
+.dark {
+  --background: 30 15% 8%;
+  --foreground: 30 15% 90%;
+
+  --card: 30 12% 12%;
+  --card-foreground: 30 15% 90%;
+
+  --popover: 30 12% 12%;
+  --popover-foreground: 30 15% 90%;
+
+  --primary: 36 40% 45%;
+  --primary-foreground: 30 25% 97%;
+
+  --secondary: 30 12% 16%;
+  --secondary-foreground: 30 15% 90%;
+
+  --muted: 30 10% 16%;
+  --muted-foreground: 30 10% 55%;
+
+  --accent: 36 40% 50%;
+  --accent-foreground: 30 15% 8%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 30 15% 97%;
+
+  --border: 30 10% 20%;
+  --input: 30 10% 20%;
+  --ring: 36 40% 50%;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-brand-brown: hsl(var(--brand-brown));
+  --color-brand-cream: hsl(var(--brand-cream));
+  --color-brand-beige: hsl(var(--brand-beige));
+  --color-brand-gold: hsl(var(--brand-gold));
+  --color-brand-dark: hsl(var(--brand-dark));
+  --color-success: hsl(var(--success));
+  --color-danger: hsl(var(--danger));
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-montserrat), var(--font-inter), sans-serif;
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-inter), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-montserrat), var(--font-inter), sans-serif;
+    font-weight: 700;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Matches the live site's container: centred, capped at 1400px.
+   Horizontal gutters come from the `px-4` applied alongside it. */
+@utility container {
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+@utility section-padding {
+  padding-block: 5rem;
+}
+
+@utility hero-gradient {
+  background: var(--hero-gradient);
+}
+
+@utility gold-gradient {
+  background: var(--gold-gradient);
+}
+
+@utility text-gold-gradient {
+  background-image: var(--gold-gradient);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Scroll-reveal: sections fade + rise as they enter the viewport. */
+@utility reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@utility reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Thin, brand-tinted scrollbar for the crypto table / ticker rails. */
+.scrollbar-brand {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+.scrollbar-brand::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.scrollbar-brand::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 9999px;
+}
+.scrollbar-brand::-webkit-scrollbar-track {
+  background: transparent;
 }

@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sansekai Solution
 
-## Getting Started
+Next.js rebuild of [sansekaisolution.com](https://sansekaisolution.com) — currently the
+public landing page. An admin panel is planned next.
 
-First, run the development server:
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env.local` if you have a CoinGecko key (see below).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Next.js 16 (App Router, Turbopack) + React 19
+- Tailwind CSS v4 — tokens defined CSS-first in `src/app/globals.css`
+- `lucide-react` for icons, Montserrat/Inter via `next/font`
 
-## Learn More
+## Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+  app/
+    layout.tsx            fonts + metadata
+    page.tsx              landing page composition
+    globals.css           design tokens, custom utilities
+    api/crypto/route.ts   CoinGecko proxy (45s revalidate)
+  components/
+    site/                 one file per landing-page section
+    ui/                   Reveal (scroll animation), SectionHeading
+  lib/
+    content.ts            ALL landing-page copy
+    crypto.ts             market types + number formatting
+    utils.ts              cn()
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Design tokens
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Colours are raw HSL triplets on `:root` (and `.dark`), exposed to Tailwind through
+`@theme inline` — so `bg-card`, `text-accent`, `border-border` all work, and alpha
+modifiers like `bg-accent/10` do too. The palette mirrors the live site: warm cream
+background, gold-brown accent (`36 40% 45%`).
 
-## Deploy on Vercel
+Custom utilities: `container` (centred, max 1400px), `section-padding`,
+`hero-gradient`, `gold-gradient`, `reveal` / `reveal-visible`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Content
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Every string on the page lives in `src/lib/content.ts`. When the admin panel lands,
+that module gets swapped for the same shape read from the database — components read
+from `siteContent` only and should not need changing.
+
+### Crypto market
+
+`/api/crypto` proxies CoinGecko's public `coins/markets` endpoint (top 250, 7-day
+sparklines) and caches for 45 seconds, so many visitors share one upstream call. The
+client refetches on the same cadence and supports EUR/USD/GBP, search, and pagination.
+
+Set `COINGECKO_API_KEY` in `.env.local` for production — the public tier rate-limits
+(HTTP 429) under modest traffic. The section degrades to an inline notice when the
+upstream call fails.
+
+## Checks
+
+```bash
+npm run build
+npm run lint
+npx tsc --noEmit
+```
