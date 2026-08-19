@@ -38,6 +38,12 @@ export type CryptoCard = {
   description: string;
 };
 
+export type ExpertiseItem = {
+  icon: "chart" | "globe" | "shield" | "cpu";
+  title: string;
+  description: string;
+};
+
 export type Registry = { country: string; name: string; href: string };
 
 export type Testimonial = {
@@ -373,6 +379,95 @@ export function getSiteContent(locale: Locale) {
       ] satisfies CryptoCard[],
       formTitle: t.cryptoPage.formTitle,
       formDesc: t.cryptoPage.formDesc,
+    },
+
+    /**
+     * /investissement — investment page.
+     *
+     * The live site hardcodes this hero and left column in French for every
+     * language; only the form labels and the trust row are translated.
+     */
+    investment: {
+      meta: t.meta.investment,
+      badge: "Investissement",
+      title: "INVESTISSEMENT",
+      subtitle: "L'investissement international de 300k € -3M €",
+      heroDesc:
+        "SANSEKAI vous ouvre les portes de l'investissement mondial : Investissez, Achetez, Vendez Louez. Bien plus qu'un réseau, nous transformons chaque projet en une expérience unique, avec exigence et discrétion.",
+      titleLead: "SANSEKAI : ",
+      titleAccent: "L'excellence en investissement",
+      paragraphs: [
+        "Nous mettons votre projet en relation avec des partenaires financiers fiables, de 100K à 3M €. Accompagnement discret et optimisation complète de votre dossier.",
+        "Contactez-nous et accédez à l'investissement sur mesure.",
+      ],
+      cards: [
+        { label: "VOTRE PROJET", description: "Accompagnement personnalisé" },
+        {
+          label: "OFFRE D'INVESTISSEMENT",
+          description: "Solutions sur mesure",
+        },
+      ],
+    },
+
+    /** /expertise — expertise page. */
+    expertise: {
+      meta: t.meta.expertise,
+      badge: t.expertisePage.badge,
+      title: t.expertisePage.title,
+      subtitle: t.expertisePage.subtitle,
+      desc: t.expertisePage.desc,
+      items: [
+        {
+          icon: "chart",
+          title: t.expertisePage.exp1,
+          description: t.expertisePage.exp1Desc,
+        },
+        {
+          icon: "globe",
+          title: t.expertisePage.exp2,
+          description: t.expertisePage.exp2Desc,
+        },
+        {
+          icon: "shield",
+          title: t.expertisePage.exp3,
+          description: t.expertisePage.exp3Desc,
+        },
+        {
+          icon: "cpu",
+          title: t.expertisePage.exp4,
+          description: t.expertisePage.exp4Desc,
+        },
+      ] satisfies ExpertiseItem[],
+    },
+
+    /** /contact — contact page. */
+    contact: {
+      meta: t.meta.contact,
+      badge: t.contactPage.title,
+      title: t.contactPage.subtitle,
+      desc: t.contactPage.desc,
+      formTitle: t.contactPage.formTitle,
+      formDesc: t.contactPage.formDesc,
+      fields: {
+        company: t.contactPage.fieldCompany,
+        siren: t.contactPage.fieldSiren,
+        fullName: t.contactPage.fieldFullName,
+        email: t.contactPage.fieldEmail,
+        message: t.contactPage.fieldMessage,
+        upload: t.contactPage.fieldUpload,
+      },
+      uploadHint: "PDF, max 10MB",
+      submit: t.contactPage.submit,
+      success: t.contactPage.success,
+      successDesc: t.contactPage.successDesc,
+      email: "admin@sansekaisolution.com",
+    },
+
+    /** The live site's 404 is hardcoded English, with no nav or footer. */
+    notFound: {
+      title: "404",
+      message: "Oops! Page not found",
+      cta: "Return to Home",
     },
 
     cookieBanner: {

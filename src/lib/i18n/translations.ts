@@ -173,6 +173,58 @@ export const translations = {
       "formTitle": "Your crypto adventure starts here!",
       "formDesc": "Want to create and manage a portfolio with assistance for buying and selling — SANSEKAI supports you at every step."
     },
+    "investorPage": {
+      "badge": "Find an Investor",
+      "title": "Find an Investor",
+      "subtitle": "Publish your project, find a partner",
+      "heroDesc": "Give your project visibility by posting it on our website. Find a partner for successful financial collaboration.",
+      "step1Title": "Step 1: Access our expertise",
+      "step1Desc": "Our team analyses your project and advises you on the best strategy to attract investors and financial partners.",
+      "step2Title": "Step 2: Publish your project",
+      "step2Desc": "Publish your project on our platform to give it visibility among our network of investors and partners.",
+      "formTitle": "Publish your project",
+      "formDesc": "Fill in the information below to submit your project.",
+      "fieldProjectTitle": "Project title *",
+      "fieldSummary": "Project summary *",
+      "fieldFundingSought": "Funding sought (€) *",
+      "fieldEquityTerms": "Terms (equity/partnership)",
+      "fieldContactEmail": "Contact email *",
+      "listingTemplate": "Sample project listing",
+      "sampleTitle": "E-commerce platform expansion Europe",
+      "sampleSummary": "E-commerce platform seeking investor for European expansion. 200% growth in 18 months.",
+      "sampleFunding": "€500,000",
+      "sampleTerms": "15% equity · Strategic partnership welcome"
+    },
+    "contactPage": {
+      "title": "Contact",
+      "subtitle": "Contact Us",
+      "desc": "Our team is available to answer your questions.",
+      "formTitle": "Request for Rapid Financing",
+      "formDesc": "Fill out this form and our team will contact you within 24 hours.",
+      "fieldCompany": "Company name *",
+      "fieldSiren": "SIREN / ID number",
+      "fieldFullName": "Full name *",
+      "fieldEmail": "Email *",
+      "fieldMessage": "Message (optional)",
+      "fieldUpload": "Upload invoices (PDF)",
+      "submit": "Send",
+      "success": "Message sent successfully!",
+      "successDesc": "Our team will contact you within 24 hours."
+    },
+    "expertisePage": {
+      "badge": "Our Expertise",
+      "title": "Expertise",
+      "subtitle": "A team of experts at your service",
+      "desc": "Sansekai Solution combines financial expertise, international network and personalised support to maximise your chances of success.",
+      "exp1": "In-depth financial analysis",
+      "exp1Desc": "Complete assessment of your financial situation and identification of optimal solutions.",
+      "exp2": "International network",
+      "exp2Desc": "Access to an extensive network of financial partners across Europe and beyond.",
+      "exp3": "Regulatory compliance",
+      "exp3Desc": "Compliance with FCA standards and European regulations for maximum security.",
+      "exp4": "Technological innovation",
+      "exp4Desc": "Using the latest technologies to optimise financing processes."
+    },
     "footer": {
       "disclaimer": "Sansekai Solution acts as an introducer and not a lender. We connect our clients with financial partners suited to their needs. All financing decisions are made by the relevant financial partner.",
       "confidential": "100% confidential · Fast & secure",
@@ -273,6 +325,18 @@ export const translations = {
       "crypto": {
         "title": "Crypto Investment Guidance | Sansekai Solution",
         "description": "Sansekai Solution provides careful crypto investment guidance as part of wider business finance and investment support for entrepreneurs and SMEs."
+      },
+      "investment": {
+        "title": "Investment Advisory for SMEs | Sansekai Solution",
+        "description": "Independent investment guidance for entrepreneurs and SMEs through Sansekai Solution's international network of funds and partners."
+      },
+      "contact": {
+        "title": "Contact Sansekai Solution | Talk to Our Advisors",
+        "description": "Get in touch with Sansekai Solution to discuss business financing, cash flow support or investor search for your SME."
+      },
+      "expertise": {
+        "title": "Our Expertise | Sansekai Solution",
+        "description": "Discover Sansekai Solution's expertise in SME financing, treasury management, investor search and independent financial advisory."
       }
     }
   },
@@ -442,6 +506,58 @@ export const translations = {
       "formTitle": "Votre aventure crypto commence ici !",
       "formDesc": "Vous souhaitez créer et gérer un portefeuille avec assistance pour l'achat et la vente — SANSEKAI vous accompagne à chaque étape."
     },
+    "investorPage": {
+      "badge": "Trouver un Investisseur",
+      "title": "Trouver un Investisseur",
+      "subtitle": "Publiez votre projet, trouvez un partenaire",
+      "heroDesc": "Donnez de la visibilité à votre projet en le publiant sur notre site. Trouvez un partenaire pour une collaboration financière réussie.",
+      "step1Title": "Étape 1 : Accédez à notre expertise",
+      "step1Desc": "Notre équipe analyse votre projet et vous conseille sur la meilleure stratégie pour attirer des investisseurs et partenaires financiers.",
+      "step2Title": "Étape 2 : Publiez votre projet",
+      "step2Desc": "Publiez votre projet sur notre plateforme pour lui donner de la visibilité auprès de notre réseau d'investisseurs et partenaires.",
+      "formTitle": "Publiez votre projet",
+      "formDesc": "Remplissez les informations ci-dessous pour soumettre votre projet.",
+      "fieldProjectTitle": "Titre du projet *",
+      "fieldSummary": "Résumé du projet *",
+      "fieldFundingSought": "Montant recherché (€) *",
+      "fieldEquityTerms": "Conditions (equity/partenariat)",
+      "fieldContactEmail": "Email de contact *",
+      "listingTemplate": "Modèle de publication de projet",
+      "sampleTitle": "Expansion plateforme e-commerce Europe",
+      "sampleSummary": "Plateforme e-commerce cherchant un investisseur pour expansion européenne. Croissance de 200% en 18 mois.",
+      "sampleFunding": "500 000 €",
+      "sampleTerms": "15% equity · Partenariat stratégique bienvenu"
+    },
+    "contactPage": {
+      "title": "Contact",
+      "subtitle": "Contactez-nous",
+      "desc": "Notre équipe est à votre disposition pour répondre à vos questions.",
+      "formTitle": "Demande de financement rapide",
+      "formDesc": "Remplissez ce formulaire et notre équipe vous contactera dans les 24 heures.",
+      "fieldCompany": "Nom de l'entreprise *",
+      "fieldSiren": "SIREN / Numéro d'identification",
+      "fieldFullName": "Nom complet *",
+      "fieldEmail": "Email *",
+      "fieldMessage": "Message (optionnel)",
+      "fieldUpload": "Télécharger des factures (PDF)",
+      "submit": "Envoyer",
+      "success": "Message envoyé avec succès !",
+      "successDesc": "Notre équipe vous contactera dans les 24 heures."
+    },
+    "expertisePage": {
+      "badge": "Notre Expertise",
+      "title": "Expertise",
+      "subtitle": "Une équipe d'experts à votre service",
+      "desc": "Sansekai Solution combine expertise financière, réseau international et accompagnement personnalisé pour maximiser vos chances de succès.",
+      "exp1": "Analyse financière approfondie",
+      "exp1Desc": "Évaluation complète de votre situation financière et identification des solutions optimales.",
+      "exp2": "Réseau international",
+      "exp2Desc": "Accès à un réseau étendu de partenaires financiers à travers l'Europe et au-delà.",
+      "exp3": "Conformité réglementaire",
+      "exp3Desc": "Respect des normes FCA et des réglementations européennes pour une sécurité maximale.",
+      "exp4": "Innovation technologique",
+      "exp4Desc": "Utilisation des dernières technologies pour optimiser les processus de financement."
+    },
     "footer": {
       "disclaimer": "Sansekai Solution agit en qualité d'introducteur et non de prêteur. Nous mettons en relation nos clients avec des partenaires financiers adaptés à leurs besoins. Toute décision de financement est prise par le partenaire financier concerné.",
       "confidential": "100% confidentiel · Rapide & sécurisé",
@@ -542,6 +658,18 @@ export const translations = {
       "crypto": {
         "title": "Conseil en Investissement Crypto | Sansekai Solution",
         "description": "Sansekai Solution propose un accompagnement prudent en investissement crypto, intégré à son offre de financement d’entreprise et de conseil en investissement pour entrepreneurs et PME."
+      },
+      "investment": {
+        "title": "Conseil en investissement PME | Sansekai Solution",
+        "description": "Conseil en investissement indépendant pour entrepreneurs et PME via le réseau international de fonds et partenaires Sansekai Solution."
+      },
+      "contact": {
+        "title": "Contact Sansekai Solution | Parlez à nos conseillers",
+        "description": "Contactez Sansekai Solution pour échanger sur le financement d'entreprise, le soutien de trésorerie ou la recherche d'investisseurs pour votre PME."
+      },
+      "expertise": {
+        "title": "Notre Expertise | Sansekai Solution",
+        "description": "Découvrez l'expertise Sansekai Solution en financement PME, gestion de trésorerie, recherche d'investisseurs et conseil financier indépendant."
       }
     }
   },
@@ -711,6 +839,58 @@ export const translations = {
       "formTitle": "Ihr Krypto-Abenteuer beginnt hier!",
       "formDesc": "Sie möchten ein Portfolio erstellen und verwalten lassen — SANSEKAI begleitet Sie bei jedem Schritt."
     },
+    "investorPage": {
+      "badge": "Investor finden",
+      "title": "Investor finden",
+      "subtitle": "Veröffentlichen Sie Ihr Projekt, finden Sie einen Partner",
+      "heroDesc": "Geben Sie Ihrem Projekt Sichtbarkeit, indem Sie es auf unserer Website veröffentlichen. Finden Sie einen Partner für eine erfolgreiche finanzielle Zusammenarbeit.",
+      "step1Title": "Schritt 1: Nutzen Sie unsere Expertise",
+      "step1Desc": "Unser Team analysiert Ihr Projekt und berät Sie zur besten Strategie, um Investoren und Finanzpartner zu gewinnen.",
+      "step2Title": "Schritt 2: Veröffentlichen Sie Ihr Projekt",
+      "step2Desc": "Veröffentlichen Sie Ihr Projekt auf unserer Plattform, um es unserem Investoren- und Partnernetzwerk sichtbar zu machen.",
+      "formTitle": "Projekt veröffentlichen",
+      "formDesc": "Füllen Sie die folgenden Informationen aus, um Ihr Projekt einzureichen.",
+      "fieldProjectTitle": "Projekttitel *",
+      "fieldSummary": "Projektbeschreibung *",
+      "fieldFundingSought": "Gesuchter Betrag (€) *",
+      "fieldEquityTerms": "Konditionen (Equity/Partnerschaft)",
+      "fieldContactEmail": "Kontakt-E-Mail *",
+      "listingTemplate": "Beispiel-Projektlisting",
+      "sampleTitle": "E-Commerce-Plattform Expansion Europa",
+      "sampleSummary": "E-Commerce-Plattform sucht Investor für europäische Expansion. 200% Wachstum in 18 Monaten.",
+      "sampleFunding": "500.000 €",
+      "sampleTerms": "15% Equity · Strategische Partnerschaft willkommen"
+    },
+    "contactPage": {
+      "title": "Kontakt",
+      "subtitle": "Kontaktieren Sie uns",
+      "desc": "Unser Team steht Ihnen für Ihre Fragen zur Verfügung.",
+      "formTitle": "Schnellfinanzierung anfordern",
+      "formDesc": "Füllen Sie dieses Formular aus und unser Team kontaktiert Sie innerhalb von 24 Stunden.",
+      "fieldCompany": "Firmenname *",
+      "fieldSiren": "SIREN / Identifikationsnummer",
+      "fieldFullName": "Vollständiger Name *",
+      "fieldEmail": "E-Mail *",
+      "fieldMessage": "Nachricht (optional)",
+      "fieldUpload": "Rechnungen hochladen (PDF)",
+      "submit": "Senden",
+      "success": "Nachricht erfolgreich gesendet!",
+      "successDesc": "Unser Team kontaktiert Sie innerhalb von 24 Stunden."
+    },
+    "expertisePage": {
+      "badge": "Unsere Expertise",
+      "title": "Expertise",
+      "subtitle": "Ein Expertenteam zu Ihren Diensten",
+      "desc": "Sansekai Solution vereint Finanzexpertise, internationales Netzwerk und persönliche Betreuung, um Ihre Erfolgschancen zu maximieren.",
+      "exp1": "Eingehende Finanzanalyse",
+      "exp1Desc": "Vollständige Bewertung Ihrer finanziellen Situation und Identifizierung optimaler Lösungen.",
+      "exp2": "Internationales Netzwerk",
+      "exp2Desc": "Zugang zu einem umfangreichen Netzwerk von Finanzpartnern in ganz Europa und darüber hinaus.",
+      "exp3": "Regulatorische Konformität",
+      "exp3Desc": "Einhaltung der FCA-Standards und europäischen Vorschriften für maximale Sicherheit.",
+      "exp4": "Technologische Innovation",
+      "exp4Desc": "Nutzung neuester Technologien zur Optimierung der Finanzierungsprozesse."
+    },
     "footer": {
       "disclaimer": "Sansekai Solution handelt als Vermittler und nicht als Kreditgeber. Wir verbinden unsere Kunden mit Finanzpartnern, die ihren Bedürfnissen entsprechen. Alle Finanzierungsentscheidungen werden vom jeweiligen Finanzpartner getroffen.",
       "confidential": "100% vertraulich · Schnell & sicher",
@@ -811,6 +991,18 @@ export const translations = {
       "crypto": {
         "title": "Krypto-Investment-Beratung | Sansekai Solution",
         "description": "Sansekai Solution bietet sorgfältige Krypto-Investment-Beratung als Teil eines umfassenden Angebots zur Unternehmensfinanzierung und Investmentbegleitung für Unternehmer und KMU."
+      },
+      "investment": {
+        "title": "Investment-Beratung für KMU | Sansekai Solution",
+        "description": "Unabhängige Investment-Beratung für Unternehmer und KMU über das internationale Fonds- und Partnernetzwerk von Sansekai Solution."
+      },
+      "contact": {
+        "title": "Kontakt Sansekai Solution | Sprechen Sie mit uns",
+        "description": "Kontaktieren Sie Sansekai Solution für Unternehmensfinanzierung, Liquiditätsunterstützung oder Investorensuche für Ihr KMU."
+      },
+      "expertise": {
+        "title": "Unsere Expertise | Sansekai Solution",
+        "description": "Entdecken Sie die Expertise von Sansekai Solution in KMU-Finanzierung, Treasury, Investorensuche und unabhängiger Finanzberatung."
       }
     }
   }
