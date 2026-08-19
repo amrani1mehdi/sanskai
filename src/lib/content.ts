@@ -25,6 +25,12 @@ export type TrustItem = {
 
 export type Advantage = { title: string; description: string };
 
+export type CryptoCard = {
+  icon: "wallet" | "chart" | "trade";
+  title: string;
+  description: string;
+};
+
 export type Registry = { country: string; name: string; href: string };
 
 export type Testimonial = {
@@ -124,6 +130,17 @@ export const siteContent = {
     disclaimer:
       "Data provided by CoinGecko. For informational purposes only — not financial advice.",
     searchPlaceholder: "Search coin or ticker (e.g. BTC, Bitcoin)",
+
+    /** Row detail modal. */
+    detail: {
+      marketCap: "Market Cap",
+      volume24h: "24h Volume",
+      supply: "Circulating Supply",
+      rank: "Rank",
+      about: "About",
+      chartUnavailable:
+        "This range isn't available on the current CoinGecko plan.",
+    },
   },
 
   advantages: {
@@ -263,6 +280,147 @@ export const siteContent = {
       },
     },
     copyright: "© 2026 SANSEKAI Solution LTD. All rights reserved.",
+  },
+
+  /** Shared form field labels — the live site reuses these across pages. */
+  form: {
+    lastName: "Last name *",
+    firstName: "First name *",
+    phone: "Phone *",
+    email: "Email *",
+    company: "Company name *",
+    address: "Company address",
+    postalCode: "Postal code *",
+    city: "City *",
+    revenue: "Monthly turnover *",
+    amount: "Amount requested *",
+    commercialCode: "Commercial Code",
+    message: "Message",
+    submit: "Send",
+    sent: "Message sent ✓",
+    treasuryRequest: "Treasury financing request",
+    service: "Which service do you need?",
+    selectService: "Select a service",
+    walletCreation: "Wallet creation",
+    walletManagement: "Portfolio management",
+    buySell: "Buy/Sell",
+    experience: "Cryptocurrency experience level *",
+    selectLevel: "Select",
+    beginner: "Beginner",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
+    objective: "What is your main objective",
+    fillForm: "Fill in the form below",
+  },
+
+  common: {
+    confidential: "100% confidential",
+    response24h: "24h response",
+    secure: "Fast & secure",
+  },
+
+  /** /financement — cash flow financing page. */
+  financing: {
+    meta: {
+      title: "Business Financing for SMEs | Sansekai Solution",
+      description:
+        "Tailored business financing for SMEs from €2k to €3M: working capital, cash flow, stock and equipment funding with independent advisory.",
+    },
+    badge: "Financing",
+    title: "Cash Flow Financing",
+    subtitle:
+      "Working Capital Needs · Cash Flow Financing · Overdraft Facility · Factoring Available",
+    heroDesc:
+      "From €2,000 to €150K, SANSEKAI Solution helps you find the right financial partners and supports you at every step with a personalised approach.",
+    formTitle: "Request for Rapid Financing",
+    formSubtitle:
+      "Fill out this form and our team will contact you within 24 hours.",
+    benefits: [
+      "Access up to €150K to develop your projects",
+      "Get validation within 24h after document review",
+      "No personal guarantee required: your private assets stay protected",
+      "Tailored support to find the right financial partner",
+    ],
+    reqTitle: "Eligibility Requirements",
+    requirements: [
+      "Business active for at least 3 months",
+      "Monthly turnover above €5,000",
+    ],
+    faqTitle: "Frequently Asked Questions",
+    faqs: [
+      {
+        question: "What types of cash flow financing do you offer?",
+        answer:
+          "We offer Working Capital Needs solutions, Cash Flow Financing, Overdraft Facilities and Factoring. Each solution is tailored to your business profile.",
+      },
+      {
+        question: "How long does it take to obtain financing?",
+        answer:
+          "After receiving your complete application, we conduct a 24h assessment. Matching with the right financial partner takes 48 to 72 hours.",
+      },
+      {
+        question: "Is a personal guarantee required?",
+        answer:
+          "No personal guarantee is required. Your private assets remain protected. Financing is based on your business activity and financial health.",
+      },
+    ],
+  },
+
+  /** /crypto-monnaie — cryptocurrency page. */
+  cryptoPage: {
+    meta: {
+      title: "Crypto Investment Guidance | Sansekai Solution",
+      description:
+        "Sansekai Solution provides careful crypto investment guidance as part of wider business finance and investment support for entrepreneurs and SMEs.",
+    },
+    badge: "Cryptocurrency",
+    title: "CRYPTOCURRENCY",
+    subtitle: "SANSEKAI: Your gateway to crypto",
+    heroDesc: `Our crypto solutions in brief:
+• Wallet creation
+• Portfolio management
+• Buying & selling`,
+
+    /** The interview block is hardcoded in French on the live site. */
+    interview: {
+      badge: "Interview",
+      title: "Interview / Analyse crypto",
+      description:
+        "Découvrez une analyse autour du Bitcoin et de son utilisation, dans le cadre de notre contenu d'information sur les crypto-actifs.",
+      videoId: "1ekyt9e3WYQ",
+      disclaimer:
+        "Contenu informatif uniquement. Ceci ne constitue pas un conseil en investissement.",
+    },
+
+    explainer:
+      "The cryptocurrency market offers unique opportunities for diversification and growth. Whether you're a beginner or a seasoned investor, our team supports you with a personalised and secure approach.",
+    benefits: [
+      "Access to a secure and regulated platform",
+      "Personalised support at every step",
+      "Strategies tailored to your investor profile",
+    ],
+    cards: [
+      {
+        icon: "wallet",
+        title: "Wallet Creation",
+        description: "Setup and creation of your wallet on leading platforms.",
+      },
+      {
+        icon: "chart",
+        title: "Portfolio Management",
+        description:
+          "Personalised and secure management of your cryptocurrency portfolio to optimise your investments.",
+      },
+      {
+        icon: "trade",
+        title: "Buy/Sell",
+        description:
+          "Benefit from personalised assistance to buy and sell your cryptocurrencies with confidence.",
+      },
+    ] as CryptoCard[],
+    formTitle: "Your crypto adventure starts here!",
+    formDesc:
+      "Want to create and manage a portfolio with assistance for buying and selling — SANSEKAI supports you at every step.",
   },
 
   cookieBanner: {

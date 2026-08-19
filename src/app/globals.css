@@ -58,6 +58,8 @@
     hsl(36 35% 50%) 50%,
     hsl(36 40% 45%) 100%
   );
+  --card-shadow: 0 4px 24px -4px hsl(30 10% 20% / 0.06);
+  --card-shadow-hover: 0 12px 40px -8px hsl(30 10% 20% / 0.12);
   --shadow-soft: 0 2px 12px -2px hsl(30 20% 20% / 0.08);
   --shadow-gold: 0 8px 24px -8px hsl(36 40% 45% / 0.45);
 }
@@ -161,6 +163,14 @@
 
 @utility section-padding {
   padding-block: 5rem;
+
+  @media (width >= 48rem) {
+    padding-block: 7rem;
+  }
+
+  @media (width >= 64rem) {
+    padding-block: 8rem;
+  }
 }
 
 @utility hero-gradient {
@@ -214,4 +224,44 @@
 }
 .scrollbar-brand::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Elevated card surface — matches the live site's `.card-elevated`. */
+@utility card-elevated {
+  box-shadow: var(--card-shadow);
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+
+  &:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-3px);
+  }
+}
+
+/* Radix accordion open/close, same timing as the live site. */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@utility animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+@utility animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
 }

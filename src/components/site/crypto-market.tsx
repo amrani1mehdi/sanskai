@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Sparkline } from "@/components/site/sparkline";
+import { CoinDetail } from "@/components/site/coin-detail";
 
 const { crypto } = siteContent;
 
@@ -70,6 +71,7 @@ export function CryptoMarket() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Coin | null>(null);
 
   const tickerRef = useRef<HTMLDivElement>(null);
 
@@ -225,37 +227,46 @@ export function CryptoMarket() {
                   : coins.slice(0, TICKER_COUNT)
                 ).map((entry, i) => {
                   const coin = entry as Coin | undefined;
-                  return (
-                    <div
-                      key={coin?.id ?? i}
-                      className="flex min-w-[186px] shrink-0 items-center gap-2.5 rounded-md border border-border bg-card px-4 py-3"
-                    >
-                      {coin ? (
-                        <>
-                          <Image
-                            src={coin.image}
-                            alt=""
-                            width={20}
-                            height={20}
-                            unoptimized
-                            className="size-5 rounded-full"
-                          />
-                          <span className="text-xs font-bold uppercase text-foreground">
-                            {coin.symbol}
-                          </span>
-                          <span className="text-xs tabular-nums text-foreground">
-                            {formatPrice(coin.current_price, currency)}
-                          </span>
-                          <span className="ml-auto text-[11px]">
-                            <Change
-                              value={coin.price_change_percentage_24h_in_currency}
-                            />
-                          </span>
-                        </>
-                      ) : (
+
+                  if (!coin) {
+                    return (
+                      <div
+                        key={i}
+                        className="flex min-w-[186px] shrink-0 items-center gap-2.5 rounded-md border border-border bg-card px-4 py-3"
+                      >
                         <span className="h-5 w-full animate-pulse rounded bg-secondary" />
-                      )}
-                    </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={coin.id}
+                      type="button"
+                      onClick={() => setSelected(coin)}
+                      aria-label={`${coin.name} details`}
+                      className="flex min-w-[186px] shrink-0 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-card px-4 py-3 transition-colors hover:border-accent/40"
+                    >
+                      <Image
+                        src={coin.image}
+                        alt=""
+                        width={20}
+                        height={20}
+                        unoptimized
+                        className="size-5 rounded-full"
+                      />
+                      <span className="text-xs font-bold uppercase text-foreground">
+                        {coin.symbol}
+                      </span>
+                      <span className="text-xs tabular-nums text-foreground">
+                        {formatPrice(coin.current_price, currency)}
+                      </span>
+                      <span className="ml-auto text-[11px]">
+                        <Change
+                          value={coin.price_change_percentage_24h_in_currency}
+                        />
+                      </span>
+                    </button>
                   );
                 })}
               </div>
@@ -337,7 +348,8 @@ export function CryptoMarket() {
                         return (
                           <tr
                             key={coin.id}
-                            className="border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/50"
+                            onClick={() => setSelected(coin)}
+                            className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-secondary/50"
                           >
                             <td className="px-4 py-4 text-left text-xs tabular-nums text-muted-foreground">
                               {coin.market_cap_rank}
@@ -459,6 +471,14 @@ export function CryptoMarket() {
           </Reveal>
         </div>
       </div>
+
+      {selected ? (
+        <CoinDetail
+          coin={selected}
+          currency={currency}
+          onClose={() => setSelected(null)}
+        />
+      ) : null}
     </section>
   );
 }
