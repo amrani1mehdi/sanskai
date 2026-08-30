@@ -4,8 +4,9 @@ import { useMemo, useState } from "react";
 import { Send, TriangleAlert } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import type { Locale } from "@/lib/i18n/config";
-import { isCompanyAgeEligible } from "@/lib/eligibility";
+import { isCompanyAgeEligible, isRevenueEligible } from "@/lib/eligibility";
 import { DatePicker } from "@/components/ui/date-picker";
+import { cn } from "@/lib/utils";
 
 /** Shared by every field on the live site's financing form. */
 const inputClass =
@@ -43,14 +44,26 @@ export function FinancingForm({
     setValues((current) => ({ ...current, [key]: value }));
 
   /*
-   * A company only qualifies once it has been trading longer than six months,
-   * so the notice appears as soon as a date is picked rather than waiting for
-   * a submit that was never going to be accepted.
+   * Both notices appear as soon as the offending field is filled in, rather
+   * than waiting for a submit that was never going to be accepted. Each is
+   * shown against its own field so it is obvious which one to change.
    */
-  const ineligible = useMemo(
+  const ageIneligible = useMemo(
     () => values.dateCreation !== "" && !isCompanyAgeEligible(values.dateCreation),
     [values.dateCreation],
   );
+
+  // Only judge the revenue once it reads as a number, so the warning does not
+  // flash while someone is still typing the first digit.
+  const revenueIneligible = useMemo(
+    () =>
+      values.chiffreAffaire.trim() !== "" &&
+      /\d/.test(values.chiffreAffaire) &&
+      !isRevenueEligible(values.chiffreAffaire),
+    [values.chiffreAffaire],
+  );
+
+  const ineligible = ageIneligible || revenueIneligible;
 
   // The live site posts to a Supabase edge function. There is no backend in
   // this rebuild yet, so the form mirrors the same success UX locally.
@@ -118,29 +131,16 @@ export function FinancingForm({
             onChange={set("dateCreation")}
             locale={locale}
             placeholder={form.companyCreatedAtPlaceholder}
-            invalid={ineligible}
-            describedBy={ineligible ? "company-age-notice" : undefined}
+            invalid={ageIneligible}
+            describedBy={ageIneligible ? "company-age-notice" : undefined}
           />
 
-          {ineligible ? (
-            <div
+          {ageIneligible ? (
+            <IneligibleNotice
               id="company-age-notice"
-              role="alert"
-              className="mt-3 flex gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4"
-            >
-              <TriangleAlert
-                className="size-4 shrink-0 text-danger mt-0.5"
-                aria-hidden
-              />
-              <div>
-                <p className="text-sm font-semibold text-foreground">
-                  {form.ineligibleTitle}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-                  {form.ineligibleBody}
-                </p>
-              </div>
-            </div>
+              title={form.ineligibleTitle}
+              body={form.ineligibleBody}
+            />
           ) : null}
         </div>
 
@@ -161,15 +161,27 @@ export function FinancingForm({
             label={form.revenue}
             value={values.chiffreAffaire}
             onChange={set("chiffreAffaire")}
+            inputMode="decimal"
+            invalid={revenueIneligible}
+            describedBy={revenueIneligible ? "revenue-notice" : undefined}
             required
           />
           <Field
             label={form.amount}
             value={values.montant}
             onChange={set("montant")}
+            inputMode="decimal"
             required
           />
         </div>
+
+        {revenueIneligible ? (
+          <IneligibleNotice
+            id="revenue-notice"
+            title={form.ineligibleTitle}
+            body={form.ineligibleRevenueBody}
+          />
+        ) : null}
 
         <Field
           label={form.commercialCode}
@@ -207,18 +219,49 @@ export function FinancingForm({
   );
 }
 
+/** Shown against the field that fails an eligibility rule. */
+function IneligibleNotice({
+  id,
+  title,
+  body,
+}: {
+  id: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div
+      id={id}
+      role="alert"
+      className="mt-3 flex gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4"
+    >
+      <TriangleAlert className="size-4 shrink-0 text-danger mt-0.5" aria-hidden />
+      <div>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{body}</p>
+      </div>
+    </div>
+  );
+}
+
 function Field({
   label,
   value,
   onChange,
   type,
   required,
+  inputMode,
+  invalid,
+  describedBy,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
+  inputMode?: "decimal" | "numeric" | "tel" | "email" | "text";
+  invalid?: boolean;
+  describedBy?: string;
 }) {
   return (
     <div>
@@ -226,7 +269,10 @@ function Field({
       <input
         required={required}
         type={type}
-        className={inputClass}
+        inputMode={inputMode}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
+        className={cn(inputClass, invalid && "border-danger focus:border-danger")}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />

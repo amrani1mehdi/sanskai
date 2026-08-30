@@ -9,6 +9,9 @@
 /** A company must have been trading longer than this to apply. */
 export const MIN_COMPANY_AGE_MONTHS = 6;
 
+/** Monthly revenue floor, in euros. Meeting it exactly is enough. */
+export const MIN_MONTHLY_REVENUE = 7000;
+
 /**
  * `date` shifted by `months`, clamped to the end of the target month.
  *
@@ -47,6 +50,62 @@ export function isCompanyAgeEligible(
 
   // Strictly before the cut-off: reaching exactly six months is not enough.
   return date.getTime() < cutoff.getTime();
+}
+
+/**
+ * Reads a money amount typed by a human, in any of the site's locales.
+ *
+ * People write the same figure as "7000", "7,000", "7 000", "7.000" or
+ * "€7,000.50", and the thousands and decimal separators swap between English,
+ * French and German. Returns null when nothing numeric can be read.
+ */
+export function parseAmount(value: string): number | null {
+  // Drop currency symbols, spaces (including the non-breaking ones French
+  // uses for thousands) and anything else that is not part of the number.
+  const cleaned = value.replace(/[^\d.,-]/g, "");
+  if (!/\d/.test(cleaned)) return null;
+
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+
+  let normalised: string;
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    // Both present: whichever comes last is the decimal separator.
+    const decimal = lastComma > lastDot ? "," : ".";
+    const thousands = decimal === "," ? "." : ",";
+    normalised = cleaned
+      .split(thousands)
+      .join("")
+      .replace(decimal, ".");
+  } else if (lastComma !== -1 || lastDot !== -1) {
+    const separator = lastComma !== -1 ? "," : ".";
+    const [head, ...rest] = cleaned.split(separator);
+    const tail = rest.join("");
+
+    /*
+     * A single separator is ambiguous: "7.000" is seven thousand in German and
+     * seven in English. Exactly three trailing digits reads as thousands,
+     * which is the common case here; anything else is a decimal.
+     */
+    normalised = rest.length > 1 || tail.length === 3 ? head + tail : `${head}.${tail}`;
+  } else {
+    normalised = cleaned;
+  }
+
+  const amount = Number.parseFloat(normalised);
+
+  return Number.isFinite(amount) ? amount : null;
+}
+
+/** Whether the typed monthly revenue meets the floor. */
+export function isRevenueEligible(value: string | null | undefined): boolean {
+  if (!value) return false;
+
+  const amount = parseAmount(value);
+  if (amount === null) return false;
+
+  return amount >= MIN_MONTHLY_REVENUE;
 }
 
 /**
