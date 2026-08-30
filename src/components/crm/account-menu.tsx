@@ -1,7 +1,10 @@
 "use client";
 
 /**
- * The gear beside the admin avatar: profile, add a responsable, sign out.
+ * The gear beside the admin avatar: profile, change password, sign out.
+ *
+ * The CRM has one administrator — there are no responsables and nothing is
+ * assigned — so this menu manages that single account and nothing else.
  *
  * The menu closes on Escape, on outside click and after any action, so it never
  * strands the rail in an open state on mobile.
@@ -9,16 +12,16 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LogOut, Settings, UserPlus, UserRound, X } from "lucide-react";
+import { KeyRound, LogOut, Settings, UserRound, X } from "lucide-react";
 import { CURRENT_ADMIN } from "@/lib/crm/config";
 import { useCrm } from "@/lib/crm/store";
 import { cn } from "@/lib/utils";
 
-type Panel = "profil" | "responsable" | null;
+type Panel = "profil" | "motDePasse" | null;
 
 export function AccountMenu({ onNavigate }: { onNavigate: () => void }) {
   const router = useRouter();
-  const { owners, leads } = useCrm();
+  const { leads } = useCrm();
 
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
@@ -84,12 +87,12 @@ export function AccountMenu({ onNavigate }: { onNavigate: () => void }) {
             type="button"
             role="menuitem"
             onClick={() => {
-              setPanel("responsable");
+              setPanel("motDePasse");
               setOpen(false);
             }}
             className={item}
           >
-            <UserPlus size={15} /> Ajouter un responsable
+            <KeyRound size={15} /> Changer le mot de passe
           </button>
 
           <div className="my-1.5 border-t border-sidebar-border" />
@@ -112,10 +115,9 @@ export function AccountMenu({ onNavigate }: { onNavigate: () => void }) {
       <ProfilePanel
         open={panel === "profil"}
         onClose={() => setPanel(null)}
-        ownerCount={owners.length}
         leadCount={leads.length}
       />
-      <AddOwnerPanel open={panel === "responsable"} onClose={() => setPanel(null)} />
+      <PasswordPanel open={panel === "motDePasse"} onClose={() => setPanel(null)} />
     </div>
   );
 }
@@ -171,12 +173,10 @@ function Sheet({
 function ProfilePanel({
   open,
   onClose,
-  ownerCount,
   leadCount,
 }: {
   open: boolean;
   onClose: () => void;
-  ownerCount: number;
   leadCount: number;
 }) {
   return (
@@ -196,14 +196,12 @@ function ProfilePanel({
       <dl className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
         <Row label="Rôle" value="Accès complet au back office" />
         <Row label="Leads suivis" value={`${leadCount}`} />
-        <Row label="Responsables" value={`${ownerCount}`} />
       </dl>
 
-      {/* Honest about what this screen is until authentication exists. */}
-      <p className="mt-5 rounded-lg border border-border bg-secondary/60 px-4 py-3 text-xs text-muted-foreground">
-        Le CRM n&apos;a pas encore d&apos;authentification : ce profil est celui de
-        l&apos;administrateur unique. Les identifiants et la gestion des accès
-        viendront avec la connexion.
+      <p className="mt-5 rounded-lg border border-border bg-secondary/60 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+        Le CRM fonctionne avec un compte administrateur unique. Le nom
+        d&apos;utilisateur et le mot de passe initial sont fournis avec
+        l&apos;installation ; le mot de passe se change ensuite depuis ce menu.
       </p>
     </Sheet>
   );
@@ -221,148 +219,72 @@ function Row({ label, value }: { label: string; value: string }) {
 const inputClass =
   "w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30";
 
-const EMPTY_FORM = {
-  name: "",
-  role: "",
-  username: "",
-  password: "",
-  confirm: "",
-};
+const EMPTY = { current: "", next: "", confirm: "" };
 
-type FormErrors = Partial<Record<keyof typeof EMPTY_FORM, string>>;
+type Errors = Partial<Record<keyof typeof EMPTY, string>>;
 
-const USERNAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
+function PasswordPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [values, setValues] = useState(EMPTY);
+  const [errors, setErrors] = useState<Errors>({});
 
-function AddOwnerPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { createOwner, owners, usernameTaken } = useCrm();
-  const [values, setValues] = useState(EMPTY_FORM);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [added, setAdded] = useState<string | null>(null);
-
-  const set = (key: keyof typeof EMPTY_FORM) => (value: string) => {
+  const set = (key: keyof typeof EMPTY) => (value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
-    setAdded(null);
-  };
-
-  const validate = (): FormErrors => {
-    const next: FormErrors = {};
-
-    if (values.name.trim() === "") next.name = "Le nom est obligatoire.";
-
-    const username = values.username.trim();
-    if (username === "") {
-      next.username = "Le nom d'utilisateur est obligatoire.";
-    } else if (username.length < 3) {
-      next.username = "Au moins 3 caractères.";
-    } else if (!USERNAME_PATTERN.test(username)) {
-      next.username = "Lettres, chiffres, point, tiret et underscore uniquement.";
-    } else if (usernameTaken(username)) {
-      next.username = "Ce nom d'utilisateur est déjà pris.";
-    }
-
-    if (values.password.length < 8) {
-      next.password = "Au moins 8 caractères.";
-    }
-    if (values.confirm !== values.password) {
-      next.confirm = "Les mots de passe ne correspondent pas.";
-    }
-
-    return next;
   };
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const found = validate();
+    const found: Errors = {};
+    if (values.current === "") found.current = "Le mot de passe actuel est requis.";
+    if (values.next.length < 8) found.next = "Au moins 8 caractères.";
+    if (values.confirm !== values.next) {
+      found.confirm = "Les mots de passe ne correspondent pas.";
+    }
+
     setErrors(found);
     if (Object.values(found).some(Boolean)) return;
 
-    const owner = createOwner(values.name, values.role, values.username);
-    if (!owner) return;
-
-    setAdded(owner.name);
-    setValues(EMPTY_FORM);
+    /* Deliberately not wired to anything here: changing a password is the API's
+       job (PATCH /v1/auth/password), and a browser store is no place to hold or
+       verify one. The form validates, then says where the change happens. */
+    setErrors({
+      current:
+        "Le changement de mot de passe passe par l'API du CRM, qui n'est pas encore branchée sur ce tableau de bord.",
+    });
   };
 
   const close = () => {
-    setValues(EMPTY_FORM);
+    setValues(EMPTY);
     setErrors({});
-    setAdded(null);
     onClose();
   };
 
   return (
-    <Sheet open={open} title="Ajouter un responsable" onClose={close}>
-      <p className="mb-5 text-sm text-muted-foreground">
-        Le responsable devient assignable sur chaque lead, et apparaît dans les
-        filtres et la charge par responsable.
-      </p>
-
+    <Sheet open={open} title="Changer le mot de passe" onClose={close}>
       <form onSubmit={submit} noValidate className="space-y-4">
         <Field
-          id="owner-name"
-          label="Nom complet *"
-          value={values.name}
-          onChange={set("name")}
-          placeholder="Camille Rousseau"
-          error={errors.name}
+          id="current-password"
+          label="Mot de passe actuel *"
+          value={values.current}
+          onChange={set("current")}
+          error={errors.current}
         />
-
         <Field
-          id="owner-role"
-          label="Fonction"
-          value={values.role}
-          onChange={set("role")}
-          placeholder="Chargée de financement"
+          id="next-password"
+          label="Nouveau mot de passe *"
+          value={values.next}
+          onChange={set("next")}
+          placeholder="8 caractères minimum"
+          error={errors.next}
         />
-
         <Field
-          id="owner-username"
-          label="Nom d'utilisateur *"
-          value={values.username}
-          onChange={set("username")}
-          placeholder="c.rousseau"
-          autoComplete="username"
-          error={errors.username}
+          id="confirm-password"
+          label="Confirmation *"
+          value={values.confirm}
+          onChange={set("confirm")}
+          error={errors.confirm}
         />
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            id="owner-password"
-            label="Mot de passe *"
-            type="password"
-            value={values.password}
-            onChange={set("password")}
-            placeholder="8 caractères minimum"
-            autoComplete="new-password"
-            error={errors.password}
-          />
-          <Field
-            id="owner-confirm"
-            label="Confirmation *"
-            type="password"
-            value={values.confirm}
-            onChange={set("confirm")}
-            autoComplete="new-password"
-            error={errors.confirm}
-          />
-        </div>
-
-        {/* Being straight about where the secret goes — nowhere, for now. */}
-        <p className="rounded-lg border border-border bg-secondary/60 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-          Le mot de passe est vérifié puis <strong>non conservé</strong> : le CRM
-          n&apos;a pas encore de back end, et un navigateur n&apos;est pas un endroit
-          où stocker un identifiant. Le compte est créé avec la mention « accès à
-          configurer », et le mot de passe sera réellement défini à la mise en place
-          de l&apos;authentification.
-        </p>
-
-        {added ? (
-          <p className="rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success">
-            {added} a été ajouté à l&apos;équipe.
-          </p>
-        ) : null}
 
         <div className="flex justify-end gap-2 pt-1">
           <button
@@ -370,45 +292,16 @@ function AddOwnerPanel({ open, onClose }: { open: boolean; onClose: () => void }
             onClick={close}
             className="rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
           >
-            Fermer
+            Annuler
           </button>
           <button
             type="submit"
             className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
           >
-            Ajouter
+            Mettre à jour
           </button>
         </div>
       </form>
-
-      <div className="mt-6 border-t border-border pt-5">
-        <h3 className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Équipe ({owners.length})
-        </h3>
-        <ul className="space-y-2">
-          {owners.map((owner) => (
-            <li key={owner.id} className="flex items-center gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
-                {owner.initials}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-foreground">
-                  {owner.name}
-                  {owner.username ? (
-                    <span className="text-muted-foreground"> · {owner.username}</span>
-                  ) : null}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">{owner.role}</p>
-              </div>
-              {owner.accessPending ? (
-                <span className="shrink-0 rounded-full border border-border bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">
-                  Accès à configurer
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </div>
     </Sheet>
   );
 }
@@ -419,8 +312,6 @@ function Field({
   value,
   onChange,
   placeholder,
-  type,
-  autoComplete,
   error,
 }: {
   id: string;
@@ -428,8 +319,6 @@ function Field({
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  type?: string;
-  autoComplete?: string;
   error?: string;
 }) {
   return (
@@ -439,9 +328,9 @@ function Field({
       </label>
       <input
         id={id}
-        type={type}
+        type="password"
+        autoComplete={id === "current-password" ? "current-password" : "new-password"}
         value={value}
-        autoComplete={autoComplete}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}

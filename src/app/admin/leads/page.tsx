@@ -1,6 +1,6 @@
 import { LeadsView, type InitialFilters } from "@/components/crm/leads-view";
 
-/** `?service=`, `?prestation=`, `?statut=`, `?responsable=` — set by the sidebar. */
+/** `?service=`, `?prestation=`, `?statut=` — set by the sidebar and dashboard. */
 export default async function LeadsPage({ searchParams }: PageProps<"/admin/leads">) {
   const params = await searchParams;
   const first = (value: string | string[] | undefined) =>
@@ -10,7 +10,6 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
     service: first(params.service),
     statut: first(params.statut),
     prestation: first(params.prestation),
-    responsable: first(params.responsable),
     q: first(params.q),
   };
 

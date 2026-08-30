@@ -7,7 +7,7 @@
  */
 
 import { PRESTATIONS, SERVICES, STAGES } from "./config";
-import type { Lead, LeadStatus, Owner, PrestationId, ServiceId } from "./types";
+import type { Lead, LeadStatus, PrestationId, ServiceId } from "./types";
 
 /** The forms collect amounts as free text ("48 000 €", "75000"). */
 export function parseAmount(value: string | undefined): number {
@@ -58,22 +58,6 @@ export function byPrestation(leads: Lead[]): Slice<PrestationId>[] {
       count: leads.filter((lead) => lead.prestation === prestation.id).length,
     })),
   );
-}
-
-/** Owners plus an "unassigned" row, which is the one that needs watching. */
-export function byOwner(leads: Lead[], owners: Owner[]): Slice<string>[] {
-  return withRatios([
-    ...owners.map((owner) => ({
-      id: owner.id,
-      label: owner.name,
-      count: leads.filter((lead) => lead.ownerId === owner.id).length,
-    })),
-    {
-      id: "non_assigne",
-      label: "Non assignés",
-      count: leads.filter((lead) => lead.ownerId === null).length,
-    },
-  ]);
 }
 
 const MONTH = new Intl.DateTimeFormat("fr-FR", { month: "short" });
@@ -138,6 +122,5 @@ export function headline(leads: Lead[]) {
       .filter((lead) => lead.status === "approuve")
       .reduce((sum, lead) => sum + parseAmount(lead.montant), 0),
     aTraiter: count("nouveau") + count("a_examiner"),
-    nonAssignes: leads.filter((lead) => lead.ownerId === null).length,
   };
 }

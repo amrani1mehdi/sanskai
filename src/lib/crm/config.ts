@@ -1,17 +1,11 @@
 /**
- * CRM configuration — stages, services, responsables.
+ * CRM configuration — stages and services.
  *
  * Deliberately data-driven: adding a service or a stage means adding an entry
  * here, not touching the table, the filters, or the Kanban board.
  */
 
-import type {
-  DocumentKind,
-  LeadStatus,
-  Owner,
-  PrestationId,
-  ServiceId,
-} from "./types";
+import type { DocumentKind, LeadStatus, PrestationId, ServiceId } from "./types";
 
 export type StageConfig = {
   id: LeadStatus;
@@ -172,35 +166,6 @@ export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
 
 /** Only the identity document is optional on the form. */
 export const OPTIONAL_DOCUMENTS: DocumentKind[] = ["piece_identite", "autre"];
-
-/** Responsables the leads can be assigned to. */
-export const OWNERS: Owner[] = [
-  {
-    id: "ow-1",
-    name: "Camille Rousseau",
-    role: "Chargée de financement",
-    initials: "CR",
-    username: "c.rousseau",
-  },
-  {
-    id: "ow-2",
-    name: "Malik Benali",
-    role: "Analyste dossiers",
-    initials: "MB",
-    username: "m.benali",
-  },
-  {
-    id: "ow-3",
-    name: "Sofia Lambert",
-    role: "Responsable développement",
-    initials: "SL",
-    username: "s.lambert",
-  },
-];
-
-export const OWNER_BY_ID = Object.fromEntries(
-  OWNERS.map((owner) => [owner.id, owner]),
-) as Record<string, Owner>;
 
 /** The signed-in admin. Stamped on notes and activity entries. */
 export const CURRENT_ADMIN = "Admin Sansekai";

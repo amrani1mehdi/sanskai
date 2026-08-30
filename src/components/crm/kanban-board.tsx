@@ -13,13 +13,13 @@ import { useMemo, useState } from "react";
 import { Mail, Paperclip, Phone, StickyNote } from "lucide-react";
 import { PrestationChip } from "@/components/crm/prestation-chip";
 import { SERVICE_BY_ID, STAGES } from "@/lib/crm/config";
-import { formatAmount, formatShortDate, initialsOf } from "@/lib/crm/format";
+import { formatAmount, formatShortDate } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
-import type { Lead, LeadStatus, Owner } from "@/lib/crm/types";
+import type { Lead, LeadStatus } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
 
 export function KanbanBoard() {
-  const { leads, setStatus, logActivity, getOwner } = useCrm();
+  const { leads, setStatus, logActivity } = useCrm();
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<LeadStatus | null>(null);
 
@@ -99,7 +99,6 @@ export function KanbanBoard() {
                         setOver(null);
                       }}
                       onLog={logActivity}
-                      owner={getOwner(lead.ownerId)}
                     />
                   ))}
 
@@ -124,14 +123,12 @@ function KanbanCard({
   onDragStart,
   onDragEnd,
   onLog,
-  owner,
 }: {
   lead: Lead;
   dragging: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
   onLog: ReturnType<typeof useCrm>["logActivity"];
-  owner: Owner | undefined;
 }) {
 
   return (
@@ -178,22 +175,6 @@ function KanbanCard({
       ) : null}
 
       <div className="mt-3 flex items-center gap-3 border-t border-border pt-2.5 text-[11px] text-muted-foreground">
-        {owner ? (
-          <span
-            title={owner.name}
-            className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-[10px] font-bold text-foreground"
-          >
-            {owner.initials}
-          </span>
-        ) : (
-          <span
-            title="Non assigné"
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-border text-[10px]"
-          >
-            {initialsOf(lead.prenom, lead.nom)}
-          </span>
-        )}
-
         {lead.documents.length > 0 ? (
           <span className="inline-flex items-center gap-1">
             <Paperclip size={11} />
