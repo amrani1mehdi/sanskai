@@ -2,7 +2,6 @@ import { Navbar } from "@/components/site/navbar";
 import { Hero } from "@/components/site/hero";
 import { TrustBar } from "@/components/site/trust-bar";
 import { Solutions } from "@/components/site/solutions";
-import { CryptoMarket } from "@/components/site/crypto-market";
 import { Advantages } from "@/components/site/advantages";
 import { Registries } from "@/components/site/registries";
 import { Testimonials } from "@/components/site/testimonials";
@@ -24,7 +23,6 @@ export default async function Home() {
         <Hero content={content} />
         <TrustBar content={content} />
         <Solutions content={content} />
-        <CryptoMarket content={content} />
         <Advantages content={content} />
         <Registries content={content} />
         <Testimonials content={content} />

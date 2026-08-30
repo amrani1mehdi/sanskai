@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Bitcoin, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendingUp, Users } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 
 const icons = {
   "trending-up": TrendingUp,
-  bitcoin: Bitcoin,
+  users: Users,
 } as const;
 
 export function Solutions({ content }: { content: SiteContent }) {

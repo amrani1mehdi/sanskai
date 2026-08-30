@@ -12,7 +12,6 @@ export const translations = {
       "home": "Home",
       "solutions": "Our Solutions",
       "cashflow": "Cash Flow Financing",
-      "crypto": "Cryptocurrency",
       "investor": "Find an Investor",
       "debt": "Debt Collection",
       "expertise": "Expertise",
@@ -26,10 +25,9 @@ export const translations = {
       "title1": "Easily access",
       "titleHighlight": "financing",
       "title2": "for your business",
-      "subtitle": "• Financing for upcoming orders and inventory\n• Cash flow and working capital assistance\n• Crypto-asset and investment support",
+      "subtitle": "• Financing for upcoming orders and inventory\n• Cash flow and working capital assistance\n• Investment support and investor search",
       "ctaFinancing": "Request financing",
       "ctaInvest": "Discover investments",
-      "ctaCrypto": "Start with crypto",
       "ctaInvestor": "Find an investor",
       "ctaDebt": "Debt collection"
     },
@@ -41,11 +39,6 @@ export const translations = {
       "cashflow": {
         "title": "Cash Flow Financing",
         "desc": "Working Capital Needs, Cash Flow Financing, Overdraft Facility and Factoring Available. From €2,000 to €150K.",
-        "cta": "Learn more"
-      },
-      "invest": {
-        "title": "Invest in Cryptocurrency",
-        "desc": "Portfolio creation and management, buying and selling cryptocurrencies with personalised support.",
         "cta": "Learn more"
       },
       "investor": {
@@ -154,25 +147,6 @@ export const translations = {
       "faq3q": "Is a personal guarantee required?",
       "faq3a": "No personal guarantee is required. Your private assets remain protected. Financing is based on your business activity and financial health."
     },
-    "cryptoPage": {
-      "badge": "Cryptocurrency",
-      "title": "CRYPTOCURRENCY",
-      "subtitle": "SANSEKAI: Your gateway to crypto",
-      "heroDesc": "Our crypto solutions in brief:\n• Wallet creation\n• Portfolio management\n• Buying & selling",
-      "explainer": "The cryptocurrency market offers unique opportunities for diversification and growth. Whether you're a beginner or a seasoned investor, our team supports you with a personalised and secure approach.",
-      "benefit1": "Access to a secure and regulated platform",
-      "benefit2": "Personalised support at every step",
-      "benefit3": "Strategies tailored to your investor profile",
-      "ctaText": "Start your crypto journey today",
-      "wallet": "Wallet Creation",
-      "walletDesc": "Setup and creation of your wallet on leading platforms.",
-      "management": "Portfolio Management",
-      "managementDesc": "Personalised and secure management of your cryptocurrency portfolio to optimise your investments.",
-      "trading": "Buy/Sell",
-      "tradingDesc": "Benefit from personalised assistance to buy and sell your cryptocurrencies with confidence.",
-      "formTitle": "Your crypto adventure starts here!",
-      "formDesc": "Want to create and manage a portfolio with assistance for buying and selling — SANSEKAI supports you at every step."
-    },
     "investorPage": {
       "badge": "Find an Investor",
       "title": "Find an Investor",
@@ -252,17 +226,6 @@ export const translations = {
       "projectNature": "Project nature",
       "projectCountry": "Project country",
       "projectDesc": "Project description",
-      "service": "Which service do you need?",
-      "selectService": "Select a service",
-      "experience": "Cryptocurrency experience level *",
-      "selectLevel": "Select",
-      "beginner": "Beginner",
-      "intermediate": "Intermediate",
-      "advanced": "Advanced",
-      "objective": "What is your main objective",
-      "walletCreation": "Wallet creation",
-      "walletManagement": "Portfolio management",
-      "buySell": "Buy/Sell",
       "talkProject": "Let's talk about your project",
       "fillForm": "Fill in the form below",
       "treasuryRequest": "Treasury financing request",
@@ -273,38 +236,6 @@ export const translations = {
       "accept": "Accept",
       "decline": "Decline",
       "learnMore": "Learn more"
-    },
-    "cryptoMarket": {
-      "label": "Live Market",
-      "title": "Live Cryptocurrency Market",
-      "subtitle": "Top 250 cryptocurrencies, prices and trends in real time. Auto-refreshed every 45 seconds.",
-      "searchPlaceholder": "Search coin or ticker (e.g. BTC, Bitcoin)",
-      "updated": "Updated {{n}}s ago",
-      "noResults": "No cryptocurrency matches your search.",
-      "error": "Unable to load market data. Please try again shortly.",
-      "disclaimer": "Data provided by CoinGecko. For informational purposes only — not financial advice.",
-      "pageInfo": "Page {{page}} of {{total}} · {{count}} coins",
-      "marketCap": "Market Cap",
-      "volume24h": "24h Volume",
-      "supply": "Circulating Supply",
-      "rank": "Rank",
-      "about": "About",
-      "col": {
-        "name": "Name",
-        "price": "Price",
-        "marketCap": "Market Cap",
-        "volume": "24h Volume",
-        "supply": "Circulating",
-        "last7d": "Last 7 days"
-      },
-      "tf": {
-        "1H": "1H",
-        "24H": "24H",
-        "7D": "7D",
-        "1M": "1M",
-        "1Y": "1Y",
-        "All": "All"
-      }
     },
     "common": {
       "confidential": "100% confidential",
@@ -321,10 +252,6 @@ export const translations = {
       "financing": {
         "title": "Business Financing for SMEs | Sansekai Solution",
         "description": "Tailored business financing for SMEs from €2k to €3M: working capital, cash flow, stock and equipment funding with independent advisory."
-      },
-      "crypto": {
-        "title": "Crypto Investment Guidance | Sansekai Solution",
-        "description": "Sansekai Solution provides careful crypto investment guidance as part of wider business finance and investment support for entrepreneurs and SMEs."
       },
       "investment": {
         "title": "Investment Advisory for SMEs | Sansekai Solution",
@@ -345,7 +272,6 @@ export const translations = {
       "home": "Accueil",
       "solutions": "Nos Solutions",
       "cashflow": "Financement de Trésorerie",
-      "crypto": "Crypto Monnaie",
       "investor": "Trouver un Investisseur",
       "debt": "Recouvrement de Créances",
       "expertise": "Expertise",
@@ -359,10 +285,9 @@ export const translations = {
       "title1": "Accédez facilement au",
       "titleHighlight": "financement",
       "title2": "pour votre entreprise",
-      "subtitle": "• Financement de commandes et stocks à venir\n• Aide à la trésorerie et fonds de roulement\n• Accompagnement crypto-actifs et investissement",
+      "subtitle": "• Financement de commandes et stocks à venir\n• Aide à la trésorerie et fonds de roulement\n• Accompagnement à l'investissement et recherche d'investisseurs",
       "ctaFinancing": "Demander un financement",
       "ctaInvest": "Découvrir les investissements",
-      "ctaCrypto": "Commencer en crypto",
       "ctaInvestor": "Trouver un investisseur",
       "ctaDebt": "Recouvrement de créances"
     },
@@ -374,11 +299,6 @@ export const translations = {
       "cashflow": {
         "title": "Financement de Trésorerie",
         "desc": "Besoin en Fonds de Roulement, Financement de Trésorerie, Facilité de Découvert et Affacturage Disponible. De 2 000 € à 150K €.",
-        "cta": "En savoir plus"
-      },
-      "invest": {
-        "title": "Investir en Crypto",
-        "desc": "Création et gestion de portefeuille, achat et vente de cryptomonnaies avec accompagnement personnalisé.",
         "cta": "En savoir plus"
       },
       "investor": {
@@ -487,25 +407,6 @@ export const translations = {
       "faq3q": "Une garantie personnelle est-elle nécessaire ?",
       "faq3a": "Non, aucune garantie personnelle n'est exigée. Vos biens privés restent protégés. Le financement est basé sur l'activité et la santé financière de votre entreprise."
     },
-    "cryptoPage": {
-      "badge": "Crypto Monnaie",
-      "title": "CRYPTO MONNAIE",
-      "subtitle": "SANSEKAI : Votre passerelle vers la crypto",
-      "heroDesc": "Nos solutions crypto en bref :\n• Création de portefeuille\n• Gestion de portefeuille\n• Achat & vente",
-      "explainer": "Le marché des cryptomonnaies offre des opportunités uniques de diversification et de croissance. Que vous soyez débutant ou investisseur chevronné, notre équipe vous accompagne avec une approche personnalisée et sécurisée.",
-      "benefit1": "Accès à une plateforme sécurisée et régulée",
-      "benefit2": "Accompagnement personnalisé à chaque étape",
-      "benefit3": "Stratégies adaptées à votre profil d'investisseur",
-      "ctaText": "Commencez votre aventure crypto dès aujourd'hui",
-      "wallet": "Création de portefeuille",
-      "walletDesc": "Configuration et création de votre portefeuille sur les plateformes.",
-      "management": "Gestion de portefeuille",
-      "managementDesc": "Gestion personnalisée et sécurisée de votre portefeuille de cryptomonnaies pour optimiser vos investissements.",
-      "trading": "Achat/Vente",
-      "tradingDesc": "Bénéficiez d'une assistance personnalisée pour acheter et vendre vos cryptomonnaies en toute confiance.",
-      "formTitle": "Votre aventure crypto commence ici !",
-      "formDesc": "Vous souhaitez créer et gérer un portefeuille avec assistance pour l'achat et la vente — SANSEKAI vous accompagne à chaque étape."
-    },
     "investorPage": {
       "badge": "Trouver un Investisseur",
       "title": "Trouver un Investisseur",
@@ -585,17 +486,6 @@ export const translations = {
       "projectNature": "Nature du projet",
       "projectCountry": "Pays du projet",
       "projectDesc": "Descriptif du projet",
-      "service": "Quel service souhaitez-vous ?",
-      "selectService": "Sélectionnez un service",
-      "experience": "Niveau d'expérience avec les cryptomonnaies *",
-      "selectLevel": "Sélectionnez",
-      "beginner": "Débutant",
-      "intermediate": "Intermédiaire",
-      "advanced": "Avancé",
-      "objective": "Quel est votre principal objectif",
-      "walletCreation": "Création de portefeuille",
-      "walletManagement": "Gestion de portefeuille",
-      "buySell": "Achat/Vente",
       "talkProject": "Parlons de votre projet",
       "fillForm": "Remplissez le formulaire ci-dessous",
       "treasuryRequest": "Formulaire demande de trésorerie",
@@ -606,38 +496,6 @@ export const translations = {
       "accept": "Accepter",
       "decline": "Refuser",
       "learnMore": "En savoir plus"
-    },
-    "cryptoMarket": {
-      "label": "Marché en direct",
-      "title": "Marché Crypto",
-      "subtitle": "Top 250 des cryptomonnaies, prix et tendances en temps réel. Actualisé toutes les 45 secondes.",
-      "searchPlaceholder": "Rechercher une crypto ou un ticker (ex. BTC, Bitcoin)",
-      "updated": "Mis à jour il y a {{n}}s",
-      "noResults": "Aucune cryptomonnaie ne correspond à votre recherche.",
-      "error": "Impossible de charger les données du marché. Veuillez réessayer.",
-      "disclaimer": "Données fournies par CoinGecko. À titre informatif uniquement — pas un conseil financier.",
-      "pageInfo": "Page {{page}} sur {{total}} · {{count}} cryptos",
-      "marketCap": "Capitalisation",
-      "volume24h": "Volume 24h",
-      "supply": "Offre en circulation",
-      "rank": "Rang",
-      "about": "À propos de",
-      "col": {
-        "name": "Nom",
-        "price": "Prix",
-        "marketCap": "Capitalisation",
-        "volume": "Volume 24h",
-        "supply": "En circulation",
-        "last7d": "7 derniers jours"
-      },
-      "tf": {
-        "1H": "1H",
-        "24H": "24H",
-        "7D": "7J",
-        "1M": "1M",
-        "1Y": "1A",
-        "All": "Tout"
-      }
     },
     "common": {
       "confidential": "100% confidentiel",
@@ -654,10 +512,6 @@ export const translations = {
       "financing": {
         "title": "Financement d'entreprise PME | Sansekai Solution",
         "description": "Financement d'entreprise sur mesure pour PME de 2k€ à 3M€ : fonds de roulement, trésorerie, stocks et matériel, avec conseil indépendant."
-      },
-      "crypto": {
-        "title": "Conseil en Investissement Crypto | Sansekai Solution",
-        "description": "Sansekai Solution propose un accompagnement prudent en investissement crypto, intégré à son offre de financement d’entreprise et de conseil en investissement pour entrepreneurs et PME."
       },
       "investment": {
         "title": "Conseil en investissement PME | Sansekai Solution",
@@ -678,7 +532,6 @@ export const translations = {
       "home": "Startseite",
       "solutions": "Unsere Lösungen",
       "cashflow": "Cashflow-Finanzierung",
-      "crypto": "Kryptowährung",
       "investor": "Investor finden",
       "debt": "Forderungseinzug",
       "expertise": "Expertise",
@@ -692,10 +545,9 @@ export const translations = {
       "title1": "Einfacher Zugang zur",
       "titleHighlight": "Finanzierung",
       "title2": "für Ihr Unternehmen",
-      "subtitle": "• Finanzierung kommender Bestellungen und Lagerbestände\n• Cashflow- und Betriebskapitalhilfe\n• Krypto-Asset- und Investmentbegleitung",
+      "subtitle": "• Finanzierung kommender Bestellungen und Lagerbestände\n• Cashflow- und Betriebskapitalhilfe\n• Investment-Begleitung und Investorensuche",
       "ctaFinancing": "Finanzierung anfordern",
       "ctaInvest": "Investitionen entdecken",
-      "ctaCrypto": "Mit Krypto starten",
       "ctaInvestor": "Investor finden",
       "ctaDebt": "Forderungseinzug"
     },
@@ -707,11 +559,6 @@ export const translations = {
       "cashflow": {
         "title": "Cashflow-Finanzierung",
         "desc": "Betriebsmittelbedarf, Cashflow-Finanzierung, Überziehungsfazilität und Factoring verfügbar. Von 2.000 € bis 150K €.",
-        "cta": "Mehr erfahren"
-      },
-      "invest": {
-        "title": "In Kryptowährung investieren",
-        "desc": "Portfolio-Erstellung und -Verwaltung, Kauf und Verkauf von Kryptowährungen mit persönlicher Betreuung.",
         "cta": "Mehr erfahren"
       },
       "investor": {
@@ -820,25 +667,6 @@ export const translations = {
       "faq3q": "Ist eine persönliche Garantie erforderlich?",
       "faq3a": "Nein, keine persönliche Garantie erforderlich. Ihr Privatvermögen bleibt geschützt. Die Finanzierung basiert auf der Aktivität und finanziellen Gesundheit Ihres Unternehmens."
     },
-    "cryptoPage": {
-      "badge": "Kryptowährung",
-      "title": "KRYPTOWÄHRUNG",
-      "subtitle": "SANSEKAI: Ihr Tor zur Krypto-Welt",
-      "heroDesc": "Unsere Krypto-Lösungen im Überblick:\n• Wallet-Erstellung\n• Portfolio-Verwaltung\n• Kauf & Verkauf",
-      "explainer": "Der Kryptowährungsmarkt bietet einzigartige Möglichkeiten zur Diversifizierung und zum Wachstum. Ob Anfänger oder erfahrener Investor, unser Team unterstützt Sie mit einem persönlichen und sicheren Ansatz.",
-      "benefit1": "Zugang zu einer sicheren und regulierten Plattform",
-      "benefit2": "Persönliche Betreuung bei jedem Schritt",
-      "benefit3": "Strategien, die auf Ihr Anlegerprofil zugeschnitten sind",
-      "ctaText": "Starten Sie noch heute Ihre Krypto-Reise",
-      "wallet": "Wallet-Erstellung",
-      "walletDesc": "Einrichtung und Erstellung Ihres Wallets auf führenden Plattformen.",
-      "management": "Portfolio-Verwaltung",
-      "managementDesc": "Personalisierte und sichere Verwaltung Ihres Krypto-Portfolios zur Optimierung Ihrer Investitionen.",
-      "trading": "Kauf/Verkauf",
-      "tradingDesc": "Profitieren Sie von persönlicher Unterstützung beim Kauf und Verkauf Ihrer Kryptowährungen.",
-      "formTitle": "Ihr Krypto-Abenteuer beginnt hier!",
-      "formDesc": "Sie möchten ein Portfolio erstellen und verwalten lassen — SANSEKAI begleitet Sie bei jedem Schritt."
-    },
     "investorPage": {
       "badge": "Investor finden",
       "title": "Investor finden",
@@ -918,17 +746,6 @@ export const translations = {
       "projectNature": "Art des Projekts",
       "projectCountry": "Projektland",
       "projectDesc": "Projektbeschreibung",
-      "service": "Welchen Service wünschen Sie?",
-      "selectService": "Service auswählen",
-      "experience": "Erfahrungsniveau mit Kryptowährungen *",
-      "selectLevel": "Auswählen",
-      "beginner": "Anfänger",
-      "intermediate": "Fortgeschritten",
-      "advanced": "Experte",
-      "objective": "Was ist Ihr Hauptziel",
-      "walletCreation": "Wallet-Erstellung",
-      "walletManagement": "Portfolio-Verwaltung",
-      "buySell": "Kauf/Verkauf",
       "talkProject": "Sprechen wir über Ihr Projekt",
       "fillForm": "Füllen Sie das Formular aus",
       "treasuryRequest": "Antrag auf Treasury-Finanzierung",
@@ -939,38 +756,6 @@ export const translations = {
       "accept": "Akzeptieren",
       "decline": "Ablehnen",
       "learnMore": "Mehr erfahren"
-    },
-    "cryptoMarket": {
-      "label": "Live-Markt",
-      "title": "Kryptowährungsmarkt in Echtzeit",
-      "subtitle": "Top 250 Kryptowährungen, Preise und Trends in Echtzeit. Alle 45 Sekunden aktualisiert.",
-      "searchPlaceholder": "Coin oder Ticker suchen (z. B. BTC, Bitcoin)",
-      "updated": "Aktualisiert vor {{n}}s",
-      "noResults": "Keine Kryptowährung entspricht Ihrer Suche.",
-      "error": "Marktdaten konnten nicht geladen werden. Bitte erneut versuchen.",
-      "disclaimer": "Daten bereitgestellt von CoinGecko. Nur zu Informationszwecken — keine Anlageberatung.",
-      "pageInfo": "Seite {{page}} von {{total}} · {{count}} Coins",
-      "marketCap": "Marktkapitalisierung",
-      "volume24h": "24h-Volumen",
-      "supply": "Umlaufmenge",
-      "rank": "Rang",
-      "about": "Über",
-      "col": {
-        "name": "Name",
-        "price": "Preis",
-        "marketCap": "Marktkap.",
-        "volume": "24h-Volumen",
-        "supply": "Im Umlauf",
-        "last7d": "Letzte 7 Tage"
-      },
-      "tf": {
-        "1H": "1Std",
-        "24H": "24Std",
-        "7D": "7T",
-        "1M": "1M",
-        "1Y": "1J",
-        "All": "Alle"
-      }
     },
     "common": {
       "confidential": "100% vertraulich",
@@ -987,10 +772,6 @@ export const translations = {
       "financing": {
         "title": "Unternehmensfinanzierung KMU | Sansekai Solution",
         "description": "Maßgeschneiderte Unternehmensfinanzierung für KMU von 2k€ bis 3M€: Working Capital, Liquidität, Bestand und Ausrüstung mit unabhängiger Beratung."
-      },
-      "crypto": {
-        "title": "Krypto-Investment-Beratung | Sansekai Solution",
-        "description": "Sansekai Solution bietet sorgfältige Krypto-Investment-Beratung als Teil eines umfassenden Angebots zur Unternehmensfinanzierung und Investmentbegleitung für Unternehmer und KMU."
       },
       "investment": {
         "title": "Investment-Beratung für KMU | Sansekai Solution",

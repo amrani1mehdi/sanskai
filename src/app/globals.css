@@ -209,22 +209,6 @@
   }
 }
 
-/* Thin, brand-tinted scrollbar for the crypto table / ticker rails. */
-.scrollbar-brand {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--border)) transparent;
-}
-.scrollbar-brand::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
-}
-.scrollbar-brand::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--border));
-  border-radius: 9999px;
-}
-.scrollbar-brand::-webkit-scrollbar-track {
-  background: transparent;
-}
 
 /* Elevated card surface — matches the live site's `.card-elevated`. */
 @utility card-elevated {

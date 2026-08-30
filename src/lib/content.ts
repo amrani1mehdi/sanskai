@@ -17,7 +17,7 @@ export type NavLink = { label: string; href: string };
 
 export type Solution = {
   id: string;
-  icon: "trending-up" | "bitcoin";
+  icon: "trending-up" | "users";
   title: string;
   description: string;
   cta: string;
@@ -31,12 +31,6 @@ export type TrustItem = {
 };
 
 export type Advantage = { title: string; description: string };
-
-export type CryptoCard = {
-  icon: "wallet" | "chart" | "trade";
-  title: string;
-  description: string;
-};
 
 export type ExpertiseItem = {
   icon: "chart" | "globe" | "shield" | "cpu";
@@ -95,36 +89,6 @@ const TESTIMONIALS: Testimonial[] = [
   },
 ];
 
-/** The interview block is hardcoded in French on the live site. */
-const INTERVIEW = {
-  badge: "Interview",
-  title: "Interview / Analyse crypto",
-  description:
-    "Découvrez une analyse autour du Bitcoin et de son utilisation, dans le cadre de notre contenu d'information sur les crypto-actifs.",
-  videoId: "1ekyt9e3WYQ",
-  disclaimer:
-    "Contenu informatif uniquement. Ceci ne constitue pas un conseil en investissement.",
-};
-
-/**
- * Strings this rebuild needs that the live site has no equivalent for — the
- * "All" chart range is unavailable on CoinGecko's free tier, which the live
- * site simply renders as an empty chart.
- */
-const EXTRA: Record<Locale, { chartUnavailable: string }> = {
-  en: {
-    chartUnavailable: "This range isn't available on the current CoinGecko plan.",
-  },
-  fr: {
-    chartUnavailable:
-      "Cette période n'est pas disponible avec l'offre CoinGecko actuelle.",
-  },
-  de: {
-    chartUnavailable:
-      "Dieser Zeitraum ist im aktuellen CoinGecko-Tarif nicht verfügbar.",
-  },
-};
-
 /** Turns the live site's "• one\n• two" bullet blob into a list. */
 function toBullets(value: string): string[] {
   return value
@@ -151,7 +115,7 @@ export function getSiteContent(locale: Locale) {
     },
 
     nav: {
-      links: [{ label: t.nav.crypto, href: "/crypto-monnaie" }] as NavLink[],
+      links: [{ label: t.nav.investor, href: "/investissement" }] as NavLink[],
       cta: { label: t.nav.requestFinancing, href: "/financement" },
     },
 
@@ -162,7 +126,7 @@ export function getSiteContent(locale: Locale) {
       titleTrail: ` ${t.hero.title2}`,
       bullets: toBullets(t.hero.subtitle),
       primaryCta: { label: t.hero.ctaFinancing, href: "/financement" },
-      secondaryCta: { label: t.hero.ctaCrypto, href: "/crypto-monnaie" },
+      secondaryCta: { label: t.hero.ctaInvest, href: "/investissement" },
       backgroundImage: "/images/hero-bg.jpg",
     },
 
@@ -176,12 +140,12 @@ export function getSiteContent(locale: Locale) {
         href: "/financement",
       },
       {
-        id: "crypto",
-        icon: "bitcoin",
-        title: t.services.invest.title,
-        description: t.services.invest.desc,
-        cta: t.services.invest.cta,
-        href: "/crypto-monnaie",
+        id: "investor",
+        icon: "users",
+        title: t.services.investor.title,
+        description: t.services.investor.desc,
+        cta: t.services.investor.cta,
+        href: "/investissement",
       },
     ] satisfies Solution[],
 
@@ -215,39 +179,6 @@ export function getSiteContent(locale: Locale) {
       subtitle: t.services.sectionDesc,
     },
 
-    crypto: {
-      eyebrow: t.cryptoMarket.label,
-      /** Rendered whole, as on the live site — the title has no accent split. */
-      title: t.cryptoMarket.title,
-      subtitle: t.cryptoMarket.subtitle,
-      disclaimer: t.cryptoMarket.disclaimer,
-      searchPlaceholder: t.cryptoMarket.searchPlaceholder,
-      updated: t.cryptoMarket.updated,
-      noResults: t.cryptoMarket.noResults,
-      error: t.cryptoMarket.error,
-      pageInfo: t.cryptoMarket.pageInfo,
-      columns: [
-        "#",
-        t.cryptoMarket.col.name,
-        t.cryptoMarket.col.price,
-        "24H",
-        "7D",
-        t.cryptoMarket.col.marketCap,
-        t.cryptoMarket.col.volume,
-        t.cryptoMarket.col.supply,
-        t.cryptoMarket.col.last7d,
-      ],
-
-      /** Row detail modal. */
-      detail: {
-        marketCap: t.cryptoMarket.marketCap,
-        volume24h: t.cryptoMarket.volume24h,
-        supply: t.cryptoMarket.supply,
-        rank: t.cryptoMarket.rank,
-        about: t.cryptoMarket.about,
-        chartUnavailable: EXTRA[locale].chartUnavailable,
-      },
-    },
 
     advantages: {
       eyebrow: t.whyUs.sectionLabel,
@@ -301,7 +232,7 @@ export function getSiteContent(locale: Locale) {
           title: t.footer.services,
           links: [
             { label: t.nav.cashflow, href: "/financement" },
-            { label: t.nav.crypto, href: "/crypto-monnaie" },
+            { label: t.nav.investor, href: "/investissement" },
           ] as NavLink[],
         },
       ],
@@ -344,41 +275,6 @@ export function getSiteContent(locale: Locale) {
         { question: t.cashflowPage.faq2q, answer: t.cashflowPage.faq2a },
         { question: t.cashflowPage.faq3q, answer: t.cashflowPage.faq3a },
       ],
-    },
-
-    /** /crypto-monnaie — cryptocurrency page. */
-    cryptoPage: {
-      meta: t.meta.crypto,
-      badge: t.cryptoPage.badge,
-      title: t.cryptoPage.title,
-      subtitle: t.cryptoPage.subtitle,
-      heroDesc: t.cryptoPage.heroDesc,
-      interview: INTERVIEW,
-      explainer: t.cryptoPage.explainer,
-      benefits: [
-        t.cryptoPage.benefit1,
-        t.cryptoPage.benefit2,
-        t.cryptoPage.benefit3,
-      ],
-      cards: [
-        {
-          icon: "wallet",
-          title: t.cryptoPage.wallet,
-          description: t.cryptoPage.walletDesc,
-        },
-        {
-          icon: "chart",
-          title: t.cryptoPage.management,
-          description: t.cryptoPage.managementDesc,
-        },
-        {
-          icon: "trade",
-          title: t.cryptoPage.trading,
-          description: t.cryptoPage.tradingDesc,
-        },
-      ] satisfies CryptoCard[],
-      formTitle: t.cryptoPage.formTitle,
-      formDesc: t.cryptoPage.formDesc,
     },
 
     /**

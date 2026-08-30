@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Bitcoin, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendingUp, Users } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 
 const cardIcons = {
   "trending-up": TrendingUp,
-  bitcoin: Bitcoin,
+  users: Users,
 } as const;
 
 export function Hero({ content }: { content: SiteContent }) {
