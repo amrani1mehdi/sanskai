@@ -30,3 +30,6 @@ Thumbs.db
 /public/css/filament
 /public/js/filament
 /public/fonts/filament
+
+# Installed locally by the official installer; not part of the project.
+/composer.phar

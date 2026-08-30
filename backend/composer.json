@@ -9,11 +9,11 @@
     ],
     "license": "MIT",
     "require": {
+        "php": "^8.3",
         "filament/filament": "^5.7",
         "laravel/framework": "^13.17",
-        "laravel/sanctum": "^5.0",
-        "laravel/tinker": "^3.0",
-        "php": "^8.3"
+        "laravel/sanctum": "^4.3",
+        "laravel/tinker": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
