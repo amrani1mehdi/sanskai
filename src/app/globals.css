@@ -50,7 +50,6 @@
   --series-1: 213 68% 50%;
   --series-2: 17 82% 56%;
   --series-3: 159 73% 40%;
-  --series-4: 41 100% 46%;
 
   /* Back-office rail. Only used inside .crm-theme, which overrides these, but
      declared here so the generated utilities always resolve. */
@@ -120,7 +119,6 @@
   --series-1: 213 77% 56%;
   --series-2: 17 70% 50%;
   --series-3: 159 73% 36%;
-  --series-4: 40 100% 39%;
 }
 
 /* ==========================================================================
@@ -219,7 +217,6 @@
   --color-series-1: hsl(var(--series-1));
   --color-series-2: hsl(var(--series-2));
   --color-series-3: hsl(var(--series-3));
-  --color-series-4: hsl(var(--series-4));
 
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-hover: hsl(var(--sidebar-hover));

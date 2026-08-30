@@ -295,14 +295,6 @@ export const translations = {
         "Audiences built from your customer profile",
         "Ad copy and visuals designed for each placement",
         "Reporting on cost per enquiry, not just impressions"
-      ],
-      "loyaltyTitle": "Digital loyalty",
-      "loyaltyDesc": "Turn one-off buyers into regulars with a loyalty scheme that lives on their phone rather than in their wallet.",
-      "loyaltyFeatures": [
-        "Digital stamp or points card, with no app to install",
-        "Rewards you set yourself and change whenever you like",
-        "Customers join by scanning a QR code at the counter",
-        "See who comes back, how often, and what they spend"
       ]
     }
   },
@@ -594,14 +586,6 @@ export const translations = {
         "Des audiences construites à partir de votre profil client",
         "Visuels et textes conçus pour chaque emplacement",
         "Un suivi du coût par contact, pas seulement des impressions"
-      ],
-      "loyaltyTitle": "Fidélité digitale",
-      "loyaltyDesc": "Transformez les acheteurs occasionnels en habitués avec un programme de fidélité qui vit sur leur téléphone plutôt que dans leur portefeuille.",
-      "loyaltyFeatures": [
-        "Carte à tampons ou à points, sans application à installer",
-        "Des récompenses que vous définissez et modifiez quand vous voulez",
-        "Vos clients s'inscrivent en scannant un QR code en caisse",
-        "Voyez qui revient, à quelle fréquence et combien ils dépensent"
       ]
     }
   },
@@ -893,14 +877,6 @@ export const translations = {
         "Zielgruppen aus Ihrem Kundenprofil",
         "Anzeigentexte und Motive je Platzierung",
         "Auswertung nach Kosten pro Anfrage, nicht nach Impressionen"
-      ],
-      "loyaltyTitle": "Digitale Kundenbindung",
-      "loyaltyDesc": "Machen Sie aus Gelegenheitskäufern Stammkunden — mit einem Treueprogramm auf dem Handy statt im Portemonnaie.",
-      "loyaltyFeatures": [
-        "Digitale Stempel- oder Punktekarte, ohne App-Installation",
-        "Prämien, die Sie selbst festlegen und jederzeit ändern",
-        "Kunden melden sich per QR-Code an der Kasse an",
-        "Sehen Sie, wer wiederkommt, wie oft und wie viel ausgegeben wird"
       ]
     }
   }

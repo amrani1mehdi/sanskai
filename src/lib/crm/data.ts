@@ -425,7 +425,7 @@ export const SEED_LEADS: Lead[] = [
     id: "ld-009",
     reference: "DEV-2026-0079",
     service: "developpement",
-    prestation: "fidelite_digitale",
+    prestation: "site_web",
     status: "approuve",
     createdAt: "2026-08-04T14:00:00.000Z",
     updatedAt: "2026-08-19T09:15:00.000Z",
