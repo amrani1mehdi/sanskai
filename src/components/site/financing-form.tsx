@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 const inputClass =
   "w-full px-4 py-3.5 rounded-lg bg-background text-foreground placeholder:text-muted-foreground border border-border focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all text-sm";
 
-type YesNo = "" | "yes" | "no";
+type YesNo = "yes" | "no";
 
 const EMPTY = {
   nom: "",
@@ -24,9 +24,10 @@ const EMPTY = {
   adresse: "",
   codePostal: "",
   ville: "",
-  siteWeb: "" as YesNo,
+  // Both default to "no", so the follow-ups stay out of the way until asked for.
+  siteWeb: "no" as YesNo,
   siteWebUrl: "",
-  reseaux: "" as YesNo,
+  reseaux: "no" as YesNo,
   reseauxOu: "",
   chiffreAffaire: "",
   montant: "",
@@ -278,11 +279,12 @@ export function FinancingForm({
 }
 
 /**
- * A yes/no answer as a two-option segmented control.
+ * A yes/no answer as a pair of radios.
  *
- * Real radios underneath — hidden but focusable, so arrow keys move between
- * the options and screen readers announce a grouped choice rather than two
- * unrelated buttons.
+ * The native input is hidden and the dot drawn from the site's tokens, since
+ * browsers barely let you restyle a radio — but it is still a real radio in a
+ * fieldset, so arrow keys move between the options and screen readers announce
+ * one grouped question rather than two unrelated controls.
  */
 function YesNoQuestion({
   name,
@@ -299,27 +301,21 @@ function YesNoQuestion({
   value: YesNo;
   onChange: (value: YesNo) => void;
 }) {
-  const options: { value: Exclude<YesNo, "">; label: string }[] = [
+  const options: { value: YesNo; label: string }[] = [
     { value: "yes", label: yesLabel },
     { value: "no", label: noLabel },
   ];
 
   return (
     <fieldset>
-      <legend className="text-xs font-medium text-foreground mb-1.5">
+      <legend className="text-xs font-medium text-foreground mb-2">
         {legend}
       </legend>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex items-center gap-6">
         {options.map((option) => (
           <label
             key={option.value}
-            className={cn(
-              "cursor-pointer rounded-lg border px-4 py-3 text-center text-sm transition-colors",
-              "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent",
-              value === option.value
-                ? "gold-gradient border-transparent font-semibold text-accent-foreground"
-                : "border-border bg-background text-foreground hover:border-accent/40",
-            )}
+            className="group flex cursor-pointer items-center gap-2.5 text-sm text-foreground"
           >
             <input
               type="radio"
@@ -327,7 +323,20 @@ function YesNoQuestion({
               value={option.value}
               checked={value === option.value}
               onChange={() => onChange(option.value)}
-              className="sr-only"
+              className="peer sr-only"
+            />
+            <span
+              aria-hidden
+              className={cn(
+                "relative size-[18px] shrink-0 rounded-full border-2 border-border bg-background transition-colors",
+                "group-hover:border-accent/50",
+                "peer-checked:border-accent",
+                "peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-card",
+                // The dot: a pseudo-element on this sibling, so `peer-checked`
+                // can reach it — a nested child would be out of its selector.
+                "after:absolute after:inset-[3px] after:rounded-full after:bg-accent after:opacity-0 after:transition-opacity",
+                "peer-checked:after:opacity-100",
+              )}
             />
             {option.label}
           </label>
