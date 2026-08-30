@@ -7,7 +7,6 @@ import {
   Phone,
   Sparkles,
   StickyNote,
-  UserPlus,
   Waypoints,
 } from "lucide-react";
 import { formatDateTime } from "@/lib/crm/format";
@@ -17,7 +16,6 @@ const ICONS: Record<ActivityKind, typeof History> = {
   creation: Sparkles,
   statut: Waypoints,
   note: StickyNote,
-  assignation: UserPlus,
   appel: Phone,
   email: Mail,
   document: FileText,

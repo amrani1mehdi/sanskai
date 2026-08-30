@@ -16,7 +16,6 @@ import {
   Phone,
   Sparkles,
   StickyNote,
-  UserPlus,
   Waypoints,
 } from "lucide-react";
 import { Pagination, paginate } from "@/components/crm/pagination";
@@ -28,7 +27,6 @@ const ICONS: Record<ActivityKind, typeof History> = {
   creation: Sparkles,
   statut: Waypoints,
   note: StickyNote,
-  assignation: UserPlus,
   appel: Phone,
   email: Mail,
   document: FileText,
@@ -38,7 +36,6 @@ const KIND_LABELS: Record<ActivityKind, string> = {
   creation: "Nouvelles demandes",
   statut: "Changements de statut",
   note: "Notes internes",
-  assignation: "Assignations",
   appel: "Appels",
   email: "Emails",
   document: "Documents",

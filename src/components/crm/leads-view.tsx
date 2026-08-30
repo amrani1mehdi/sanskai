@@ -25,15 +25,12 @@ import { cn } from "@/lib/utils";
 type ServiceFilter = ServiceId | "tous";
 type StatusFilter = LeadStatus | "tous";
 type PrestationFilter = PrestationId | "tous";
-/** "non_assigne" is a real filter, not a missing value. */
-type OwnerFilter = string | "tous" | "non_assigne";
 
 /** Filters the sidebar and dashboard can preset through the URL. */
 export type InitialFilters = {
   service?: string;
   statut?: string;
   prestation?: string;
-  responsable?: string;
   q?: string;
 };
 
@@ -49,7 +46,7 @@ function pick<T extends string>(value: string | undefined, allowed: T[]): T | "t
 }
 
 export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
-  const { leads, owners, getOwner, hydrated } = useCrm();
+  const { leads, hydrated } = useCrm();
 
   const [query, setQuery] = useState(initial.q ?? "");
   const [service, setService] = useState<ServiceFilter>(
@@ -71,15 +68,6 @@ export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
     ),
   );
   const [page, setPage] = useState(1);
-  const [owner, setOwner] = useState<OwnerFilter>(
-    initial.responsable === "non_assigne"
-      ? "non_assigne"
-      : pick(
-          initial.responsable,
-          owners.map((item) => item.id),
-        ),
-  );
-
   /** The sub-service filter only means anything inside Développement. */
   const showPrestations = service === "developpement";
 
@@ -97,10 +85,6 @@ export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
         if (service !== "tous" && lead.service !== service) return false;
         if (status !== "tous" && lead.status !== status) return false;
         if (prestation !== "tous" && lead.prestation !== prestation) return false;
-        if (owner === "non_assigne" && lead.ownerId !== null) return false;
-        if (owner !== "tous" && owner !== "non_assigne" && lead.ownerId !== owner) {
-          return false;
-        }
         if (!needle) return true;
 
         return [
@@ -118,7 +102,7 @@ export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
       .sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
-  }, [leads, query, service, status, prestation, owner]);
+  }, [leads, query, service, status, prestation]);
 
   const pageData = paginate(filtered, page, PAGE_SIZE);
 
@@ -126,15 +110,13 @@ export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
     query.trim() !== "" ||
     service !== "tous" ||
     status !== "tous" ||
-    prestation !== "tous" ||
-    owner !== "tous";
+    prestation !== "tous";
 
   const resetFilters = () => {
     setQuery("");
     setService("tous");
     setStatus("tous");
     setPrestation("tous");
-    setOwner("tous");
     setPage(1);
   };
 
@@ -227,24 +209,6 @@ export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
               ))}
             </select>
 
-            <select
-              aria-label="Filtrer par responsable"
-              value={owner}
-              onChange={(event) => {
-                setOwner(event.target.value as OwnerFilter);
-                setPage(1);
-              }}
-              className={selectClass}
-            >
-              <option value="tous">Tous les responsables</option>
-              <option value="non_assigne">Non assignés</option>
-              {owners.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-
             {filtersActive ? (
               <button
                 type="button"
@@ -258,7 +222,7 @@ export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
         </div>
       </div>
 
-      <LeadTable leads={pageData.rows} hydrated={hydrated} getOwner={getOwner} />
+      <LeadTable leads={pageData.rows} hydrated={hydrated} />
 
       <Pagination
         page={pageData.page}
@@ -308,15 +272,7 @@ function StatTiles({ leads }: { leads: Lead[] }) {
   );
 }
 
-function LeadTable({
-  leads,
-  hydrated,
-  getOwner,
-}: {
-  leads: Lead[];
-  hydrated: boolean;
-  getOwner: ReturnType<typeof useCrm>["getOwner"];
-}) {
+function LeadTable({ leads, hydrated }: { leads: Lead[]; hydrated: boolean }) {
   if (leads.length === 0) {
     return (
       <div className="mt-4 rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
@@ -331,7 +287,7 @@ function LeadTable({
 
   return (
     <div className="mt-4 overflow-x-auto rounded-xl border border-border bg-card scrollbar-brand">
-      <table className="w-full min-w-[60rem] border-collapse text-left">
+      <table className="w-full min-w-[52rem] border-collapse text-left">
         <thead>
           <tr className="border-b border-border bg-secondary/60">
             {[
@@ -339,7 +295,6 @@ function LeadTable({
               "Lead",
               "Service",
               "Statut",
-              "Responsable",
               "Montant",
               "Pièces",
               "Reçu le",
@@ -355,8 +310,6 @@ function LeadTable({
         </thead>
         <tbody>
           {leads.map((lead) => {
-            const owner = getOwner(lead.ownerId);
-
             return (
               <tr
                 key={lead.id}
@@ -402,13 +355,6 @@ function LeadTable({
                 </td>
                 <td className="px-4 py-3 align-top">
                   <StatusBadge status={lead.status} />
-                </td>
-                <td className="px-4 py-3 align-top text-sm whitespace-nowrap">
-                  {owner ? (
-                    <span className="text-foreground">{owner.name}</span>
-                  ) : (
-                    <span className="text-muted-foreground">Non assigné</span>
-                  )}
                 </td>
                 <td className="px-4 py-3 align-top text-sm whitespace-nowrap text-foreground">
                   {lead.service === "financement" ? formatAmount(lead.montant) : "—"}

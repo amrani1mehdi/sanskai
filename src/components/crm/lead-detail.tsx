@@ -40,8 +40,7 @@ import { useCrm } from "@/lib/crm/store";
 import type { Lead, LeadStatus } from "@/lib/crm/types";
 
 export function LeadDetail({ id }: { id: string }) {
-  const { getLead, getOwner, owners, hydrated, setStatus, assign, logActivity, removeLead } =
-    useCrm();
+  const { getLead, hydrated, setStatus, logActivity, removeLead } = useCrm();
   const router = useRouter();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -77,7 +76,6 @@ export function LeadDetail({ id }: { id: string }) {
   }
 
   const service = SERVICE_BY_ID[lead.service];
-  const owner = getOwner(lead.ownerId);
 
   return (
     <div className="container mx-auto px-4 py-8 lg:py-10">
@@ -154,29 +152,6 @@ export function LeadDetail({ id }: { id: string }) {
               ))}
             </select>
 
-            <label
-              htmlFor="responsable"
-              className="mt-4 mb-1.5 block text-xs font-medium text-foreground"
-            >
-              Responsable
-            </label>
-            <select
-              id="responsable"
-              value={lead.ownerId ?? ""}
-              onChange={(event) => assign(lead.id, event.target.value || null)}
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30"
-            >
-              <option value="">Non assigné</option>
-              {owners.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-
-            {owner ? (
-              <p className="mt-2 text-xs text-muted-foreground">{owner.role}</p>
-            ) : null}
           </section>
 
           <section className="rounded-xl border border-border bg-card p-6">

@@ -61,7 +61,6 @@ export type ActivityKind =
   | "creation"
   | "statut"
   | "note"
-  | "assignation"
   | "appel"
   | "email"
   | "document";
@@ -73,21 +72,6 @@ export type Activity = {
   label: string;
   author: string;
   at: string;
-};
-
-export type Owner = {
-  id: string;
-  name: string;
-  role: string;
-  initials: string;
-  /** Login the responsable will use once authentication exists. */
-  username?: string;
-  /**
-   * True once a password has been chosen for this responsable but not yet
-   * stored — the browser is not a place to keep credentials, so the secret is
-   * validated, dropped, and set for real when the back end lands.
-   */
-  accessPending?: boolean;
 };
 
 /**
@@ -107,7 +91,6 @@ export type Lead = {
   status: LeadStatus;
   createdAt: string;
   updatedAt: string;
-  ownerId: string | null;
 
   // Identity — both forms collect all four.
   nom: string;

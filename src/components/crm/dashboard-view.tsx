@@ -11,7 +11,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { ArrowRight, Inbox, TrendingUp, UserRoundX, Wallet } from "lucide-react";
+import { ArrowRight, Inbox, Layers, TrendingUp, Wallet } from "lucide-react";
 import { StatusBadge } from "@/components/crm/status-badge";
 import {
   PRESTATION_BY_ID,
@@ -20,7 +20,6 @@ import {
 } from "@/lib/crm/config";
 import { formatShortDate, initialsOf } from "@/lib/crm/format";
 import {
-  byOwner,
   byPrestation,
   byService,
   byStatus,
@@ -28,7 +27,7 @@ import {
   monthlyIntake,
 } from "@/lib/crm/stats";
 import { useCrm } from "@/lib/crm/store";
-import type { Lead, Owner } from "@/lib/crm/types";
+import type { Lead } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
 
 const EUROS = new Intl.NumberFormat("fr-FR", {
@@ -38,13 +37,12 @@ const EUROS = new Intl.NumberFormat("fr-FR", {
 });
 
 export function DashboardView() {
-  const { leads, owners, getOwner } = useCrm();
+  const { leads } = useCrm();
 
   const stats = useMemo(() => headline(leads), [leads]);
   const statuses = useMemo(() => byStatus(leads), [leads]);
   const services = useMemo(() => byService(leads), [leads]);
   const prestations = useMemo(() => byPrestation(leads), [leads]);
-  const ownerLoad = useMemo(() => byOwner(leads, owners), [leads, owners]);
   const months = useMemo(() => monthlyIntake(leads), [leads]);
 
   const recent = useMemo(
@@ -91,11 +89,10 @@ export function DashboardView() {
           hint={`dont ${EUROS.format(stats.montantApprouve)} approuvé`}
         />
         <StatTile
-          icon={UserRoundX}
-          label="Non assignés"
-          value={String(stats.nonAssignes)}
-          hint="en attente d'un responsable"
-          alert={stats.nonAssignes > 0}
+          icon={Layers}
+          label="Total des leads"
+          value={String(stats.total)}
+          hint="toutes demandes confondues"
         />
       </div>
 
@@ -146,7 +143,7 @@ export function DashboardView() {
         </Panel>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6">
         {/* Services et sous-services */}
         <Panel title="Services" subtitle="Origine des demandes">
           <ul className="space-y-3">
@@ -183,21 +180,6 @@ export function DashboardView() {
             </ul>
           </div>
         </Panel>
-
-        <Panel title="Charge par responsable" subtitle="Dossiers actuellement suivis">
-          <ul className="space-y-3">
-            {ownerLoad.map((slice) => (
-              <BarRow
-                key={slice.id}
-                label={slice.label}
-                count={slice.count}
-                ratio={slice.ratio}
-                bar={slice.id === "non_assigne" ? "bg-muted-foreground" : "bg-accent"}
-                href={`/admin/leads?responsable=${slice.id}`}
-              />
-            ))}
-          </ul>
-        </Panel>
       </div>
 
       {/* Derniers leads */}
@@ -221,7 +203,7 @@ export function DashboardView() {
 
         <ul className="divide-y divide-border">
           {recent.map((lead) => (
-            <RecentRow key={lead.id} lead={lead} owner={getOwner(lead.ownerId)} />
+            <RecentRow key={lead.id} lead={lead} />
           ))}
         </ul>
       </section>
@@ -234,18 +216,16 @@ function StatTile({
   label,
   value,
   hint,
-  alert,
 }: {
   icon: typeof Inbox;
   label: string;
   value: string;
   hint: string;
-  alert?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center gap-2">
-        <Icon size={15} className={alert ? "text-danger" : "text-accent"} />
+        <Icon size={15} className="text-accent" />
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           {label}
         </p>
@@ -313,7 +293,7 @@ function BarRow({
   );
 }
 
-function RecentRow({ lead, owner }: { lead: Lead; owner: Owner | undefined }) {
+function RecentRow({ lead }: { lead: Lead }) {
 
   return (
     <li>
@@ -335,10 +315,6 @@ function RecentRow({ lead, owner }: { lead: Lead; owner: Owner | undefined }) {
         </span>
 
         <StatusBadge status={lead.status} />
-
-        <span className="hidden text-xs text-muted-foreground sm:block">
-          {owner ? owner.name : "Non assigné"}
-        </span>
 
         <span className="text-xs whitespace-nowrap text-muted-foreground">
           {formatShortDate(lead.createdAt)}
