@@ -38,6 +38,18 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Lead documents. Private by construction: no 'url', no public
+         * visibility, and rooted outside the web root — the only way to a file
+         * is the authenticated download endpoint.
+         */
+        'lead_documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/lead-documents'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

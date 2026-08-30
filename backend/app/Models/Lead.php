@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'service', 'prestation', 'status', 'assigned_to_id',
+    'service', 'prestation', 'status',
     'nom', 'prenom', 'email', 'telephone',
     'entreprise', 'date_creation', 'adresse', 'code_postal', 'ville',
     'chiffre_affaire', 'chiffre_affaire_cents', 'montant', 'montant_cents',
@@ -35,11 +35,6 @@ class Lead extends Model
             'eligible_age' => 'boolean',
             'eligible_revenue' => 'boolean',
         ];
-    }
-
-    public function assignedTo(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'assigned_to_id');
     }
 
     public function documents(): HasMany

@@ -37,14 +37,6 @@ class LeadResource extends JsonResource
             'status' => $this->status->value,
             'statusLabel' => $this->status->label(),
 
-            'assignedTo' => $this->whenLoaded(
-                'assignedTo',
-                fn () => $this->assignedTo
-                    ? new ResponsableResource($this->assignedTo)
-                    : null,
-            ),
-            'assignedToId' => $this->assigned_to_id,
-
             // Identity.
             'nom' => $this->nom,
             'prenom' => $this->prenom,

@@ -7,14 +7,14 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
 /**
- * A `users` row, as the CRM's "responsable".
+ * The signed-in administrator.
  *
- * Only the fields the back office renders — never the email verification,
- * MFA or password columns.
+ * Only what the back office renders — never the password, the email
+ * verification or the MFA columns, all of which the model hides anyway.
  *
  * @mixin \App\Models\User
  */
-class ResponsableResource extends JsonResource
+class AdminUserResource extends JsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
@@ -22,6 +22,7 @@ class ResponsableResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'username' => $this->username,
             'email' => $this->email,
             'initials' => Str::of($this->name)
                 ->explode(' ')
@@ -29,7 +30,6 @@ class ResponsableResource extends JsonResource
                 ->take(2)
                 ->map(fn (string $part) => Str::upper(Str::substr($part, 0, 1)))
                 ->implode(''),
-            'leadCount' => $this->whenCounted('assignedLeads'),
         ];
     }
 }

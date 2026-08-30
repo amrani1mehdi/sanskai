@@ -59,7 +59,6 @@ tags:
   - name: Documents
   - name: Notes
   - name: Activity
-  - name: Responsables
 
 security:
   - bearerAuth: []
@@ -334,11 +333,15 @@ paths:
       summary: Exchange credentials for a bearer token
       operationId: createToken
       description: |
-        Only users with `is_admin` receive a token — the same gate the Filament
-        panel applies. Throttled to 5 attempts per email and IP; the response is
-        identical whether the address is unknown or the password is wrong.
+        The CRM runs on a single administrator account, created at installation
+        with a username and a password.
 
-        The token is shown once and cannot be retrieved again.
+        `login` accepts **either** the username or the email — the account is
+        handed out with a username, and the Filament panel signs in on email.
+
+        Only users with `is_admin` receive a token. Throttled to 5 attempts per
+        login and IP; the response is identical whether the account is unknown or
+        the password is wrong. The token is shown once.
       security: []
       requestBody:
         required: true
@@ -346,11 +349,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [email, password, deviceName]
+              required: [login, password, deviceName]
               properties:
-                email:
+                login:
                   type: string
-                  format: email
+                  maxLength: 190
+                  description: Username or email.
+                  example: admin
                 password:
                   type: string
                   format: password
@@ -369,9 +374,10 @@ paths:
                   token: 3|Xq7pW2vK9mN4tR8sL1cD6bY0hJ5fA3gE
                   user:
                     id: 1
-                    name: Camille Rousseau
-                    email: c.rousseau@sansekaisolution.com
-                    initials: CR
+                    name: Sansekai Admin
+                    username: admin
+                    email: admin@sansekaisolution.com
+                    initials: SA
         "422":
           description: Invalid credentials
           content:
@@ -379,7 +385,7 @@ paths:
               example:
                 message: Identifiants invalides.
                 errors:
-                  email: [Identifiants invalides.]
+                  login: [Identifiants invalides.]
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
@@ -397,9 +403,59 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/Responsable"
+                    $ref: "#/components/schemas/AdminUser"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+
+  /v1/auth/password:
+    patch:
+      tags: [Auth]
+      summary: Change the administrator's password
+      operationId: updatePassword
+      description: |
+        Requires the current password, so a stolen token alone cannot lock the
+        owner out of their own account.
+
+        Every **other** token is revoked on success — if the password changed
+        because it leaked, sessions opened with the old one must not survive. The
+        token making the call keeps working.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, password, password_confirmation]
+              properties:
+                currentPassword:
+                  type: string
+                  format: password
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                password_confirmation:
+                  type: string
+                  format: password
+                  description: Must match `password`.
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              example:
+                data:
+                  message: Mot de passe mis à jour.
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          description: Wrong current password, too short, or mismatched confirmation
+          content:
+            application/json:
+              example:
+                message: Le mot de passe actuel est incorrect.
+                errors:
+                  currentPassword: [Le mot de passe actuel est incorrect.]
 
   # ------------------------------------------------------------------ Leads --
   /v1/leads:
@@ -423,12 +479,6 @@ paths:
           in: query
           schema:
             $ref: "#/components/schemas/Prestation"
-        - name: assignedTo
-          in: query
-          description: A responsable id, or `none` for unassigned leads.
-          schema:
-            type: string
-            example: none
         - name: search
           in: query
           description: >
@@ -494,34 +544,24 @@ paths:
           $ref: "#/components/responses/NotFound"
     patch:
       tags: [Leads]
-      summary: Change status or responsable
       operationId: updateLead
+      summary: Move a lead to another stage
       description: |
-        The only two mutable fields. Submitted values are never editable: what
-        the applicant sent is evidence, and quietly correcting it would break the
-        audit trail. Each change is recorded in the lead's activity.
-
-        Send `assignedToId: null` to unassign.
+        The status is the only mutable field. Submitted values are never
+        editable: what the applicant sent is evidence, and quietly correcting it
+        would break the audit trail. The change is recorded in the lead's
+        activity with the stage it came from.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              minProperties: 1
+              required: [status]
               properties:
                 status:
                   $ref: "#/components/schemas/LeadStatus"
-                assignedToId:
-                  type: [integer, "null"]
-                  description: Must be a user with `is_admin`.
-            examples:
-              advanceStatus:
-                value: {status: qualifie}
-              assign:
-                value: {assignedToId: 2}
-              unassign:
-                value: {assignedToId: null}
+            example: {status: qualifie}
       responses:
         "200":
           description: Updated lead
@@ -537,7 +577,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
         "422":
-          description: Unknown status, or responsable is not an admin
+          description: Unknown or missing status
     delete:
       tags: [Leads]
       summary: Delete a lead and everything attached to it
@@ -571,9 +611,7 @@ paths:
                   byStatus: {nouveau: 3, a_examiner: 2, qualifie: 2, en_cours: 2, approuve: 4, refuse: 1}
                   byService: {financement: 9, developpement: 5}
                   byPrestation: {site_web: 1, logo: 1, campagne_publicitaire: 2, fidelite_digitale: 1}
-                  byResponsable: {none: 4, "1": 4, "2": 3, "3": 3}
                   aTraiter: 5
-                  nonAssignes: 4
                   tauxReussite: 80
                   montantDemande: 665000
                   montantApprouve: 190000
@@ -874,40 +912,6 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
 
-  # ---------------------------------------------------------- Responsables --
-  /v1/responsables:
-    get:
-      tags: [Responsables]
-      summary: Assignable responsables
-      operationId: listResponsables
-      description: |
-        Admin `users`, with how many leads each currently holds. There is no
-        owners table — a responsable is a user.
-
-        Read-only by design: creating an account carries a password and MFA, and
-        belongs in the Filament panel rather than behind a lead endpoint.
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Responsable"
-              example:
-                data:
-                  - id: 1
-                    name: Camille Rousseau
-                    email: c.rousseau@sansekaisolution.com
-                    initials: CR
-                    leadCount: 4
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-
 components:
   securitySchemes:
     bearerAuth:
@@ -970,7 +974,7 @@ components:
 
     ActivityKind:
       type: string
-      enum: [creation, statut, note, assignation, appel, email, document]
+      enum: [creation, statut, note, appel, email, document]
 
     SubmissionReceipt:
       type: object
@@ -1017,11 +1021,6 @@ components:
         status:
           $ref: "#/components/schemas/LeadStatus"
         statusLabel: {type: string, example: Nouveau}
-        assignedToId: {type: [integer, "null"]}
-        assignedTo:
-          oneOf:
-            - $ref: "#/components/schemas/Responsable"
-            - type: "null"
         nom: {type: string}
         prenom: {type: string}
         email: {type: string, format: email}
@@ -1086,7 +1085,6 @@ components:
         prestation: null
         status: nouveau
         statusLabel: Nouveau
-        assignedToId: null
         nom: Marchand
         prenom: Julien
         email: j.marchand@atelier-marchand.fr
@@ -1175,17 +1173,18 @@ components:
             reference: {type: string}
             entreprise: {type: string}
 
-    Responsable:
+    AdminUser:
       type: object
-      description: An admin `users` row. There is no separate owners table.
+      description: >
+        The signed-in administrator. The CRM has one account and no
+        responsables — nothing is assigned, so there is no owners table and no
+        endpoint to manage one.
       properties:
         id: {type: integer}
-        name: {type: string}
+        name: {type: string, example: Sansekai Admin}
+        username: {type: [string, "null"], example: admin}
         email: {type: string, format: email}
-        initials: {type: string, example: CR}
-        leadCount:
-          type: integer
-          description: Only present on `/v1/responsables`.
+        initials: {type: string, example: SA}
 
     Paginated:
       type: object

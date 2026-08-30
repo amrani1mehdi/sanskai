@@ -28,25 +28,9 @@ class IndexLeadsRequest extends FormRequest
             'service' => ['sometimes', Rule::enum(LeadService::class)],
             'status' => ['sometimes', Rule::enum(LeadStatus::class)],
             'prestation' => ['sometimes', Rule::enum(Prestation::class)],
-            // "none" is a real filter: leads nobody has picked up.
-            'assignedTo' => ['sometimes', 'string'],
             'search' => ['sometimes', 'string', 'max:190'],
             'perPage' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'page' => ['sometimes', 'integer', 'min:1'],
         ];
-    }
-
-    public function withValidator($validator): void
-    {
-        $validator->after(function ($validator) {
-            $assigned = $this->input('assignedTo');
-
-            if ($assigned !== null && $assigned !== 'none' && ! ctype_digit((string) $assigned)) {
-                $validator->errors()->add(
-                    'assignedTo',
-                    'Doit être un identifiant de responsable ou "none".',
-                );
-            }
-        });
     }
 }

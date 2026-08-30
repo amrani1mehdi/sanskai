@@ -3,6 +3,8 @@
 The REST API between the Next.js website and this Laravel CRM.
 
 - **Spec:** [`openapi.yaml`](./openapi.yaml) — 21 endpoints, fully documented.
+- **Database:** MySQL. **Documents:** Laravel Storage, on a private disk, each
+  row tied to its lead by foreign key.
 - **Browsable:** `GET /api/docs` (Swagger UI). Open to everyone locally, behind
   an admin session in production.
 
@@ -11,21 +13,27 @@ The REST API between the Next.js website and this Laravel CRM.
 ## 1. Setup
 
 ```bash
+# MySQL first — the app expects a database to exist.
+mysql -u root -e "CREATE DATABASE sansekai_crm CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
 cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-php artisan db:seed --class=AdminUserSeeder   # first admin
+php artisan db:seed --class=AdminUserSeeder   # the administrator account
 php artisan serve                             # http://localhost:8000
 ```
 
-Two variables matter beyond the defaults:
+Variables that matter beyond the defaults:
 
 | Variable | What it does |
 |---|---|
+| `DB_*` | MySQL connection. `DB_DATABASE` defaults to `sansekai_crm`. |
 | `WEBSITE_API_KEY` | Shared secret for the two public submission endpoints. Generate with `php artisan key:generate --show`. |
-| `LEAD_DOCUMENTS_DISK` | Disk for uploads. Defaults to `local`, which is **private** — keep it that way. |
+| `LEAD_DOCUMENTS_DISK` | Disk for uploads. Defaults to `lead_documents`, which is **private** — keep it that way. |
+| `ADMIN_USERNAME` | The administrator's login. Defaults to `admin`. |
+| `ADMIN_PASSWORD` | Initial password. Left blank in local, the seeder generates one and prints it once. |
 
 Locally, leaving `WEBSITE_API_KEY` empty allows unauthenticated submissions so
 you can curl the endpoint. In production an empty key is a hard failure rather
@@ -52,6 +60,13 @@ devtools and used to write leads straight into the CRM.
 **Back office** (everything else): `Authorization: Bearer <token>`, from
 `POST /v1/auth/token`. Only users with `is_admin` are issued one, the same gate
 the Filament panel applies. The token is shown once.
+
+The CRM has **one administrator account** and no responsables — nothing is
+assigned to anyone, so there is no owners table and no endpoint to manage one.
+The account is created at installation with a username and a password;
+`login` accepts either the username or the email, and the password is changed
+afterwards through `PATCH /v1/auth/password`, which revokes every other token
+on success.
 
 ---
 
@@ -217,9 +232,10 @@ export async function GET(
 | Status | Meaning | What to do |
 |---|---|---|
 | `401` | Bad or missing key/token | Re-authenticate. On `/website/*`, the key is wrong. |
+| `429` on login | 5 failed attempts | Per login and IP. |
 | `404` | No such record | |
 | `422` | Validation or eligibility failure | Show `errors[field][0]` against that field. |
-| `429` | Rate limited | Back off. Submissions allow 6/min per IP; logins 5 per email+IP. |
+| `429` | Rate limited | Back off. Submissions allow 6/min per IP; logins 5 per login+IP. |
 
 ---
 
@@ -229,8 +245,9 @@ Decisions worth knowing before extending this:
 
 - **No `statuses`, `services` or `owners` tables.** Statuses and services are
   fixed values owned by the code that renders them; a lookup table would add a
-  join and an admin screen for data nobody edits. A responsable is an admin
-  `users` row, so assignment is a foreign key into the table that already exists.
+  join and an admin screen for data nobody edits. And with a single
+  administrator there is nobody to assign a lead to, so leads carry no owner at
+  all.
 - **One `leads` table for both services.** They share identity, company and
   tracking columns; the few that differ are nullable rather than a second table
   plus a join on every list query.
@@ -240,7 +257,13 @@ Decisions worth knowing before extending this:
   *and* re-evaluated on read. Raising a threshold later must not retroactively
   reject a dossier accepted under the old one.
 - **Submitted values are immutable over the API.** `PATCH /v1/leads/{id}` takes
-  only `status` and `assignedToId`; what the applicant sent is evidence.
+  only `status`; what the applicant sent is evidence.
+- **Documents never touch the public disk.** They are written through Laravel
+  Storage to `lead_documents` (rooted at `storage/app/private/lead-documents`,
+  no `url`, no public visibility) with a hashed filename, and a
+  `lead_documents` row in MySQL ties each file to its lead by foreign key.
+  Deleting a lead or a document removes the file with it. The only way to read
+  one is the authenticated download endpoint.
 - **Every mutation writes to `lead_activities`** through `Lead::recordActivity()`,
   and that table has no update or delete endpoint, so a dossier's history cannot
   be quietly rewritten.

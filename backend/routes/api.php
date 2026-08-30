@@ -5,7 +5,6 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadDocumentController;
 use App\Http\Controllers\Api\V1\LeadNoteController;
-use App\Http\Controllers\Api\V1\ResponsableController;
 use App\Http\Controllers\Api\V1\WebsiteLeadController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +44,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('auth/me', [AuthController::class, 'show'])->name('auth.me');
+        Route::patch('auth/password', [AuthController::class, 'updatePassword'])
+            ->name('auth.password');
         Route::delete('auth/token', [AuthController::class, 'destroy'])->name('auth.destroy');
 
         Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
@@ -75,7 +76,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::delete('notes/{note}', [LeadNoteController::class, 'destroy'])->name('notes.destroy');
 
         Route::get('activities', [ActivityController::class, 'all'])->name('activities.index');
-        Route::get('responsables', [ResponsableController::class, 'index'])->name('responsables.index');
         Route::get('stats', [LeadController::class, 'stats'])->name('stats');
     });
 });

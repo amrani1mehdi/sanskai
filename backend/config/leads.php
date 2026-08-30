@@ -15,7 +15,7 @@ return [
      * Disk for uploaded documents. Must be private — nothing here is served
      * from public storage, so a Kbis cannot be reached by guessing a URL.
      */
-    'documents_disk' => env('LEAD_DOCUMENTS_DISK', 'local'),
+    'documents_disk' => env('LEAD_DOCUMENTS_DISK', 'lead_documents'),
 
     /** Per-file upload ceiling, in kilobytes. Mirrors the website's 10 MB. */
     'max_upload_kb' => 10240,

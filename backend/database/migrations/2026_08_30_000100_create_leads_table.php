@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Service, sub-service and status are enum columns, not lookup tables — the
  * values are owned by the code that renders them and never edited by an admin.
- * The responsable is a `users` row, so no separate owners table.
+ * Nothing is assigned: the CRM runs on a single administrator account.
  */
 return new class extends Migration
 {
@@ -27,9 +27,6 @@ return new class extends Migration
             // Développement only.
             $table->string('prestation')->nullable();
             $table->string('status')->default('nouveau');
-
-            $table->foreignId('assigned_to_id')->nullable()
-                ->constrained('users')->nullOnDelete();
 
             // Identity — both forms collect all four.
             $table->string('nom');
@@ -71,7 +68,6 @@ return new class extends Migration
             // The list is filtered on these and always sorted newest first.
             $table->index(['service', 'status']);
             $table->index(['status', 'created_at']);
-            $table->index('assigned_to_id');
             $table->index('email');
         });
     }

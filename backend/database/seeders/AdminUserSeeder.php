@@ -44,6 +44,9 @@ class AdminUserSeeder extends Seeder
 
         $attributes = [
             'name' => env('ADMIN_NAME', 'Sansekai Admin'),
+            // Handed to the admin at installation; they sign in with either this
+            // or the email, and change the password from the API afterwards.
+            'username' => env('ADMIN_USERNAME', 'admin'),
             'is_admin' => true,
             'email_verified_at' => now(),
         ];
