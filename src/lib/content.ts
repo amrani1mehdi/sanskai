@@ -17,7 +17,7 @@ export type NavLink = { label: string; href: string };
 
 export type Solution = {
   id: string;
-  icon: "trending-up" | "users";
+  icon: "trending-up" | "rocket";
   title: string;
   description: string;
   cta: string;
@@ -31,6 +31,12 @@ export type TrustItem = {
 };
 
 export type Advantage = { title: string; description: string };
+
+export type BusinessService = {
+  icon: "website" | "logo" | "ads";
+  title: string;
+  description: string;
+};
 
 export type ExpertiseItem = {
   icon: "chart" | "globe" | "shield" | "cpu";
@@ -115,7 +121,9 @@ export function getSiteContent(locale: Locale) {
     },
 
     nav: {
-      links: [{ label: t.nav.investor, href: "/investissement" }] as NavLink[],
+      links: [
+        { label: t.nav.business, href: "/developpement-entreprise" },
+      ] as NavLink[],
       cta: { label: t.nav.requestFinancing, href: "/financement" },
     },
 
@@ -140,12 +148,12 @@ export function getSiteContent(locale: Locale) {
         href: "/financement",
       },
       {
-        id: "investor",
-        icon: "users",
-        title: t.services.investor.title,
-        description: t.services.investor.desc,
-        cta: t.services.investor.cta,
-        href: "/investissement",
+        id: "business",
+        icon: "rocket",
+        title: t.services.business.title,
+        description: t.services.business.desc,
+        cta: t.services.business.cta,
+        href: "/developpement-entreprise",
       },
     ] satisfies Solution[],
 
@@ -232,7 +240,7 @@ export function getSiteContent(locale: Locale) {
           title: t.footer.services,
           links: [
             { label: t.nav.cashflow, href: "/financement" },
-            { label: t.nav.investor, href: "/investissement" },
+            { label: t.nav.business, href: "/developpement-entreprise" },
           ] as NavLink[],
         },
       ],
@@ -275,6 +283,38 @@ export function getSiteContent(locale: Locale) {
         { question: t.cashflowPage.faq2q, answer: t.cashflowPage.faq2a },
         { question: t.cashflowPage.faq3q, answer: t.cashflowPage.faq3a },
       ],
+    },
+
+    /** /developpement-entreprise — business development page. */
+    businessDevelopment: {
+      meta: t.meta.business,
+      badge: t.businessPage.badge,
+      title: t.businessPage.title,
+      subtitle: t.businessPage.subtitle,
+      desc: t.businessPage.desc,
+      services: [
+        {
+          icon: "website",
+          title: t.businessPage.websiteTitle,
+          description: t.businessPage.websiteDesc,
+        },
+        {
+          icon: "logo",
+          title: t.businessPage.logoTitle,
+          description: t.businessPage.logoDesc,
+        },
+        {
+          icon: "ads",
+          title: t.businessPage.adsTitle,
+          description: t.businessPage.adsDesc,
+        },
+      ] satisfies BusinessService[],
+      cta: {
+        title: t.businessPage.ctaTitle,
+        description: t.businessPage.ctaDesc,
+        label: t.businessPage.ctaButton,
+        href: "/contact",
+      },
     },
 
     /**

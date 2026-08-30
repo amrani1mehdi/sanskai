@@ -18,7 +18,8 @@ export const translations = {
       "contact": "Contact",
       "about": "About",
       "clientArea": "Client Area",
-      "requestFinancing": "Request Rapid Financing"
+      "requestFinancing": "Request Rapid Financing",
+      "business": "Business Development"
     },
     "hero": {
       "badge": "Financing Expert · England · France · Germany · Canada · United States",
@@ -74,6 +75,11 @@ export const translations = {
       "advisory": {
         "title": "Investment Advisory",
         "desc": "Strategic guidance for smarter and more profitable investments."
+      },
+      "business": {
+        "title": "Business Development",
+        "desc": "Website creation, logo design and social media advertising campaigns to put your business in front of the right people.",
+        "cta": "Learn more"
       }
     },
     "trust": {
@@ -264,7 +270,26 @@ export const translations = {
       "expertise": {
         "title": "Our Expertise | Sansekai Solution",
         "description": "Discover Sansekai Solution's expertise in SME financing, treasury management, investor search and independent financial advisory."
+      },
+      "business": {
+        "title": "Business Development for SMEs | Sansekai Solution",
+        "description": "Website creation, logo design and social media advertising for SMEs and entrepreneurs, alongside Sansekai Solution's financing and investment support."
       }
+    },
+    "businessPage": {
+      "badge": "Business development",
+      "title": "Business Development",
+      "subtitle": "Everything your business needs to be seen",
+      "desc": "Beyond financing, SANSEKAI Solution helps you build the presence that wins clients — a site that sells, an identity that sticks, and campaigns that reach the right people.",
+      "websiteTitle": "Website creation",
+      "websiteDesc": "A site built around what your business actually sells, fast on every device and ready to be found.",
+      "logoTitle": "Logo design",
+      "logoDesc": "A mark that carries across a shopfront, an invoice and a phone screen, with the files to use it anywhere.",
+      "adsTitle": "Social media advertising",
+      "adsDesc": "Campaigns aimed at the people most likely to buy, measured on what they bring in rather than on impressions.",
+      "ctaTitle": "Ready to grow your presence?",
+      "ctaDesc": "Tell us what you are building and we will come back within 24 hours.",
+      "ctaButton": "Talk to us"
     }
   },
   "fr": {
@@ -278,7 +303,8 @@ export const translations = {
       "contact": "Contact",
       "about": "À propos",
       "clientArea": "Espace Client",
-      "requestFinancing": "Demande de financement rapide"
+      "requestFinancing": "Demande de financement rapide",
+      "business": "Développement d'entreprise"
     },
     "hero": {
       "badge": "Expert en financement · England · France · Germany · Canada · United States",
@@ -334,6 +360,11 @@ export const translations = {
       "advisory": {
         "title": "Conseil en investissement",
         "desc": "Orientations stratégiques pour des investissements plus intelligents et rentables."
+      },
+      "business": {
+        "title": "Développement d'entreprise",
+        "desc": "Création de site web, création de logo et campagnes publicitaires sur les réseaux pour mettre votre entreprise devant les bonnes personnes.",
+        "cta": "En savoir plus"
       }
     },
     "trust": {
@@ -524,7 +555,26 @@ export const translations = {
       "expertise": {
         "title": "Notre Expertise | Sansekai Solution",
         "description": "Découvrez l'expertise Sansekai Solution en financement PME, gestion de trésorerie, recherche d'investisseurs et conseil financier indépendant."
+      },
+      "business": {
+        "title": "Développement d'entreprise PME | Sansekai Solution",
+        "description": "Création de site web, création de logo et campagnes publicitaires sur les réseaux pour PME et entrepreneurs, en complément du financement et du conseil Sansekai Solution."
       }
+    },
+    "businessPage": {
+      "badge": "Développement d'entreprise",
+      "title": "Développement d'entreprise",
+      "subtitle": "Tout ce qu'il faut à votre entreprise pour se faire voir",
+      "desc": "Au-delà du financement, SANSEKAI Solution vous aide à construire la présence qui attire les clients : un site qui vend, une identité qui marque, et des campagnes qui touchent les bonnes personnes.",
+      "websiteTitle": "Création de site Web",
+      "websiteDesc": "Un site pensé autour de ce que votre entreprise vend réellement, rapide sur tous les écrans et prêt à être trouvé.",
+      "logoTitle": "Création de LOGO",
+      "logoDesc": "Une marque qui fonctionne sur une devanture, une facture et un écran de téléphone, avec tous les fichiers pour l'utiliser partout.",
+      "adsTitle": "Campagne publicitaire sur les réseaux",
+      "adsDesc": "Des campagnes adressées aux personnes les plus susceptibles d'acheter, mesurées sur ce qu'elles rapportent plutôt que sur les impressions.",
+      "ctaTitle": "Prêt à développer votre présence ?",
+      "ctaDesc": "Dites-nous ce que vous construisez et nous revenons vers vous sous 24 heures.",
+      "ctaButton": "Parlons-en"
     }
   },
   "de": {
@@ -538,7 +588,8 @@ export const translations = {
       "contact": "Kontakt",
       "about": "Über uns",
       "clientArea": "Kundenbereich",
-      "requestFinancing": "Schnellfinanzierung anfordern"
+      "requestFinancing": "Schnellfinanzierung anfordern",
+      "business": "Unternehmensentwicklung"
     },
     "hero": {
       "badge": "Finanzierungsexperte · England · France · Germany · Canada · United States",
@@ -594,6 +645,11 @@ export const translations = {
       "advisory": {
         "title": "Anlageberatung",
         "desc": "Strategische Orientierung für intelligentere und profitablere Investitionen."
+      },
+      "business": {
+        "title": "Unternehmensentwicklung",
+        "desc": "Website-Erstellung, Logo-Design und Social-Media-Werbekampagnen, damit Ihr Unternehmen die Richtigen erreicht.",
+        "cta": "Mehr erfahren"
       }
     },
     "trust": {
@@ -784,7 +840,26 @@ export const translations = {
       "expertise": {
         "title": "Unsere Expertise | Sansekai Solution",
         "description": "Entdecken Sie die Expertise von Sansekai Solution in KMU-Finanzierung, Treasury, Investorensuche und unabhängiger Finanzberatung."
+      },
+      "business": {
+        "title": "Unternehmensentwicklung für KMU | Sansekai Solution",
+        "description": "Website-Erstellung, Logo-Design und Social-Media-Werbung für KMU und Unternehmer, ergänzend zur Finanzierungs- und Investmentbegleitung von Sansekai Solution."
       }
+    },
+    "businessPage": {
+      "badge": "Unternehmensentwicklung",
+      "title": "Unternehmensentwicklung",
+      "subtitle": "Alles, damit Ihr Unternehmen gesehen wird",
+      "desc": "Über die Finanzierung hinaus hilft Ihnen SANSEKAI Solution, die Präsenz aufzubauen, die Kunden gewinnt: eine Website, die verkauft, eine Identität, die bleibt, und Kampagnen, die die Richtigen erreichen.",
+      "websiteTitle": "Website-Erstellung",
+      "websiteDesc": "Eine Website rund um das, was Ihr Unternehmen tatsächlich verkauft — schnell auf jedem Gerät und auffindbar.",
+      "logoTitle": "Logo-Design",
+      "logoDesc": "Ein Zeichen, das auf Ladenfront, Rechnung und Handybildschirm funktioniert, mit allen Dateien für jeden Einsatz.",
+      "adsTitle": "Werbekampagnen in sozialen Netzwerken",
+      "adsDesc": "Kampagnen für die Menschen mit der höchsten Kaufwahrscheinlichkeit, gemessen am Ertrag statt an Impressionen.",
+      "ctaTitle": "Bereit, Ihre Präsenz auszubauen?",
+      "ctaDesc": "Sagen Sie uns, was Sie aufbauen — wir melden uns innerhalb von 24 Stunden.",
+      "ctaButton": "Sprechen wir darüber"
     }
   }
 } as const;

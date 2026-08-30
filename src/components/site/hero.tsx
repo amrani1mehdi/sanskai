@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, Rocket, TrendingUp } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { Reveal } from "@/components/ui/reveal";
 
 const cardIcons = {
   "trending-up": TrendingUp,
-  users: Users,
+  rocket: Rocket,
 } as const;
 
 export function Hero({ content }: { content: SiteContent }) {
