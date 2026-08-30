@@ -294,7 +294,33 @@ export const translations = {
       "ctaButton": "Talk to us",
       "requestService": "Request this service",
       "formTitle": "Tell us about your project",
-      "formDesc": "Pick a service and leave your details — we come back within 24 hours."
+      "formDesc": "Pick a service and leave your details — we come back within 24 hours.",
+      "websiteFeatures": [
+        "Responsive on phone, tablet and desktop",
+        "Pages structured around what you actually sell",
+        "Search-engine basics so customers can find you",
+        "Contact form delivered straight to your inbox"
+      ],
+      "logoFeatures": [
+        "Concepts drawn from your positioning, not templates",
+        "Works in colour, in black and white, and at small sizes",
+        "Vector and image files for both print and web",
+        "Colour and typography guidance to keep it consistent"
+      ],
+      "adsFeatures": [
+        "Campaigns on the platforms your customers actually use",
+        "Audiences built from your customer profile",
+        "Ad copy and visuals designed for each placement",
+        "Reporting on cost per enquiry, not just impressions"
+      ],
+      "loyaltyTitle": "Digital loyalty",
+      "loyaltyDesc": "Turn one-off buyers into regulars with a loyalty scheme that lives on their phone rather than in their wallet.",
+      "loyaltyFeatures": [
+        "Digital stamp or points card, with no app to install",
+        "Rewards you set yourself and change whenever you like",
+        "Customers join by scanning a QR code at the counter",
+        "See who comes back, how often, and what they spend"
+      ]
     }
   },
   "fr": {
@@ -584,7 +610,33 @@ export const translations = {
       "ctaButton": "Parlons-en",
       "requestService": "Demander ce service",
       "formTitle": "Parlez-nous de votre projet",
-      "formDesc": "Choisissez un service et laissez vos coordonnées — nous revenons vers vous sous 24 heures."
+      "formDesc": "Choisissez un service et laissez vos coordonnées — nous revenons vers vous sous 24 heures.",
+      "websiteFeatures": [
+        "Adapté au mobile, à la tablette et à l'ordinateur",
+        "Des pages structurées autour de ce que vous vendez",
+        "Les bases du référencement pour être trouvé",
+        "Formulaire de contact relié à votre boîte mail"
+      ],
+      "logoFeatures": [
+        "Des concepts issus de votre positionnement, pas de modèles",
+        "Lisible en couleur, en noir et blanc et en petit format",
+        "Fichiers vectoriels et images, pour l'impression et le web",
+        "Règles de couleurs et de typographie pour rester cohérent"
+      ],
+      "adsFeatures": [
+        "Des campagnes sur les plateformes que vos clients utilisent",
+        "Des audiences construites à partir de votre profil client",
+        "Visuels et textes conçus pour chaque emplacement",
+        "Un suivi du coût par contact, pas seulement des impressions"
+      ],
+      "loyaltyTitle": "Fidélité digitale",
+      "loyaltyDesc": "Transformez les acheteurs occasionnels en habitués avec un programme de fidélité qui vit sur leur téléphone plutôt que dans leur portefeuille.",
+      "loyaltyFeatures": [
+        "Carte à tampons ou à points, sans application à installer",
+        "Des récompenses que vous définissez et modifiez quand vous voulez",
+        "Vos clients s'inscrivent en scannant un QR code en caisse",
+        "Voyez qui revient, à quelle fréquence et combien ils dépensent"
+      ]
     }
   },
   "de": {
@@ -874,7 +926,33 @@ export const translations = {
       "ctaButton": "Sprechen wir darüber",
       "requestService": "Diese Leistung anfragen",
       "formTitle": "Erzählen Sie uns von Ihrem Projekt",
-      "formDesc": "Wählen Sie eine Leistung und hinterlassen Sie Ihre Daten — wir melden uns innerhalb von 24 Stunden."
+      "formDesc": "Wählen Sie eine Leistung und hinterlassen Sie Ihre Daten — wir melden uns innerhalb von 24 Stunden.",
+      "websiteFeatures": [
+        "Optimiert für Handy, Tablet und Desktop",
+        "Seiten rund um das, was Sie tatsächlich verkaufen",
+        "SEO-Grundlagen, damit Kunden Sie finden",
+        "Kontaktformular direkt in Ihr Postfach"
+      ],
+      "logoFeatures": [
+        "Entwürfe aus Ihrer Positionierung, keine Vorlagen",
+        "Funktioniert in Farbe, in Schwarz-Weiß und in klein",
+        "Vektor- und Bilddateien für Druck und Web",
+        "Farb- und Typografie-Regeln für einen einheitlichen Auftritt"
+      ],
+      "adsFeatures": [
+        "Kampagnen auf den Plattformen, die Ihre Kunden nutzen",
+        "Zielgruppen aus Ihrem Kundenprofil",
+        "Anzeigentexte und Motive je Platzierung",
+        "Auswertung nach Kosten pro Anfrage, nicht nach Impressionen"
+      ],
+      "loyaltyTitle": "Digitale Kundenbindung",
+      "loyaltyDesc": "Machen Sie aus Gelegenheitskäufern Stammkunden — mit einem Treueprogramm auf dem Handy statt im Portemonnaie.",
+      "loyaltyFeatures": [
+        "Digitale Stempel- oder Punktekarte, ohne App-Installation",
+        "Prämien, die Sie selbst festlegen und jederzeit ändern",
+        "Kunden melden sich per QR-Code an der Kasse an",
+        "Sehen Sie, wer wiederkommt, wie oft und wie viel ausgegeben wird"
+      ]
     }
   }
 } as const;

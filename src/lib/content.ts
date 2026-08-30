@@ -33,9 +33,11 @@ export type TrustItem = {
 export type Advantage = { title: string; description: string };
 
 export type BusinessService = {
-  icon: "website" | "logo" | "ads";
+  icon: "website" | "logo" | "ads" | "loyalty";
   title: string;
   description: string;
+  /** What the service actually covers, listed on the card. */
+  features: readonly string[];
 };
 
 export type ExpertiseItem = {
@@ -297,16 +299,25 @@ export function getSiteContent(locale: Locale) {
           icon: "website",
           title: t.businessPage.websiteTitle,
           description: t.businessPage.websiteDesc,
+          features: t.businessPage.websiteFeatures,
         },
         {
           icon: "logo",
           title: t.businessPage.logoTitle,
           description: t.businessPage.logoDesc,
+          features: t.businessPage.logoFeatures,
         },
         {
           icon: "ads",
           title: t.businessPage.adsTitle,
           description: t.businessPage.adsDesc,
+          features: t.businessPage.adsFeatures,
+        },
+        {
+          icon: "loyalty",
+          title: t.businessPage.loyaltyTitle,
+          description: t.businessPage.loyaltyDesc,
+          features: t.businessPage.loyaltyFeatures,
         },
       ] satisfies BusinessService[],
       requestService: t.businessPage.requestService,

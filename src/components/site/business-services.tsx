@@ -1,7 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowRight, Megaphone, Monitor, Palette, Send } from "lucide-react";
+import {
+  ArrowRight,
+  CircleCheck,
+  Megaphone,
+  Monitor,
+  Palette,
+  Send,
+  Stamp,
+} from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { MotionReveal } from "@/components/ui/motion-reveal";
 
@@ -9,6 +17,7 @@ const SERVICE_ICONS = {
   website: Monitor,
   logo: Palette,
   ads: Megaphone,
+  loyalty: Stamp,
 } as const;
 
 const inputClass =
@@ -25,7 +34,7 @@ const EMPTY = {
 };
 
 /**
- * The three services and the enquiry form beneath them.
+ * The services and the enquiry form beneath them.
  *
  * They live in one component because each card's button both scrolls to the
  * form and picks that service in it — the state has to be shared, and a server
@@ -61,7 +70,8 @@ export function BusinessServices({ content }: { content: SiteContent }) {
     <>
       <section className="section-padding bg-background">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {/* Two-up: four cards across three columns would orphan the last. */}
+          <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {businessDevelopment.services.map((service, index) => {
               const Icon = SERVICE_ICONS[service.icon];
               return (
@@ -84,10 +94,25 @@ export function BusinessServices({ content }: { content: SiteContent }) {
                     {service.description}
                   </p>
 
+                  <ul className="mt-5 space-y-2.5">
+                    {service.features.map((feature) => (
+                      <li key={feature} className="flex gap-2.5">
+                        <CircleCheck
+                          size={16}
+                          className="mt-0.5 shrink-0 text-accent"
+                          aria-hidden
+                        />
+                        <span className="text-sm text-muted-foreground leading-relaxed">
+                          {feature}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
                   <button
                     type="button"
                     onClick={() => requestService(service.title)}
-                    className="mt-6 inline-flex items-center gap-2 self-start rounded-lg border border-accent/30 px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="mt-auto pt-6 inline-flex items-center gap-2 self-start text-sm font-semibold text-accent transition-colors hover:text-foreground"
                   >
                     {businessDevelopment.requestService}
                     <ArrowRight size={14} aria-hidden />
