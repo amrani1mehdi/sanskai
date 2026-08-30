@@ -125,7 +125,7 @@ export default async function FinancementPage() {
               </MotionReveal>
 
               <MotionReveal x={20}>
-                <FinancingForm content={content} />
+                <FinancingForm content={content} locale={locale} />
               </MotionReveal>
             </div>
           </div>
