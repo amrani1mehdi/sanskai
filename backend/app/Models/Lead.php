@@ -1,0 +1,120 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\ActivityKind;
+use App\Enums\LeadService;
+use App\Enums\LeadStatus;
+use App\Enums\Prestation;
+use App\Support\Eligibility;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+#[Fillable([
+    'service', 'prestation', 'status', 'assigned_to_id',
+    'nom', 'prenom', 'email', 'telephone',
+    'entreprise', 'date_creation', 'adresse', 'code_postal', 'ville',
+    'chiffre_affaire', 'chiffre_affaire_cents', 'montant', 'montant_cents',
+    'code_commercial', 'site_web', 'site_web_url', 'reseaux', 'reseaux_ou',
+    'message', 'eligible_age', 'eligible_revenue',
+])]
+class Lead extends Model
+{
+    protected function casts(): array
+    {
+        return [
+            'service' => LeadService::class,
+            'prestation' => Prestation::class,
+            'status' => LeadStatus::class,
+            'date_creation' => 'date',
+            'site_web' => 'boolean',
+            'reseaux' => 'boolean',
+            'eligible_age' => 'boolean',
+            'eligible_revenue' => 'boolean',
+        ];
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(LeadDocument::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(LeadNote::class);
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(LeadActivity::class);
+    }
+
+    /**
+     * Appends to the audit trail.
+     *
+     * Every mutation goes through here rather than writing the table directly,
+     * so no code path can change a lead without leaving a trace.
+     */
+    public function recordActivity(ActivityKind $kind, string $label, ?User $actor = null): LeadActivity
+    {
+        return $this->activities()->create([
+            'kind' => $kind,
+            'label' => $label,
+            'actor_id' => $actor?->id,
+            'actor_name' => $actor?->name ?? 'Site web',
+        ]);
+    }
+
+    /** Months of trading history, derived — never stored, so it cannot go stale. */
+    public function companyAgeMonths(): ?int
+    {
+        return $this->date_creation?->diffInMonths(now());
+    }
+
+    /** Re-runs the rules against the current thresholds. */
+    public function isEligibleNow(): bool
+    {
+        return Eligibility::companyAge($this->date_creation?->format('Y-m-d'))
+            && Eligibility::revenue($this->chiffre_affaire);
+    }
+
+    /** `FIN-2026-0142`, unique and human-quotable over the phone. */
+    public static function nextReference(LeadService $service): string
+    {
+        $prefix = $service === LeadService::Financement ? 'FIN' : 'DEV';
+        $year = now()->year;
+
+        $last = static::query()
+            ->where('reference', 'like', "{$prefix}-{$year}-%")
+            ->orderByDesc('reference')
+            ->value('reference');
+
+        $sequence = $last ? ((int) substr($last, -4)) + 1 : 1;
+
+        return sprintf('%s-%d-%04d', $prefix, $year, $sequence);
+    }
+
+    /** @param Builder<Lead> $query */
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        if (blank($term)) {
+            return $query;
+        }
+
+        $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $term).'%';
+
+        return $query->where(function (Builder $inner) use ($like) {
+            foreach (['reference', 'nom', 'prenom', 'entreprise', 'email', 'telephone', 'ville'] as $column) {
+                $inner->orWhere($column, 'like', $like);
+            }
+        });
+    }
+}
