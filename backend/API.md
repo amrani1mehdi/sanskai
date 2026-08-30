@@ -141,7 +141,6 @@ posting:
 | Création de site Web | `site_web` |
 | Création de LOGO | `logo` |
 | Campagne publicitaire sur les réseaux | `campagne_publicitaire` |
-| Fidélité digitale | `fidelite_digitale` |
 
 ### Enumerations
 
@@ -149,7 +148,7 @@ Identical to the front end's `lib/crm/config.ts`:
 
 - **status** — `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`
 - **service** — `financement`, `developpement`
-- **prestation** — `site_web`, `logo`, `campagne_publicitaire`, `fidelite_digitale`
+- **prestation** — `site_web`, `logo`, `campagne_publicitaire`
 - **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `autre`
 - **activity kind** — `creation`, `statut`, `note`, `assignation`, `appel`, `email`, `document`
 

@@ -612,7 +612,7 @@ paths:
                   total: 14
                   byStatus: {nouveau: 3, a_examiner: 2, qualifie: 2, en_cours: 2, approuve: 4, refuse: 1}
                   byService: {financement: 9, developpement: 5}
-                  byPrestation: {site_web: 1, logo: 1, campagne_publicitaire: 2, fidelite_digitale: 1}
+                  byPrestation: {site_web: 2, logo: 1, campagne_publicitaire: 2}
                   aTraiter: 5
                   tauxReussite: 80
                   montantDemande: 665000
@@ -973,7 +973,7 @@ components:
     Prestation:
       type: string
       description: Sub-services under Développement d'entreprise. Exactly one per lead.
-      enum: [site_web, logo, campagne_publicitaire, fidelite_digitale]
+      enum: [site_web, logo, campagne_publicitaire]
 
     DocumentKind:
       type: string

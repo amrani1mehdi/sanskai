@@ -83,12 +83,10 @@ export type PrestationConfig = {
 };
 
 /**
- * The four sub-services on the Développement d'entreprise page. The enquiry
+ * The three sub-services on the Développement d'entreprise page. The enquiry
  * form is a single select, so a lead carries exactly one.
  *
- * Colours are slots 1-4 of the validated categorical palette, in fixed order.
- * Four slots stay inside the gates only because every bar and chip is
- * direct-labelled — see the palette note in globals.css.
+ * Colours are slots 1-3 of the validated categorical palette, in fixed order.
  */
 export const PRESTATIONS: PrestationConfig[] = [
   {
@@ -111,13 +109,6 @@ export const PRESTATIONS: PrestationConfig[] = [
     shortLabel: "Campagne pub",
     bar: "bg-series-3",
     chip: "border-series-3/30 bg-series-3/10 text-series-3",
-  },
-  {
-    id: "fidelite_digitale",
-    label: "Fidélité digitale",
-    shortLabel: "Fidélité",
-    bar: "bg-series-4",
-    chip: "border-series-4/40 bg-series-4/10 text-series-4",
   },
 ];
 

@@ -23,11 +23,7 @@ export type ServiceId = "financement" | "developpement";
  * Sub-offers bundled under Développement d'entreprise. The enquiry form is a
  * single select, so a lead asks for exactly one of these.
  */
-export type PrestationId =
-  | "site_web"
-  | "logo"
-  | "campagne_publicitaire"
-  | "fidelite_digitale";
+export type PrestationId = "site_web" | "logo" | "campagne_publicitaire";
 
 /** The four upload slots on the financing form, plus a catch-all. */
 export type DocumentKind =
