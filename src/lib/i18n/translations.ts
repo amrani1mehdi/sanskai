@@ -277,6 +277,13 @@ export const translations = {
       "websiteUrl": "Website name or URL *",
       "hasSocial": "Do you have marketing or social media accounts?",
       "socialWhere": "Where? (Instagram, Facebook, TikTok, etc.) *",
+      "idDocument": "Proof of identity",
+      "optional": "Optional",
+      "chooseFile": "Choose a file or drop it here",
+      "fileHint": "PDF, JPG or PNG · up to 10 MB",
+      "removeFile": "Remove file",
+      "fileTooLarge": "That file is larger than 10 MB.",
+      "fileWrongType": "Only PDF, JPG and PNG files are accepted.",
       "siret": "SIRET Number"
     },
     "gdpr": {
@@ -621,6 +628,13 @@ export const translations = {
       "websiteUrl": "Nom ou adresse du site web *",
       "hasSocial": "Avez-vous des comptes marketing ou réseaux sociaux ?",
       "socialWhere": "Lesquels ? (Instagram, Facebook, TikTok, etc.) *",
+      "idDocument": "Pièce d'identité",
+      "optional": "Facultatif",
+      "chooseFile": "Choisissez un fichier ou déposez-le ici",
+      "fileHint": "PDF, JPG ou PNG · jusqu'à 10 Mo",
+      "removeFile": "Supprimer le fichier",
+      "fileTooLarge": "Ce fichier dépasse 10 Mo.",
+      "fileWrongType": "Seuls les fichiers PDF, JPG et PNG sont acceptés.",
       "siret": "Numéro SIRET"
     },
     "gdpr": {
@@ -965,6 +979,13 @@ export const translations = {
       "websiteUrl": "Name oder URL der Website *",
       "hasSocial": "Haben Sie Marketing- oder Social-Media-Konten?",
       "socialWhere": "Welche? (Instagram, Facebook, TikTok usw.) *",
+      "idDocument": "Ausweisdokument",
+      "optional": "Optional",
+      "chooseFile": "Datei auswählen oder hier ablegen",
+      "fileHint": "PDF, JPG oder PNG · bis 10 MB",
+      "removeFile": "Datei entfernen",
+      "fileTooLarge": "Diese Datei ist größer als 10 MB.",
+      "fileWrongType": "Es werden nur PDF-, JPG- und PNG-Dateien akzeptiert.",
       "siret": "SIRET-Nummer"
     },
     "gdpr": {

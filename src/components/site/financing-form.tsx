@@ -6,6 +6,7 @@ import type { SiteContent } from "@/lib/content";
 import type { Locale } from "@/lib/i18n/config";
 import { isCompanyAgeEligible, isRevenueEligible } from "@/lib/eligibility";
 import { DatePicker } from "@/components/ui/date-picker";
+import { FileUpload } from "@/components/ui/file-upload";
 import { cn } from "@/lib/utils";
 
 /** Shared by every field on the live site's financing form. */
@@ -46,6 +47,7 @@ export function FinancingForm({
 
   const [values, setValues] = useState(EMPTY);
   const [sent, setSent] = useState(false);
+  const [idDocument, setIdDocument] = useState<File | null>(null);
 
   const set = (key: keyof typeof EMPTY) => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
@@ -92,6 +94,7 @@ export function FinancingForm({
     if (ineligible) return;
 
     setValues(EMPTY);
+    setIdDocument(null);
     setSent(true);
     setTimeout(() => setSent(false), 4000);
   };
@@ -113,6 +116,19 @@ export function FinancingForm({
             required
           />
         </div>
+
+        {/* Sits with the name fields, since it is what backs them up. */}
+        <FileUpload
+          label={form.idDocument}
+          optionalLabel={form.optional}
+          hint={form.fileHint}
+          chooseLabel={form.chooseFile}
+          removeLabel={form.removeFile}
+          tooLargeMessage={form.fileTooLarge}
+          wrongTypeMessage={form.fileWrongType}
+          file={idDocument}
+          onChange={setIdDocument}
+        />
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field
