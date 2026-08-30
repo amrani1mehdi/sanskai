@@ -12,7 +12,6 @@ export const translations = {
       "home": "Home",
       "solutions": "Our Solutions",
       "cashflow": "Cash Flow Financing",
-      "investor": "Find an Investor",
       "debt": "Debt Collection",
       "expertise": "Expertise",
       "contact": "Contact",
@@ -26,10 +25,8 @@ export const translations = {
       "title1": "Easily access",
       "titleHighlight": "financing",
       "title2": "for your business",
-      "subtitle": "• Financing for upcoming orders and inventory\n• Cash flow and working capital assistance\n• Investment support and investor search",
+      "subtitle": "• Financing for upcoming orders and inventory\n• Cash flow and working capital assistance\n• Website, branding and social media campaigns",
       "ctaFinancing": "Request financing",
-      "ctaInvest": "Discover investments",
-      "ctaInvestor": "Find an investor",
       "ctaDebt": "Debt collection"
     },
     "services": {
@@ -40,11 +37,6 @@ export const translations = {
       "cashflow": {
         "title": "Cash Flow Financing",
         "desc": "Working Capital Needs, Cash Flow Financing, Overdraft Facility and Factoring Available. From €2,000 to €150K.",
-        "cta": "Learn more"
-      },
-      "investor": {
-        "title": "Find an Investor",
-        "desc": "Apply for funding using our form and receive a response within 24 hours. If you are eligible, your funds will be in your account within 48 hours.",
         "cta": "Learn more"
       },
       "debt": {
@@ -153,28 +145,6 @@ export const translations = {
       "faq3q": "Is a personal guarantee required?",
       "faq3a": "No personal guarantee is required. Your private assets remain protected. Financing is based on your business activity and financial health."
     },
-    "investorPage": {
-      "badge": "Find an Investor",
-      "title": "Find an Investor",
-      "subtitle": "Publish your project, find a partner",
-      "heroDesc": "Give your project visibility by posting it on our website. Find a partner for successful financial collaboration.",
-      "step1Title": "Step 1: Access our expertise",
-      "step1Desc": "Our team analyses your project and advises you on the best strategy to attract investors and financial partners.",
-      "step2Title": "Step 2: Publish your project",
-      "step2Desc": "Publish your project on our platform to give it visibility among our network of investors and partners.",
-      "formTitle": "Publish your project",
-      "formDesc": "Fill in the information below to submit your project.",
-      "fieldProjectTitle": "Project title *",
-      "fieldSummary": "Project summary *",
-      "fieldFundingSought": "Funding sought (€) *",
-      "fieldEquityTerms": "Terms (equity/partnership)",
-      "fieldContactEmail": "Contact email *",
-      "listingTemplate": "Sample project listing",
-      "sampleTitle": "E-commerce platform expansion Europe",
-      "sampleSummary": "E-commerce platform seeking investor for European expansion. 200% growth in 18 months.",
-      "sampleFunding": "€500,000",
-      "sampleTerms": "15% equity · Strategic partnership welcome"
-    },
     "contactPage": {
       "title": "Contact",
       "subtitle": "Contact Us",
@@ -229,12 +199,8 @@ export const translations = {
       "message": "Message",
       "submit": "Send",
       "sent": "Message sent ✓",
-      "projectNature": "Project nature",
-      "projectCountry": "Project country",
-      "projectDesc": "Project description",
       "service": "Which service do you need?",
       "selectService": "Select a service",
-      "talkProject": "Let's talk about your project",
       "fillForm": "Fill in the form below",
       "treasuryRequest": "Treasury financing request",
       "companyCreatedAt": "Company creation date *",
@@ -281,10 +247,6 @@ export const translations = {
       "financing": {
         "title": "Business Financing for SMEs | Sansekai Solution",
         "description": "Tailored business financing for SMEs from €2k to €3M: working capital, cash flow, stock and equipment funding with independent advisory."
-      },
-      "investment": {
-        "title": "Investment Advisory for SMEs | Sansekai Solution",
-        "description": "Independent investment guidance for entrepreneurs and SMEs through Sansekai Solution's international network of funds and partners."
       },
       "contact": {
         "title": "Contact Sansekai Solution | Talk to Our Advisors",
@@ -349,7 +311,6 @@ export const translations = {
       "home": "Accueil",
       "solutions": "Nos Solutions",
       "cashflow": "Financement de Trésorerie",
-      "investor": "Trouver un Investisseur",
       "debt": "Recouvrement de Créances",
       "expertise": "Expertise",
       "contact": "Contact",
@@ -363,10 +324,8 @@ export const translations = {
       "title1": "Accédez facilement au",
       "titleHighlight": "financement",
       "title2": "pour votre entreprise",
-      "subtitle": "• Financement de commandes et stocks à venir\n• Aide à la trésorerie et fonds de roulement\n• Accompagnement à l'investissement et recherche d'investisseurs",
+      "subtitle": "• Financement de commandes et stocks à venir\n• Aide à la trésorerie et fonds de roulement\n• Site web, identité de marque et campagnes sur les réseaux",
       "ctaFinancing": "Demander un financement",
-      "ctaInvest": "Découvrir les investissements",
-      "ctaInvestor": "Trouver un investisseur",
       "ctaDebt": "Recouvrement de créances"
     },
     "services": {
@@ -377,11 +336,6 @@ export const translations = {
       "cashflow": {
         "title": "Financement de Trésorerie",
         "desc": "Besoin en Fonds de Roulement, Financement de Trésorerie, Facilité de Découvert et Affacturage Disponible. De 2 000 € à 150K €.",
-        "cta": "En savoir plus"
-      },
-      "investor": {
-        "title": "Trouver un Investisseur",
-        "desc": "Demandez un financement via notre formulaire et recevez une réponse sous 24 heures. Si vous êtes éligible, vos fonds seront sur votre compte sous 48 heures.",
         "cta": "En savoir plus"
       },
       "debt": {
@@ -490,28 +444,6 @@ export const translations = {
       "faq3q": "Une garantie personnelle est-elle nécessaire ?",
       "faq3a": "Non, aucune garantie personnelle n'est exigée. Vos biens privés restent protégés. Le financement est basé sur l'activité et la santé financière de votre entreprise."
     },
-    "investorPage": {
-      "badge": "Trouver un Investisseur",
-      "title": "Trouver un Investisseur",
-      "subtitle": "Publiez votre projet, trouvez un partenaire",
-      "heroDesc": "Donnez de la visibilité à votre projet en le publiant sur notre site. Trouvez un partenaire pour une collaboration financière réussie.",
-      "step1Title": "Étape 1 : Accédez à notre expertise",
-      "step1Desc": "Notre équipe analyse votre projet et vous conseille sur la meilleure stratégie pour attirer des investisseurs et partenaires financiers.",
-      "step2Title": "Étape 2 : Publiez votre projet",
-      "step2Desc": "Publiez votre projet sur notre plateforme pour lui donner de la visibilité auprès de notre réseau d'investisseurs et partenaires.",
-      "formTitle": "Publiez votre projet",
-      "formDesc": "Remplissez les informations ci-dessous pour soumettre votre projet.",
-      "fieldProjectTitle": "Titre du projet *",
-      "fieldSummary": "Résumé du projet *",
-      "fieldFundingSought": "Montant recherché (€) *",
-      "fieldEquityTerms": "Conditions (equity/partenariat)",
-      "fieldContactEmail": "Email de contact *",
-      "listingTemplate": "Modèle de publication de projet",
-      "sampleTitle": "Expansion plateforme e-commerce Europe",
-      "sampleSummary": "Plateforme e-commerce cherchant un investisseur pour expansion européenne. Croissance de 200% en 18 mois.",
-      "sampleFunding": "500 000 €",
-      "sampleTerms": "15% equity · Partenariat stratégique bienvenu"
-    },
     "contactPage": {
       "title": "Contact",
       "subtitle": "Contactez-nous",
@@ -566,12 +498,8 @@ export const translations = {
       "message": "Message",
       "submit": "Envoyer",
       "sent": "Message envoyé ✓",
-      "projectNature": "Nature du projet",
-      "projectCountry": "Pays du projet",
-      "projectDesc": "Descriptif du projet",
       "service": "Quel service vous intéresse ?",
       "selectService": "Choisissez un service",
-      "talkProject": "Parlons de votre projet",
       "fillForm": "Remplissez le formulaire ci-dessous",
       "treasuryRequest": "Formulaire demande de trésorerie",
       "companyCreatedAt": "Date de création de l'entreprise *",
@@ -618,10 +546,6 @@ export const translations = {
       "financing": {
         "title": "Financement d'entreprise PME | Sansekai Solution",
         "description": "Financement d'entreprise sur mesure pour PME de 2k€ à 3M€ : fonds de roulement, trésorerie, stocks et matériel, avec conseil indépendant."
-      },
-      "investment": {
-        "title": "Conseil en investissement PME | Sansekai Solution",
-        "description": "Conseil en investissement indépendant pour entrepreneurs et PME via le réseau international de fonds et partenaires Sansekai Solution."
       },
       "contact": {
         "title": "Contact Sansekai Solution | Parlez à nos conseillers",
@@ -686,7 +610,6 @@ export const translations = {
       "home": "Startseite",
       "solutions": "Unsere Lösungen",
       "cashflow": "Cashflow-Finanzierung",
-      "investor": "Investor finden",
       "debt": "Forderungseinzug",
       "expertise": "Expertise",
       "contact": "Kontakt",
@@ -700,10 +623,8 @@ export const translations = {
       "title1": "Einfacher Zugang zur",
       "titleHighlight": "Finanzierung",
       "title2": "für Ihr Unternehmen",
-      "subtitle": "• Finanzierung kommender Bestellungen und Lagerbestände\n• Cashflow- und Betriebskapitalhilfe\n• Investment-Begleitung und Investorensuche",
+      "subtitle": "• Finanzierung kommender Bestellungen und Lagerbestände\n• Cashflow- und Betriebskapitalhilfe\n• Website, Markenauftritt und Social-Media-Kampagnen",
       "ctaFinancing": "Finanzierung anfordern",
-      "ctaInvest": "Investitionen entdecken",
-      "ctaInvestor": "Investor finden",
       "ctaDebt": "Forderungseinzug"
     },
     "services": {
@@ -714,11 +635,6 @@ export const translations = {
       "cashflow": {
         "title": "Cashflow-Finanzierung",
         "desc": "Betriebsmittelbedarf, Cashflow-Finanzierung, Überziehungsfazilität und Factoring verfügbar. Von 2.000 € bis 150K €.",
-        "cta": "Mehr erfahren"
-      },
-      "investor": {
-        "title": "Investor finden",
-        "desc": "Beantragen Sie eine Finanzierung über unser Formular und erhalten Sie innerhalb von 24 Stunden eine Antwort. Wenn Sie berechtigt sind, sind die Mittel innerhalb von 48 Stunden auf Ihrem Konto.",
         "cta": "Mehr erfahren"
       },
       "debt": {
@@ -827,28 +743,6 @@ export const translations = {
       "faq3q": "Ist eine persönliche Garantie erforderlich?",
       "faq3a": "Nein, keine persönliche Garantie erforderlich. Ihr Privatvermögen bleibt geschützt. Die Finanzierung basiert auf der Aktivität und finanziellen Gesundheit Ihres Unternehmens."
     },
-    "investorPage": {
-      "badge": "Investor finden",
-      "title": "Investor finden",
-      "subtitle": "Veröffentlichen Sie Ihr Projekt, finden Sie einen Partner",
-      "heroDesc": "Geben Sie Ihrem Projekt Sichtbarkeit, indem Sie es auf unserer Website veröffentlichen. Finden Sie einen Partner für eine erfolgreiche finanzielle Zusammenarbeit.",
-      "step1Title": "Schritt 1: Nutzen Sie unsere Expertise",
-      "step1Desc": "Unser Team analysiert Ihr Projekt und berät Sie zur besten Strategie, um Investoren und Finanzpartner zu gewinnen.",
-      "step2Title": "Schritt 2: Veröffentlichen Sie Ihr Projekt",
-      "step2Desc": "Veröffentlichen Sie Ihr Projekt auf unserer Plattform, um es unserem Investoren- und Partnernetzwerk sichtbar zu machen.",
-      "formTitle": "Projekt veröffentlichen",
-      "formDesc": "Füllen Sie die folgenden Informationen aus, um Ihr Projekt einzureichen.",
-      "fieldProjectTitle": "Projekttitel *",
-      "fieldSummary": "Projektbeschreibung *",
-      "fieldFundingSought": "Gesuchter Betrag (€) *",
-      "fieldEquityTerms": "Konditionen (Equity/Partnerschaft)",
-      "fieldContactEmail": "Kontakt-E-Mail *",
-      "listingTemplate": "Beispiel-Projektlisting",
-      "sampleTitle": "E-Commerce-Plattform Expansion Europa",
-      "sampleSummary": "E-Commerce-Plattform sucht Investor für europäische Expansion. 200% Wachstum in 18 Monaten.",
-      "sampleFunding": "500.000 €",
-      "sampleTerms": "15% Equity · Strategische Partnerschaft willkommen"
-    },
     "contactPage": {
       "title": "Kontakt",
       "subtitle": "Kontaktieren Sie uns",
@@ -903,12 +797,8 @@ export const translations = {
       "message": "Nachricht",
       "submit": "Senden",
       "sent": "Nachricht gesendet ✓",
-      "projectNature": "Art des Projekts",
-      "projectCountry": "Projektland",
-      "projectDesc": "Projektbeschreibung",
       "service": "Welche Leistung benötigen Sie?",
       "selectService": "Leistung auswählen",
-      "talkProject": "Sprechen wir über Ihr Projekt",
       "fillForm": "Füllen Sie das Formular aus",
       "treasuryRequest": "Antrag auf Treasury-Finanzierung",
       "companyCreatedAt": "Gründungsdatum des Unternehmens *",
@@ -955,10 +845,6 @@ export const translations = {
       "financing": {
         "title": "Unternehmensfinanzierung KMU | Sansekai Solution",
         "description": "Maßgeschneiderte Unternehmensfinanzierung für KMU von 2k€ bis 3M€: Working Capital, Liquidität, Bestand und Ausrüstung mit unabhängiger Beratung."
-      },
-      "investment": {
-        "title": "Investment-Beratung für KMU | Sansekai Solution",
-        "description": "Unabhängige Investment-Beratung für Unternehmer und KMU über das internationale Fonds- und Partnernetzwerk von Sansekai Solution."
       },
       "contact": {
         "title": "Kontakt Sansekai Solution | Sprechen Sie mit uns",

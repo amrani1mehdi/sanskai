@@ -136,7 +136,10 @@ export function getSiteContent(locale: Locale) {
       titleTrail: ` ${t.hero.title2}`,
       bullets: toBullets(t.hero.subtitle),
       primaryCta: { label: t.hero.ctaFinancing, href: "/financement" },
-      secondaryCta: { label: t.hero.ctaInvest, href: "/investissement" },
+      secondaryCta: {
+        label: t.nav.business,
+        href: "/developpement-entreprise",
+      },
       backgroundImage: "/images/hero-bg.jpg",
     },
 
@@ -327,33 +330,6 @@ export function getSiteContent(locale: Locale) {
       },
     },
 
-    /**
-     * /investissement — investment page.
-     *
-     * The live site hardcodes this hero and left column in French for every
-     * language; only the form labels and the trust row are translated.
-     */
-    investment: {
-      meta: t.meta.investment,
-      badge: "Investissement",
-      title: "INVESTISSEMENT",
-      subtitle: "L'investissement international de 300k € -3M €",
-      heroDesc:
-        "SANSEKAI vous ouvre les portes de l'investissement mondial : Investissez, Achetez, Vendez Louez. Bien plus qu'un réseau, nous transformons chaque projet en une expérience unique, avec exigence et discrétion.",
-      titleLead: "SANSEKAI : ",
-      titleAccent: "L'excellence en investissement",
-      paragraphs: [
-        "Nous mettons votre projet en relation avec des partenaires financiers fiables, de 100K à 3M €. Accompagnement discret et optimisation complète de votre dossier.",
-        "Contactez-nous et accédez à l'investissement sur mesure.",
-      ],
-      cards: [
-        { label: "VOTRE PROJET", description: "Accompagnement personnalisé" },
-        {
-          label: "OFFRE D'INVESTISSEMENT",
-          description: "Solutions sur mesure",
-        },
-      ],
-    },
 
     /** /expertise — expertise page. */
     expertise: {
