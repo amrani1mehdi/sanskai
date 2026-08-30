@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Send } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Send, TriangleAlert } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
+import type { Locale } from "@/lib/i18n/config";
+import { isCompanyAgeEligible } from "@/lib/eligibility";
+import { DatePicker } from "@/components/ui/date-picker";
 
 /** Shared by every field on the live site's financing form. */
 const inputClass =
@@ -14,6 +17,7 @@ const EMPTY = {
   telephone: "",
   email: "",
   entreprise: "",
+  dateCreation: "",
   adresse: "",
   codePostal: "",
   ville: "",
@@ -23,7 +27,13 @@ const EMPTY = {
   message: "",
 };
 
-export function FinancingForm({ content }: { content: SiteContent }) {
+export function FinancingForm({
+  content,
+  locale,
+}: {
+  content: SiteContent;
+  locale: Locale;
+}) {
   const { form } = content;
 
   const [values, setValues] = useState(EMPTY);
@@ -32,10 +42,22 @@ export function FinancingForm({ content }: { content: SiteContent }) {
   const set = (key: keyof typeof EMPTY) => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
 
+  /*
+   * A company only qualifies once it has been trading longer than six months,
+   * so the notice appears as soon as a date is picked rather than waiting for
+   * a submit that was never going to be accepted.
+   */
+  const ineligible = useMemo(
+    () => values.dateCreation !== "" && !isCompanyAgeEligible(values.dateCreation),
+    [values.dateCreation],
+  );
+
   // The live site posts to a Supabase edge function. There is no backend in
   // this rebuild yet, so the form mirrors the same success UX locally.
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (ineligible) return;
+
     setValues(EMPTY);
     setSent(true);
     setTimeout(() => setSent(false), 4000);
@@ -82,6 +104,46 @@ export function FinancingForm({ content }: { content: SiteContent }) {
           onChange={set("entreprise")}
           required
         />
+
+        <div>
+          <label
+            htmlFor="company-created-at"
+            className="text-xs font-medium text-foreground mb-1.5 block"
+          >
+            {form.companyCreatedAt}
+          </label>
+          <DatePicker
+            id="company-created-at"
+            value={values.dateCreation}
+            onChange={set("dateCreation")}
+            locale={locale}
+            placeholder={form.companyCreatedAtPlaceholder}
+            invalid={ineligible}
+            describedBy={ineligible ? "company-age-notice" : undefined}
+          />
+
+          {ineligible ? (
+            <div
+              id="company-age-notice"
+              role="alert"
+              className="mt-3 flex gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4"
+            >
+              <TriangleAlert
+                className="size-4 shrink-0 text-danger mt-0.5"
+                aria-hidden
+              />
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  {form.ineligibleTitle}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                  {form.ineligibleBody}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         <Field label={form.address} value={values.adresse} onChange={set("adresse")} />
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -129,7 +191,8 @@ export function FinancingForm({ content }: { content: SiteContent }) {
 
         <button
           type="submit"
-          className="w-full gold-gradient text-accent-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm mt-2 disabled:opacity-50"
+          disabled={ineligible}
+          className="w-full gold-gradient text-accent-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm mt-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {sent ? (
             form.sent
