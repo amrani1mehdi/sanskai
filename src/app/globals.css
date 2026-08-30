@@ -44,6 +44,29 @@
   --success: 142 60% 38%;
   --danger: 0 72% 51%;
 
+  /* Categorical series for the CRM statistics — slots 1-3 of the validated
+     data-viz palette, stepped for the light surface. Assigned in fixed order,
+     never cycled. */
+  --series-1: 213 68% 50%;
+  --series-2: 17 82% 56%;
+  --series-3: 159 73% 40%;
+  --series-4: 41 100% 46%;
+
+  /* Back-office rail. Only used inside .crm-theme, which overrides these, but
+     declared here so the generated utilities always resolve. */
+  --sidebar: 215 20% 13%;
+  --sidebar-hover: 215 18% 19%;
+  --sidebar-active: 215 18% 23%;
+  --sidebar-border: 215 16% 24%;
+  --sidebar-foreground: 214 22% 94%;
+  --sidebar-muted: 214 14% 72%;
+  --sidebar-accent: 38 52% 68%;
+
+  --stage-nouveau: 214 44% 40%;
+  --stage-examiner: 34 55% 34%;
+  --stage-qualifie: 266 26% 45%;
+  --stage-encours: 198 48% 32%;
+
   --radius: 0.5rem;
 
   --hero-gradient: linear-gradient(
@@ -92,6 +115,76 @@
   --border: 30 10% 20%;
   --input: 30 10% 20%;
   --ring: 36 40% 50%;
+
+  /* Same three hues, re-stepped for the dark surface — not an automatic flip. */
+  --series-1: 213 77% 56%;
+  --series-2: 17 70% 50%;
+  --series-3: 159 73% 36%;
+  --series-4: 40 100% 39%;
+}
+
+/* ==========================================================================
+   Back office — the same token names, restated for a two-surface admin.
+
+   A deep slate rail against a soft light canvas, with the brand's gold kept as
+   the single accent: warm enough to stay Sansekai, restrained enough to work
+   against all day. Scoped to the CRM shell, so the public site is untouched;
+   components are unchanged and still read `bg-card`, `text-accent`, etc.
+
+   Every ink below was measured, not eyeballed: all clear 4.5:1 on the surfaces
+   they actually sit on (worst case 5.33:1), buttons carry white text at 6.5:1,
+   and panels separate from the canvas by their border (1.40) rather than by
+   brightness — which keeps the canvas soft without washing the panels out.
+   ========================================================================== */
+
+.crm-theme {
+  /* Light side — a soft off-white canvas with panels a step above it. Neither
+     surface is pure white; separation comes from the border, not brightness. */
+  --background: 210 25% 97%;
+  --foreground: 215 24% 17%;
+
+  --card: 210 20% 99%;
+  --card-foreground: 215 24% 17%;
+
+  --popover: 210 20% 99%;
+  --popover-foreground: 215 24% 17%;
+
+  --primary: 215 24% 17%;
+  --primary-foreground: 210 20% 99%;
+
+  --secondary: 213 22% 93%;
+  --secondary-foreground: 215 24% 17%;
+
+  --muted: 213 22% 93%;
+  --muted-foreground: 215 13% 39%;
+
+  /* The brand's gold, deepened until white text sits on it at 6.54:1. */
+  --accent: 33 40% 33%;
+  --accent-foreground: 210 20% 99%;
+
+  --border: 214 18% 84%;
+  --input: 214 18% 84%;
+  --ring: 33 40% 33%;
+
+  --success: 152 36% 30%;
+  --danger: 5 52% 43%;
+
+  /* Status palette — one muted hue per stage, so a badge is legible at a
+     glance. All >= 5.68:1 on a panel. Reserved: never reused as series colours. */
+  --stage-nouveau: 214 44% 40%;
+  --stage-examiner: 34 55% 34%;
+  --stage-qualifie: 266 26% 45%;
+  --stage-encours: 198 48% 32%;
+
+  /* Dark side — the rail carries its own ink set, since nothing that reads on
+     the light canvas would read here. */
+  --sidebar: 215 20% 13%;
+  --sidebar-hover: 215 18% 19%;
+  --sidebar-active: 215 18% 23%;
+  --sidebar-border: 215 16% 24%;
+  --sidebar-foreground: 214 22% 94%;
+  --sidebar-muted: 214 14% 72%;
+  --sidebar-accent: 38 52% 68%;
 }
 
 @theme inline {
@@ -122,6 +215,24 @@
   --color-brand-dark: hsl(var(--brand-dark));
   --color-success: hsl(var(--success));
   --color-danger: hsl(var(--danger));
+
+  --color-series-1: hsl(var(--series-1));
+  --color-series-2: hsl(var(--series-2));
+  --color-series-3: hsl(var(--series-3));
+  --color-series-4: hsl(var(--series-4));
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-hover: hsl(var(--sidebar-hover));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-muted: hsl(var(--sidebar-muted));
+  --color-sidebar-active: hsl(var(--sidebar-active));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+
+  --color-stage-nouveau: hsl(var(--stage-nouveau));
+  --color-stage-examiner: hsl(var(--stage-examiner));
+  --color-stage-qualifie: hsl(var(--stage-qualifie));
+  --color-stage-encours: hsl(var(--stage-encours));
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-montserrat), var(--font-inter), sans-serif;
@@ -209,6 +320,25 @@
   }
 }
 
+
+/* Thin, brand-tinted scrollbar. Introduced for the crypto rails; those pages
+   are gone, but the CRM's lead table and Kanban board scroll horizontally and
+   want the same restrained treatment. */
+.scrollbar-brand {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+.scrollbar-brand::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.scrollbar-brand::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 9999px;
+}
+.scrollbar-brand::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 /* Elevated card surface — matches the live site's `.card-elevated`. */
 @utility card-elevated {
