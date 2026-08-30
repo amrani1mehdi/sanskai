@@ -18,8 +18,10 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = env('ADMIN_EMAIL', 'admin@sansekaisolution.com');
-        $password = env('ADMIN_PASSWORD');
+        // config(), not env(): once the config cache is built, env() reads
+        // null outside config files and this would quietly create nothing.
+        $email = config('leads.admin.email');
+        $password = config('leads.admin.password');
 
         $existing = User::where('email', $email)->first();
 
@@ -43,10 +45,10 @@ class AdminUserSeeder extends Seeder
         }
 
         $attributes = [
-            'name' => env('ADMIN_NAME', 'Sansekai Admin'),
+            'name' => config('leads.admin.name'),
             // Handed to the admin at installation; they sign in with either this
             // or the email, and change the password from the API afterwards.
-            'username' => env('ADMIN_USERNAME', 'admin'),
+            'username' => config('leads.admin.username'),
             'is_admin' => true,
             'email_verified_at' => now(),
         ];

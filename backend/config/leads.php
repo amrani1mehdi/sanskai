@@ -22,4 +22,19 @@ return [
 
     /** Accepted upload types, mirroring the website's accept attribute. */
     'accepted_mimes' => ['pdf', 'jpg', 'jpeg', 'png'],
+
+    /*
+     * The single administrator, as created by AdminUserSeeder.
+     *
+     * Declared here rather than read with env() at the point of use: once
+     * `config:cache` has run, env() returns null everywhere outside config
+     * files, and the seeder would silently decline to create the account. Only
+     * config files may read the environment.
+     */
+    'admin' => [
+        'name' => env('ADMIN_NAME', 'Sansekai Admin'),
+        'username' => env('ADMIN_USERNAME', 'admin'),
+        'email' => env('ADMIN_EMAIL', 'admin@sansekaisolution.com'),
+        'password' => env('ADMIN_PASSWORD'),
+    ],
 ];
