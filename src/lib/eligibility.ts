@@ -6,7 +6,7 @@
  * this number changes, that copy has to change with it.
  */
 
-/** A company must have been trading longer than this to apply. */
+/** Months of trading history required to apply. Meeting it exactly is enough. */
 export const MIN_COMPANY_AGE_MONTHS = 6;
 
 /** Monthly revenue floor, in euros. Meeting it exactly is enough. */
@@ -27,12 +27,12 @@ function addMonths(date: Date, months: number): Date {
 }
 
 /**
- * Whether a company founded on `createdAt` has been trading for strictly more
- * than the minimum.
+ * Whether a company founded on `createdAt` has at least the minimum trading
+ * history, matching the "At least 6 months" wording on the page.
  *
  * Compared against a cut-off date rather than a count of whole months: a
- * company six months and one day old is older than six months, but rounding
- * down to whole months would call it six and reject it.
+ * company six months and one day old has more than six months of history, but
+ * rounding down to whole months would call it six.
  */
 export function isCompanyAgeEligible(
   createdAt: string | null | undefined,
@@ -48,8 +48,8 @@ export function isCompanyAgeEligible(
     -MIN_COMPANY_AGE_MONTHS,
   );
 
-  // Strictly before the cut-off: reaching exactly six months is not enough.
-  return date.getTime() < cutoff.getTime();
+  // On or before the cut-off, so reaching exactly six months qualifies.
+  return date.getTime() <= cutoff.getTime();
 }
 
 /**
