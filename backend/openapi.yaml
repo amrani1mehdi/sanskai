@@ -915,18 +915,24 @@ paths:
           $ref: "#/components/responses/Unauthenticated"
 
 components:
+  # Order matters: Swagger UI lists these in the Authorize dialog exactly as
+  # they appear here, and submitting a lead is the first thing anyone tries.
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      description: Sanctum personal access token from `POST /v1/auth/token`.
     websiteApiKey:
       type: apiKey
       in: header
       name: X-Api-Key
       description: >
-        Shared secret from `WEBSITE_API_KEY`. Server-to-server only — never send
-        it from the browser.
+        FOR THE TWO /website/leads/* ENDPOINTS. Paste the value of
+        WEBSITE_API_KEY from the backend's .env — not a token. Server-to-server
+        only: never send this from a browser in production.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        FOR EVERY OTHER ENDPOINT. A Sanctum token from POST /v1/auth/token —
+        paste the token itself, without the word "Bearer". Leave this blank if
+        you are only submitting a lead.
 
   responses:
     Unauthenticated:
