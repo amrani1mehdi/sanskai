@@ -25,7 +25,7 @@ export const translations = {
       "title1": "Easily access",
       "titleHighlight": "financing",
       "title2": "for your business",
-      "subtitle": "• Financing for upcoming orders and inventory\n• Cash flow and working capital assistance\n• Website, branding and social media campaigns",
+      "subtitle": "• Financing for upcoming orders and inventory\n• Cash flow and working capital assistance\n• Financing for business development and new opportunities",
       "ctaFinancing": "Request financing",
       "ctaDebt": "Debt collection"
     },
@@ -324,7 +324,7 @@ export const translations = {
       "title1": "Accédez facilement au",
       "titleHighlight": "financement",
       "title2": "pour votre entreprise",
-      "subtitle": "• Financement de commandes et stocks à venir\n• Aide à la trésorerie et fonds de roulement\n• Site web, identité de marque et campagnes sur les réseaux",
+      "subtitle": "• Financement de commandes et stocks à venir\n• Aide à la trésorerie et fonds de roulement\n• Financement du développement et de nouvelles opportunités",
       "ctaFinancing": "Demander un financement",
       "ctaDebt": "Recouvrement de créances"
     },
@@ -623,7 +623,7 @@ export const translations = {
       "title1": "Einfacher Zugang zur",
       "titleHighlight": "Finanzierung",
       "title2": "für Ihr Unternehmen",
-      "subtitle": "• Finanzierung kommender Bestellungen und Lagerbestände\n• Cashflow- und Betriebskapitalhilfe\n• Website, Markenauftritt und Social-Media-Kampagnen",
+      "subtitle": "• Finanzierung kommender Bestellungen und Lagerbestände\n• Cashflow- und Betriebskapitalhilfe\n• Finanzierung für Unternehmensentwicklung und neue Chancen",
       "ctaFinancing": "Finanzierung anfordern",
       "ctaDebt": "Forderungseinzug"
     },
