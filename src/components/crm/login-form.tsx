@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { LogIn, TriangleAlert } from "lucide-react";
+import { Eye, EyeOff, LogIn, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -17,6 +17,7 @@ export function LoginForm() {
   const router = useRouter();
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
+  const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -76,15 +77,29 @@ export function LoginForm() {
         >
           Mot de passe
         </label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className={field}
-        />
+        <div className="relative">
+          <input
+            id="password"
+            type={visible ? "text" : "password"}
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className={cn(field, "pr-11")}
+          />
+          <button
+            type="button"
+            onClick={() => setVisible((current) => !current)}
+            // The state is announced rather than implied by the icon alone.
+            aria-label={
+              visible ? "Masquer le mot de passe" : "Afficher le mot de passe"
+            }
+            aria-pressed={visible}
+            className="absolute top-1/2 right-1 -translate-y-1/2 rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+          >
+            {visible ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        </div>
       </div>
 
       {error ? (
