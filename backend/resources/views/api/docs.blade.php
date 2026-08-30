@@ -13,7 +13,11 @@
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
     <script>
         window.ui = SwaggerUIBundle({
-            url: @json(route('api.docs.spec')),
+            // Root-relative on purpose: an absolute route() URL is built from
+            // APP_URL, which points at whatever host the app thinks it is — and
+            // when that disagrees with the host actually serving this page, the
+            // browser blocks the fetch as cross-origin.
+            url: '/api/docs/openapi.yaml',
             dom_id: '#swagger',
             deepLinking: true,
             persistAuthorization: true,
