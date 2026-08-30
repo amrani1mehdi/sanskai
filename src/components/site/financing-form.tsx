@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 const inputClass =
   "w-full px-4 py-3.5 rounded-lg bg-background text-foreground placeholder:text-muted-foreground border border-border focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all text-sm";
 
+type YesNo = "" | "yes" | "no";
+
 const EMPTY = {
   nom: "",
   prenom: "",
@@ -22,6 +24,10 @@ const EMPTY = {
   adresse: "",
   codePostal: "",
   ville: "",
+  siteWeb: "" as YesNo,
+  siteWebUrl: "",
+  reseaux: "" as YesNo,
+  reseauxOu: "",
   chiffreAffaire: "",
   montant: "",
   codeCommercial: "",
@@ -42,6 +48,19 @@ export function FinancingForm({
 
   const set = (key: keyof typeof EMPTY) => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
+
+  /**
+   * Answering "no" clears the follow-up, so a detail typed before changing
+   * the answer is not submitted alongside a contradicting one.
+   */
+  const setAnswer =
+    (key: "siteWeb" | "reseaux", detail: "siteWebUrl" | "reseauxOu") =>
+    (answer: YesNo) =>
+      setValues((current) => ({
+        ...current,
+        [key]: answer,
+        ...(answer === "no" ? { [detail]: "" } : {}),
+      }));
 
   /*
    * Both notices appear as soon as the offending field is filled in, rather
@@ -158,6 +177,43 @@ export function FinancingForm({
           <Field label={form.city} value={values.ville} onChange={set("ville")} required />
         </div>
 
+        <YesNoQuestion
+          name="siteWeb"
+          legend={form.hasWebsite}
+          yesLabel={form.yes}
+          noLabel={form.no}
+          value={values.siteWeb}
+          onChange={setAnswer("siteWeb", "siteWebUrl")}
+        />
+        {values.siteWeb === "yes" ? (
+          <Field
+            label={form.websiteUrl}
+            type="url"
+            inputMode="url"
+            placeholder="https://"
+            value={values.siteWebUrl}
+            onChange={set("siteWebUrl")}
+            required
+          />
+        ) : null}
+
+        <YesNoQuestion
+          name="reseaux"
+          legend={form.hasSocial}
+          yesLabel={form.yes}
+          noLabel={form.no}
+          value={values.reseaux}
+          onChange={setAnswer("reseaux", "reseauxOu")}
+        />
+        {values.reseaux === "yes" ? (
+          <Field
+            label={form.socialWhere}
+            value={values.reseauxOu}
+            onChange={set("reseauxOu")}
+            required
+          />
+        ) : null}
+
         <div className="grid sm:grid-cols-2 gap-4">
           <Field
             label={form.revenue}
@@ -221,6 +277,66 @@ export function FinancingForm({
   );
 }
 
+/**
+ * A yes/no answer as a two-option segmented control.
+ *
+ * Real radios underneath — hidden but focusable, so arrow keys move between
+ * the options and screen readers announce a grouped choice rather than two
+ * unrelated buttons.
+ */
+function YesNoQuestion({
+  name,
+  legend,
+  yesLabel,
+  noLabel,
+  value,
+  onChange,
+}: {
+  name: string;
+  legend: string;
+  yesLabel: string;
+  noLabel: string;
+  value: YesNo;
+  onChange: (value: YesNo) => void;
+}) {
+  const options: { value: Exclude<YesNo, "">; label: string }[] = [
+    { value: "yes", label: yesLabel },
+    { value: "no", label: noLabel },
+  ];
+
+  return (
+    <fieldset>
+      <legend className="text-xs font-medium text-foreground mb-1.5">
+        {legend}
+      </legend>
+      <div className="grid grid-cols-2 gap-3">
+        {options.map((option) => (
+          <label
+            key={option.value}
+            className={cn(
+              "cursor-pointer rounded-lg border px-4 py-3 text-center text-sm transition-colors",
+              "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent",
+              value === option.value
+                ? "gold-gradient border-transparent font-semibold text-accent-foreground"
+                : "border-border bg-background text-foreground hover:border-accent/40",
+            )}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={option.value}
+              checked={value === option.value}
+              onChange={() => onChange(option.value)}
+              className="sr-only"
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 /** Shown against the field that fails an eligibility rule. */
 function IneligibleNotice({
   id,
@@ -253,6 +369,7 @@ function Field({
   type,
   required,
   inputMode,
+  placeholder,
   invalid,
   describedBy,
 }: {
@@ -261,7 +378,8 @@ function Field({
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
-  inputMode?: "decimal" | "numeric" | "tel" | "email" | "text";
+  inputMode?: "decimal" | "numeric" | "tel" | "email" | "text" | "url";
+  placeholder?: string;
   invalid?: boolean;
   describedBy?: string;
 }) {
@@ -272,6 +390,7 @@ function Field({
         required={required}
         type={type}
         inputMode={inputMode}
+        placeholder={placeholder}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         className={cn(inputClass, invalid && "border-danger focus:border-danger")}

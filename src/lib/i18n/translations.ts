@@ -271,6 +271,12 @@ export const translations = {
       "ineligibleTitle": "Not eligible yet",
       "ineligibleBody": "Your company must have more than 6 months of trading history to apply. You are welcome to come back once it does.",
       "ineligibleRevenueBody": "Your monthly revenue must be at least €7,000 to apply. You are welcome to come back once it does.",
+      "yes": "Yes",
+      "no": "No",
+      "hasWebsite": "Do you have a website?",
+      "websiteUrl": "Website name or URL *",
+      "hasSocial": "Do you have marketing or social media accounts?",
+      "socialWhere": "Where? (Instagram, Facebook, TikTok, etc.) *",
       "siret": "SIRET Number"
     },
     "gdpr": {
@@ -609,6 +615,12 @@ export const translations = {
       "ineligibleTitle": "Pas encore éligible",
       "ineligibleBody": "Votre entreprise doit avoir plus de 6 mois d'activité pour déposer une demande. N'hésitez pas à revenir le moment venu.",
       "ineligibleRevenueBody": "Votre chiffre d'affaires mensuel doit atteindre au moins 7 000 € pour déposer une demande. N'hésitez pas à revenir le moment venu.",
+      "yes": "Oui",
+      "no": "Non",
+      "hasWebsite": "Avez-vous un site web ?",
+      "websiteUrl": "Nom ou adresse du site web *",
+      "hasSocial": "Avez-vous des comptes marketing ou réseaux sociaux ?",
+      "socialWhere": "Lesquels ? (Instagram, Facebook, TikTok, etc.) *",
       "siret": "Numéro SIRET"
     },
     "gdpr": {
@@ -947,6 +959,12 @@ export const translations = {
       "ineligibleTitle": "Noch nicht förderfähig",
       "ineligibleBody": "Ihr Unternehmen muss länger als 6 Monate bestehen, um einen Antrag zu stellen. Kommen Sie gerne wieder, sobald das der Fall ist.",
       "ineligibleRevenueBody": "Ihr Monatsumsatz muss mindestens 7.000 € betragen, um einen Antrag zu stellen. Kommen Sie gerne wieder, sobald das der Fall ist.",
+      "yes": "Ja",
+      "no": "Nein",
+      "hasWebsite": "Haben Sie eine Website?",
+      "websiteUrl": "Name oder URL der Website *",
+      "hasSocial": "Haben Sie Marketing- oder Social-Media-Konten?",
+      "socialWhere": "Welche? (Instagram, Facebook, TikTok usw.) *",
       "siret": "SIRET-Nummer"
     },
     "gdpr": {
