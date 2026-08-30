@@ -309,11 +309,10 @@ export function getSiteContent(locale: Locale) {
           description: t.businessPage.adsDesc,
         },
       ] satisfies BusinessService[],
-      cta: {
-        title: t.businessPage.ctaTitle,
-        description: t.businessPage.ctaDesc,
-        label: t.businessPage.ctaButton,
-        href: "/contact",
+      requestService: t.businessPage.requestService,
+      form: {
+        title: t.businessPage.formTitle,
+        description: t.businessPage.formDesc,
       },
     },
 

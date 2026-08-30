@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, Megaphone, Monitor, Palette, Rocket } from "lucide-react";
+import { Rocket } from "lucide-react";
 import { Navbar } from "@/components/site/navbar";
 import { Footer } from "@/components/site/footer";
 import { CookieBanner } from "@/components/site/cookie-banner";
+import { BusinessServices } from "@/components/site/business-services";
 import { MotionReveal } from "@/components/ui/motion-reveal";
 import { getSiteContent } from "@/lib/content";
 import { getLocale } from "@/lib/i18n/server";
-
-const SERVICE_ICONS = {
-  website: Monitor,
-  logo: Palette,
-  ads: Megaphone,
-} as const;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { businessDevelopment } = getSiteContent(await getLocale());
@@ -59,56 +53,8 @@ export default async function DeveloppementEntreprisePage() {
           </div>
         </section>
 
-        <section className="section-padding bg-background">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {businessDevelopment.services.map((service, index) => {
-                const Icon = SERVICE_ICONS[service.icon];
-                return (
-                  <MotionReveal
-                    key={service.title}
-                    y={24}
-                    delay={index * 100}
-                    className="bg-card rounded-xl p-8 card-elevated border border-border group hover:border-accent/20 transition-colors"
-                  >
-                    <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent transition-all duration-300">
-                      <Icon
-                        size={24}
-                        className="text-accent group-hover:text-accent-foreground transition-colors"
-                      />
-                    </div>
-                    <h3 className="font-display text-lg font-bold text-card-foreground mb-3">
-                      {service.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {service.description}
-                    </p>
-                  </MotionReveal>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="section-padding bg-secondary">
-          <div className="container mx-auto px-4">
-            <MotionReveal y={20} className="max-w-2xl mx-auto text-center">
-              <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
-                {businessDevelopment.cta.title}
-              </h2>
-              <p className="text-muted-foreground leading-relaxed mb-8">
-                {businessDevelopment.cta.description}
-              </p>
-              <Link
-                href={businessDevelopment.cta.href}
-                className="gold-gradient text-accent-foreground inline-flex items-center gap-2 rounded-lg px-8 py-4 text-sm font-bold transition-opacity hover:opacity-90"
-              >
-                {businessDevelopment.cta.label}
-                <ArrowRight size={16} aria-hidden />
-              </Link>
-            </MotionReveal>
-          </div>
-        </section>
+        {/* Cards and form together: each card's button selects its service. */}
+        <BusinessServices content={content} />
       </main>
 
       <Footer content={content} />

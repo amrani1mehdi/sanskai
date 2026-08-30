@@ -235,7 +235,9 @@ export const translations = {
       "talkProject": "Let's talk about your project",
       "fillForm": "Fill in the form below",
       "treasuryRequest": "Treasury financing request",
-      "siret": "SIRET Number"
+      "siret": "SIRET Number",
+      "service": "Which service do you need?",
+      "selectService": "Select a service"
     },
     "gdpr": {
       "bannerText": "We use essential cookies for site operation. By continuing to browse, you accept the use of these cookies.",
@@ -289,7 +291,10 @@ export const translations = {
       "adsDesc": "Campaigns aimed at the people most likely to buy, measured on what they bring in rather than on impressions.",
       "ctaTitle": "Ready to grow your presence?",
       "ctaDesc": "Tell us what you are building and we will come back within 24 hours.",
-      "ctaButton": "Talk to us"
+      "ctaButton": "Talk to us",
+      "requestService": "Request this service",
+      "formTitle": "Tell us about your project",
+      "formDesc": "Pick a service and leave your details — we come back within 24 hours."
     }
   },
   "fr": {
@@ -520,7 +525,9 @@ export const translations = {
       "talkProject": "Parlons de votre projet",
       "fillForm": "Remplissez le formulaire ci-dessous",
       "treasuryRequest": "Formulaire demande de trésorerie",
-      "siret": "Numéro SIRET"
+      "siret": "Numéro SIRET",
+      "service": "Quel service vous intéresse ?",
+      "selectService": "Choisissez un service"
     },
     "gdpr": {
       "bannerText": "Nous utilisons des cookies essentiels pour le fonctionnement du site. En poursuivant votre navigation, vous acceptez l'utilisation de ces cookies.",
@@ -574,7 +581,10 @@ export const translations = {
       "adsDesc": "Des campagnes adressées aux personnes les plus susceptibles d'acheter, mesurées sur ce qu'elles rapportent plutôt que sur les impressions.",
       "ctaTitle": "Prêt à développer votre présence ?",
       "ctaDesc": "Dites-nous ce que vous construisez et nous revenons vers vous sous 24 heures.",
-      "ctaButton": "Parlons-en"
+      "ctaButton": "Parlons-en",
+      "requestService": "Demander ce service",
+      "formTitle": "Parlez-nous de votre projet",
+      "formDesc": "Choisissez un service et laissez vos coordonnées — nous revenons vers vous sous 24 heures."
     }
   },
   "de": {
@@ -805,7 +815,9 @@ export const translations = {
       "talkProject": "Sprechen wir über Ihr Projekt",
       "fillForm": "Füllen Sie das Formular aus",
       "treasuryRequest": "Antrag auf Treasury-Finanzierung",
-      "siret": "SIRET-Nummer"
+      "siret": "SIRET-Nummer",
+      "service": "Welche Leistung benötigen Sie?",
+      "selectService": "Leistung auswählen"
     },
     "gdpr": {
       "bannerText": "Wir verwenden essentielle Cookies für den Betrieb der Website. Durch die weitere Nutzung akzeptieren Sie die Verwendung dieser Cookies.",
@@ -859,7 +871,10 @@ export const translations = {
       "adsDesc": "Kampagnen für die Menschen mit der höchsten Kaufwahrscheinlichkeit, gemessen am Ertrag statt an Impressionen.",
       "ctaTitle": "Bereit, Ihre Präsenz auszubauen?",
       "ctaDesc": "Sagen Sie uns, was Sie aufbauen — wir melden uns innerhalb von 24 Stunden.",
-      "ctaButton": "Sprechen wir darüber"
+      "ctaButton": "Sprechen wir darüber",
+      "requestService": "Diese Leistung anfragen",
+      "formTitle": "Erzählen Sie uns von Ihrem Projekt",
+      "formDesc": "Wählen Sie eine Leistung und hinterlassen Sie Ihre Daten — wir melden uns innerhalb von 24 Stunden."
     }
   }
 } as const;
