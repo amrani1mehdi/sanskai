@@ -127,10 +127,12 @@ export function FinancingForm({
           </label>
           <DatePicker
             id="company-created-at"
+            name="dateCreation"
             value={values.dateCreation}
             onChange={set("dateCreation")}
             locale={locale}
             placeholder={form.companyCreatedAtPlaceholder}
+            required
             invalid={ageIneligible}
             describedBy={ageIneligible ? "company-age-notice" : undefined}
           />

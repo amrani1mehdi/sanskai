@@ -18,6 +18,10 @@ type DatePickerProps = {
   id?: string;
   invalid?: boolean;
   describedBy?: string;
+  /** Blocks submission while empty, alongside the form's other required fields. */
+  required?: boolean;
+  /** Field name for the mirror input that carries the value into the form. */
+  name?: string;
 };
 
 const WEEK_START = 1; // Monday, as in all three of the site's locales.
@@ -51,6 +55,8 @@ export function DatePicker({
   id,
   invalid,
   describedBy,
+  required,
+  name,
 }: DatePickerProps) {
   const today = useMemo(() => startOfDay(new Date()), []);
   const maxDate = useMemo(() => startOfDay(max ?? new Date()), [max]);
@@ -174,6 +180,26 @@ export function DatePicker({
         </span>
         <CalendarDays className="size-4 shrink-0 text-accent" aria-hidden />
       </button>
+
+      {/*
+        The trigger is a button, so it cannot be `required` itself. This mirror
+        carries the value into the form and lets the browser block submission
+        and focus the field the same way it does for every other required
+        input. It stays rendered and focusable — `display: none` or
+        `visibility: hidden` would make the constraint unreportable — but is
+        invisible and out of the tab order.
+      */}
+      <input
+        type="text"
+        name={name}
+        value={value}
+        onChange={() => {}}
+        required={required}
+        tabIndex={-1}
+        aria-hidden
+        onFocus={() => setOpen(true)}
+        className="pointer-events-none absolute bottom-0 left-4 h-px w-px opacity-0"
+      />
 
       {open ? (
         <div
