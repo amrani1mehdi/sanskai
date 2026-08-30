@@ -67,6 +67,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::get('leads/{lead}/activities', [ActivityController::class, 'index'])
             ->name('leads.activities.index');
+        Route::post('leads/{lead}/activities', [ActivityController::class, 'store'])
+            ->name('leads.activities.store');
 
         // Cross-lead views, for the Documents page and the team feed.
         Route::get('documents', [LeadDocumentController::class, 'all'])->name('documents.index');

@@ -13,6 +13,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { KeyRound, LogOut, Settings, UserRound, X } from "lucide-react";
+import { signOut } from "@/lib/crm/api";
 import { CURRENT_ADMIN } from "@/lib/crm/config";
 import { useCrm } from "@/lib/crm/store";
 import { cn } from "@/lib/utils";
@@ -100,10 +101,12 @@ export function AccountMenu({ onNavigate }: { onNavigate: () => void }) {
           <button
             type="button"
             role="menuitem"
-            onClick={() => {
+            onClick={async () => {
               setOpen(false);
               onNavigate();
-              router.push("/");
+              await signOut();
+              router.refresh();
+              router.replace("/admin/login");
             }}
             className={cn(item, "hover:bg-danger/20")}
           >

@@ -119,6 +119,13 @@ export type Lead = {
 
   message?: string;
 
+  /**
+   * Counts come back on the list; the collections only on a single lead. Read
+   * these for badges and totals, and the arrays only on the detail page.
+   */
+  documentCount: number;
+  noteCount: number;
+
   documents: LeadDocument[];
   notes: LeadNote[];
   activity: Activity[];

@@ -1,208 +1,194 @@
 "use client";
 
 /**
- * Client-side lead store.
+ * The CRM's data, from the API.
  *
- * There is no backend wired up yet, so leads live in a module-level store
- * mirrored to localStorage: status changes, notes and deletions survive a
- * refresh, which is enough to work the board like the real thing.
+ * One module-level store rather than state per component: the sidebar, the
+ * table and the dashboard all read the same list, so they share a single fetch
+ * instead of issuing one each.
  *
- * `useSyncExternalStore` does the reading: the server snapshot is the seed, the
- * client snapshot is whatever localStorage holds, and React reconciles the two
- * after hydration on its own. Every mutation also appends to the lead's
- * activity trail, so swapping this file for API calls later keeps the same
- * surface.
+ * A mutation writes to the API first and reloads second. Updating the local
+ * copy optimistically would let the board show a status the server rejected —
+ * on a dossier that decides whether someone gets financed, the screen should
+ * only ever show what was actually recorded.
  */
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { CURRENT_ADMIN, STAGES, STAGE_BY_ID } from "./config";
-import { SEED_LEADS } from "./data";
-import type { Activity, ActivityKind, Lead, LeadStatus } from "./types";
+import * as api from "./api";
+import type { Lead, LeadStatus } from "./types";
 
-/** v4 dropped responsables; a v3 board is not readable as-is. */
-const STORAGE_KEY = "sansekai-crm-v4";
+type Snapshot = {
+  leads: Lead[];
+  /** False until the first response lands, so views can show a skeleton. */
+  hydrated: boolean;
+  error: string | null;
+};
 
-let leads: Lead[] = SEED_LEADS;
+const EMPTY: Snapshot = { leads: [], hydrated: false, error: null };
+
+let snapshot: Snapshot = EMPTY;
+let loading = false;
 const listeners = new Set<() => void>();
 
 function emit() {
   for (const listener of listeners) listener();
 }
 
+function set(next: Snapshot) {
+  snapshot = next;
+  emit();
+}
+
+/** Sends an expired session back to the form rather than showing an empty board. */
+function handle(error: unknown): string {
+  if (error instanceof api.ApiError && error.status === 401) {
+    /* A hard navigation on purpose: the session is gone, and a client-side
+       push would carry the stale store into the login page. This is module
+       scope, so there is no router to reach for anyway. */
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.assign("/admin/login");
+    return "Session expirée.";
+  }
+
+  return error instanceof api.ApiError
+    ? error.message
+    : "Impossible de joindre le CRM.";
+}
+
+export async function loadLeads(): Promise<void> {
+  loading = true;
+
+  try {
+    set({ leads: await api.fetchLeads(), hydrated: true, error: null });
+  } catch (error) {
+    set({ ...snapshot, hydrated: true, error: handle(error) });
+  } finally {
+    loading = false;
+  }
+}
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
+
+  // First subscriber triggers the load; the rest ride along.
+  if (!snapshot.hydrated && !loading) void loadLeads();
+
   return () => {
     listeners.delete(listener);
   };
 }
 
-/**
- * Runs once when the module first evaluates in the browser, before any render.
- * Hydration still renders the seed — React compares snapshots afterwards and
- * re-renders if storage held something else.
- */
-function restore() {
+const getSnapshot = () => snapshot;
+const getServerSnapshot = () => EMPTY;
+
+/** Runs a mutation, then reloads so the screen matches the server. */
+async function mutate(action: () => Promise<unknown>): Promise<void> {
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) return;
-
-    const parsed = JSON.parse(stored) as { leads?: Lead[] };
-
-    if (Array.isArray(parsed.leads)) {
-      // A status the config no longer knows would crash every STAGE_BY_ID
-      // lookup, so anything unrecognised falls back to the first stage.
-      leads = parsed.leads.map((lead) =>
-        STAGE_BY_ID[lead.status] ? lead : { ...lead, status: STAGES[0].id },
-      );
-    }
-  } catch {
-    // Private browsing, cleared storage, or a stale shape — the seed stands.
+    await action();
+  } catch (error) {
+    set({ ...snapshot, error: handle(error) });
+    return;
   }
+
+  await loadLeads();
 }
-
-if (typeof window !== "undefined") restore();
-
-function persist() {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ leads }));
-  } catch {
-    // Storage full or unavailable; the session still works in memory.
-  }
-}
-
-function commitLeads(next: Lead[]) {
-  leads = next;
-  persist();
-  emit();
-}
-
-function newId(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function activity(kind: ActivityKind, label: string): Activity {
-  return {
-    id: newId("act"),
-    kind,
-    label,
-    author: CURRENT_ADMIN,
-    at: new Date().toISOString(),
-  };
-}
-
-/** Applies `change` to one lead and stamps `updatedAt`. */
-function update(id: string, change: (lead: Lead) => Lead) {
-  commitLeads(
-    leads.map((lead) =>
-      lead.id === id ? { ...change(lead), updatedAt: new Date().toISOString() } : lead,
-    ),
-  );
-}
-
-export function setLeadStatus(id: string, status: LeadStatus) {
-  update(id, (lead) => {
-    if (lead.status === status) return lead;
-    const from = STAGE_BY_ID[lead.status].label;
-    const to = STAGE_BY_ID[status].label;
-    return {
-      ...lead,
-      status,
-      activity: [...lead.activity, activity("statut", `Statut passé de ${from} à ${to}`)],
-    };
-  });
-}
-
-export function addLeadNote(id: string, body: string) {
-  const trimmed = body.trim();
-  if (!trimmed) return;
-
-  update(id, (lead) => ({
-    ...lead,
-    notes: [
-      ...lead.notes,
-      {
-        id: newId("note"),
-        author: CURRENT_ADMIN,
-        body: trimmed,
-        createdAt: new Date().toISOString(),
-      },
-    ],
-    activity: [...lead.activity, activity("note", "Note interne ajoutée")],
-  }));
-}
-
-export function logLeadActivity(id: string, kind: ActivityKind, label: string) {
-  update(id, (lead) => ({
-    ...lead,
-    activity: [...lead.activity, activity(kind, label)],
-  }));
-}
-
-/** Removes one internal note. The history keeps the fact that it existed. */
-export function deleteLeadNote(leadId: string, noteId: string) {
-  update(leadId, (lead) => {
-    if (!lead.notes.some((note) => note.id === noteId)) return lead;
-
-    return {
-      ...lead,
-      notes: lead.notes.filter((note) => note.id !== noteId),
-      activity: [...lead.activity, activity("note", "Note interne supprimée")],
-    };
-  });
-}
-
-/** Removes one document from its lead, leaving a trace in the history. */
-export function deleteLeadDocument(leadId: string, documentId: string) {
-  update(leadId, (lead) => {
-    const document = lead.documents.find((item) => item.id === documentId);
-    if (!document) return lead;
-
-    return {
-      ...lead,
-      documents: lead.documents.filter((item) => item.id !== documentId),
-      activity: [
-        ...lead.activity,
-        activity("document", `Document supprimé : ${document.name}`),
-      ],
-    };
-  });
-}
-
-/** Removes the lead and everything attached to it. Not undoable. */
-export function deleteLead(id: string) {
-  commitLeads(leads.filter((lead) => lead.id !== id));
-}
-
-const getLeads = () => leads;
-const getSeedLeads = () => SEED_LEADS;
 
 export function useCrm() {
-  const currentLeads = useSyncExternalStore(subscribe, getLeads, getSeedLeads);
-
-  /** False during the server render and the hydration pass. */
-  const hydrated = useSyncExternalStore(
-    subscribe,
-    () => true,
-    () => false,
-  );
+  const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const getLead = useCallback(
-    (id: string) => currentLeads.find((lead) => lead.id === id),
-    [currentLeads],
+    (id: string) => current.leads.find((lead) => lead.id === id),
+    [current.leads],
   );
 
   return useMemo(
     () => ({
-      leads: currentLeads,
-      hydrated,
+      leads: current.leads,
+      hydrated: current.hydrated,
+      error: current.error,
+      refresh: loadLeads,
       getLead,
-      setStatus: setLeadStatus,
-      addNote: addLeadNote,
-      logActivity: logLeadActivity,
-      removeLead: deleteLead,
-      removeDocument: deleteLeadDocument,
-      removeNote: deleteLeadNote,
+
+      setStatus: (id: string, status: LeadStatus) =>
+        void mutate(() => api.updateStatus(id, status)),
+
+      addNote: (id: string, body: string) => {
+        const trimmed = body.trim();
+        if (trimmed) void mutate(() => api.createNote(id, trimmed));
+      },
+
+      removeNote: (_leadId: string, noteId: string) =>
+        void mutate(() => api.deleteNote(noteId)),
+
+      removeDocument: (_leadId: string, documentId: string) =>
+        void mutate(() => api.deleteDocument(documentId)),
+
+      removeLead: (id: string) => void mutate(() => api.deleteLead(id)),
+
+      /* A call or an email placed from the back office. The API records the
+         status changes, notes and document reads on its own. */
+      logContact: (id: string, kind: "appel" | "email") =>
+        void api.logContact(id, kind),
     }),
-    [currentLeads, hydrated, getLead],
+    [current, getLead],
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* One lead, in full                                                           */
+/*                                                                             */
+/* The list carries counts only, so the detail page fetches its own copy —      */
+/* documents, notes and the whole history.                                     */
+/* -------------------------------------------------------------------------- */
+
+type Detail = { lead: Lead | null; status: "loading" | "ready" | "missing" | "error" };
+
+const details = new Map<string, Detail>();
+const detailListeners = new Map<string, Set<() => void>>();
+
+function emitDetail(id: string) {
+  for (const listener of detailListeners.get(id) ?? []) listener();
+}
+
+export async function loadLead(id: string): Promise<void> {
+  try {
+    details.set(id, { lead: await api.fetchLead(id), status: "ready" });
+  } catch (error) {
+    const missing = error instanceof api.ApiError && error.status === 404;
+    if (!missing) handle(error);
+    details.set(id, { lead: null, status: missing ? "missing" : "error" });
+  }
+
+  emitDetail(id);
+}
+
+const LOADING: Detail = { lead: null, status: "loading" };
+
+export function useLead(id: string) {
+  const subscribeToDetail = useCallback(
+    (listener: () => void) => {
+      const set = detailListeners.get(id) ?? new Set<() => void>();
+      set.add(listener);
+      detailListeners.set(id, set);
+
+      if (!details.has(id)) {
+        details.set(id, LOADING);
+        void loadLead(id);
+      }
+
+      return () => {
+        set.delete(listener);
+      };
+    },
+    [id],
+  );
+
+  const read = useCallback(() => details.get(id) ?? LOADING, [id]);
+  const detail = useSyncExternalStore(subscribeToDetail, read, () => LOADING);
+
+  const reload = useCallback(() => {
+    void loadLead(id);
+  }, [id]);
+
+  return { lead: detail.lead, status: detail.status, reload };
 }

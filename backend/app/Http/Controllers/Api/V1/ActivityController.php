@@ -18,6 +18,26 @@ class ActivityController extends Controller
     }
 
     /**
+     * POST /api/v1/leads/{lead}/activities
+     *
+     * Consigns a call or an email placed from the back office. The label is
+     * built here from the lead's own contact details, so the trail cannot be
+     * dictated by the caller.
+     */
+    public function store(StoreContactActivityRequest $request, Lead $lead): JsonResponse
+    {
+        $kind = ActivityKind::from($request->validated('kind'));
+
+        $label = $kind === ActivityKind::Appel
+            ? 'Appel passé au '.($lead->telephone ?? 'numéro non renseigné')
+            : 'Email envoyé à '.$lead->email;
+
+        $activity = $lead->recordActivity($kind, $label, $request->user());
+
+        return response()->json(['data' => new LeadActivityResource($activity)], 201);
+    }
+
+    /**
      * GET /api/v1/activities
      *
      * The team feed: everything that happened, newest first, with the lead
