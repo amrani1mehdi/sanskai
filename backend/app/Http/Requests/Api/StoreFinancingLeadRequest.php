@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api;
 
 use App\Support\Eligibility;
+use App\Support\UploadLimits;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -26,7 +27,7 @@ class StoreFinancingLeadRequest extends FormRequest
         $file = [
             'file',
             'mimes:'.implode(',', config('leads.accepted_mimes')),
-            'max:'.config('leads.max_upload_kb'),
+            'max:'.UploadLimits::maxKilobytes(),
         ];
 
         return [

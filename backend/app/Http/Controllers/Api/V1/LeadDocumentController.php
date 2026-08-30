@@ -9,11 +9,16 @@ use App\Http\Requests\Api\StoreLeadDocumentRequest;
 use App\Http\Resources\LeadDocumentResource;
 use App\Models\Lead;
 use App\Models\LeadDocument;
+use App\Support\DocumentStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class LeadDocumentController extends Controller
 {
@@ -44,26 +49,45 @@ class LeadDocumentController extends Controller
         return LeadDocumentResource::collection($documents);
     }
 
-    /** POST /api/v1/leads/{lead}/documents — an admin attaching a missing piece. */
+    /**
+     * POST /api/v1/leads/{lead}/documents
+     *
+     * For an admin attaching a piece that arrived later, by email say. The row
+     * and the file are written together; if the row cannot be written, the
+     * bytes are discarded rather than left on disk with nothing pointing at them.
+     */
     public function store(StoreLeadDocumentRequest $request, Lead $lead): JsonResponse
     {
-        $file = $request->file('file');
-        $kind = DocumentKind::from($request->validated('kind'));
+        $store = new DocumentStore;
 
-        $document = $lead->documents()->create([
-            'kind' => $kind,
-            'original_name' => $file->getClientOriginalName(),
-            'path' => $file->store("leads/{$lead->id}", config('leads.documents_disk')),
-            'mime_type' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
-            'uploaded_by_id' => $request->user()?->id,
-        ]);
+        try {
+            $document = DB::transaction(function () use ($request, $lead, $store): LeadDocument {
+                $document = $store->put(
+                    $lead,
+                    $request->file('file'),
+                    DocumentKind::from($request->validated('kind')),
+                    $request->user(),
+                );
 
-        $lead->recordActivity(
-            ActivityKind::Document,
-            "Document ajouté : {$document->original_name}",
-            $request->user(),
-        );
+                $lead->recordActivity(
+                    ActivityKind::Document,
+                    "Document ajouté : {$document->original_name}",
+                    $request->user(),
+                );
+
+                return $document;
+            });
+        } catch (Throwable $e) {
+            $store->discard();
+
+            Log::error("Échec de l'ajout d'un document", [
+                'lead_id' => $lead->id,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
 
         return response()->json(['data' => new LeadDocumentResource($document)], 201);
     }
@@ -76,11 +100,17 @@ class LeadDocumentController extends Controller
      */
     public function download(Request $request, LeadDocument $document): StreamedResponse
     {
-        abort_unless(
-            Storage::disk($document->disk())->exists($document->path),
-            404,
-            'Fichier introuvable.',
-        );
+        if (! Storage::disk($document->disk())->exists($document->path)) {
+            // A row without its file is an inconsistency someone has to fix; a
+            // bare 404 would hide it.
+            Log::error('Document référencé en base mais absent du disque', [
+                'document_id' => $document->id,
+                'lead_id' => $document->lead_id,
+                'path' => $document->path,
+            ]);
+
+            abort(404, 'Fichier introuvable.');
+        }
 
         $document->lead->recordActivity(
             ActivityKind::Document,
@@ -95,7 +125,7 @@ class LeadDocumentController extends Controller
     }
 
     /** DELETE /api/v1/documents/{document} */
-    public function destroy(Request $request, LeadDocument $document): JsonResponse
+    public function destroy(Request $request, LeadDocument $document): Response
     {
         $lead = $document->lead;
         $name = $document->original_name;
@@ -108,6 +138,6 @@ class LeadDocumentController extends Controller
             $request->user(),
         );
 
-        return response()->json(null, 204);
+        return response()->noContent();
     }
 }

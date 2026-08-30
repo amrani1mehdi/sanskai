@@ -42,7 +42,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Signing in is public by necessity; the endpoint throttles itself.
     Route::post('auth/token', [AuthController::class, 'store'])->name('auth.store');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    // `admin` re-checks is_admin on every request: revoking access should take
+    // effect on the next call, not whenever the holder next signs in.
+    Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'show'])->name('auth.me');
         Route::patch('auth/password', [AuthController::class, 'updatePassword'])
             ->name('auth.password');

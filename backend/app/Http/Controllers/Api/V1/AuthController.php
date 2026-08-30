@@ -7,6 +7,7 @@ use App\Http\Resources\AdminUserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rules\Password;
@@ -120,10 +121,10 @@ class AuthController extends Controller
     }
 
     /** DELETE /api/v1/auth/token — revokes the token that made the call. */
-    public function destroy(Request $request): JsonResponse
+    public function destroy(Request $request): Response
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(null, 204);
+        return response()->noContent();
     }
 }

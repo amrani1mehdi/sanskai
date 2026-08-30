@@ -11,6 +11,7 @@ use App\Http\Resources\LeadResource;
 use App\Models\Lead;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /** Back-office lead management. Every route here requires a signed-in admin. */
@@ -94,7 +95,7 @@ class LeadController extends Controller
      * Removes the notes, activity and document rows by cascade, and the files
      * with them — a deleted dossier should not leave a bank statement on disk.
      */
-    public function destroy(Lead $lead): JsonResponse
+    public function destroy(Lead $lead): Response
     {
         foreach ($lead->documents as $document) {
             $document->deleteWithFile();
@@ -102,7 +103,7 @@ class LeadController extends Controller
 
         $lead->delete();
 
-        return response()->json(null, 204);
+        return response()->noContent();
     }
 
     /**

@@ -103,7 +103,21 @@ on success.
 Set server-side, never sent: `reference` (`FIN-2026-0142`), `service`
 (`financement`), `status` (`nouveau`), `eligible_age`, `eligible_revenue`.
 
-Uploads: PDF / JPG / PNG, 10 MB each — the same rules the form enforces.
+Uploads: PDF / JPG / PNG. The size ceiling is the **smaller** of
+`leads.max_upload_kb` (10 MB) and PHP's own `upload_max_filesize`.
+
+> **Check php.ini before blaming the API.** A stock PHP ships
+> `upload_max_filesize=2M` and `post_max_size=8M`. PHP discards an oversized
+> file *before* Laravel sees the request, so the rule that fires is
+> "the file is required" — and the applicant is told they forgot a document they
+> actually attached. Validation therefore advertises the real limit rather than
+> the configured one, so the message is at least true. To accept the full 10 MB
+> across four slots, set:
+>
+> ```ini
+> upload_max_filesize = 10M
+> post_max_size = 48M
+> ```
 
 ### Business development form → `leads`
 
@@ -267,6 +281,19 @@ Decisions worth knowing before extending this:
 - **Every mutation writes to `lead_activities`** through `Lead::recordActivity()`,
   and that table has no update or delete endpoint, so a dossier's history cannot
   be quietly rewritten.
+- **Uploads are sniffed, not trusted.** The stored MIME type comes from the
+  file's own bytes (`getMimeType()`), never the browser's `Content-Type`, which
+  is set by whatever posted the form. Filenames are stripped to a safe basename
+  before being stored or echoed back in a `Content-Disposition` header.
+- **A rollback takes the files with it.** `DocumentStore` tracks what it wrote
+  and discards it when the transaction fails, so a failed submission never
+  leaves a bank statement on disk that no lead points to.
+- **The reference is proposed, not guaranteed.** Two submissions can compute the
+  same one; the unique index rejects the loser and the request retries. Read-then-write
+  alone is a race.
+- **`is_admin` is re-checked on every request** by the `admin` middleware, and a
+  token whose account lost access is deleted on the spot. Checking only at login
+  means revocation waits for the next sign-in, which is backwards.
 - **`app/Support/Eligibility.php` is a deliberate port** of the website's
   `src/lib/eligibility.ts`, thresholds and edge cases included. If one side's
   numbers change, the other has to. Both live in this repository, so the two can

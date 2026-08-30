@@ -181,11 +181,13 @@ paths:
                 pieceIdentite:
                   type: string
                   format: binary
-                  description: Optional. PDF, JPG or PNG, 10 MB max.
+                  description: >
+                    Optional. PDF, JPG or PNG. Max size is the smaller of the
+                    app's 10 MB and PHP's upload_max_filesize — see API.md.
                 kbis:
                   type: string
                   format: binary
-                  description: Required. PDF, JPG or PNG, 10 MB max.
+                  description: Required. PDF, JPG or PNG. See the size note on pieceIdentite.
                 relevesBancaires:
                   type: string
                   format: binary

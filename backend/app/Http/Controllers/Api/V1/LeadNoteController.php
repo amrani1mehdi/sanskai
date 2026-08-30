@@ -10,6 +10,7 @@ use App\Models\Lead;
 use App\Models\LeadNote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class LeadNoteController extends Controller
@@ -42,7 +43,7 @@ class LeadNoteController extends Controller
      *
      * The note goes; the trail keeps the fact that one existed and was removed.
      */
-    public function destroy(Request $request, LeadNote $note): JsonResponse
+    public function destroy(Request $request, LeadNote $note): Response
     {
         $lead = $note->lead;
         $note->delete();
@@ -53,6 +54,6 @@ class LeadNoteController extends Controller
             $request->user(),
         );
 
-        return response()->json(null, 204);
+        return response()->noContent();
     }
 }

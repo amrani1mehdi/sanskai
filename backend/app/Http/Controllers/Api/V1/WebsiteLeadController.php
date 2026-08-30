@@ -10,12 +10,14 @@ use App\Enums\Prestation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreDevelopmentLeadRequest;
 use App\Http\Requests\Api\StoreFinancingLeadRequest;
-use App\Http\Resources\LeadResource;
 use App\Models\Lead;
+use App\Support\DocumentStore;
 use App\Support\Eligibility;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * The website's two submission endpoints.
@@ -34,6 +36,12 @@ class WebsiteLeadController extends Controller
     ];
 
     /**
+     * Two submissions arriving together can propose the same reference; the
+     * unique index rejects the loser, and it simply tries again.
+     */
+    private const REFERENCE_ATTEMPTS = 3;
+
+    /**
      * POST /api/v1/website/leads/financement
      *
      * The lead, its files and its first activity entry are written in one
@@ -43,55 +51,66 @@ class WebsiteLeadController extends Controller
     public function financement(StoreFinancingLeadRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $store = new DocumentStore;
 
-        $lead = DB::transaction(function () use ($request, $data): Lead {
-            $lead = Lead::create([
-                'reference' => Lead::nextReference(LeadService::Financement),
-                'service' => LeadService::Financement,
-                'status' => LeadStatus::Nouveau,
+        $lead = $this->createWithReference(
+            LeadService::Financement,
+            fn (string $reference) => tap(
+                Lead::create([
+                    'reference' => $reference,
+                    'service' => LeadService::Financement,
+                    'status' => LeadStatus::Nouveau,
 
-                'nom' => $data['nom'],
-                'prenom' => $data['prenom'],
-                'email' => $data['email'],
-                'telephone' => $data['telephone'],
+                    'nom' => $data['nom'],
+                    'prenom' => $data['prenom'],
+                    'email' => $data['email'],
+                    'telephone' => $data['telephone'],
 
-                'entreprise' => $data['entreprise'],
-                'date_creation' => $data['dateCreation'],
-                'adresse' => $data['adresse'] ?? null,
-                'code_postal' => $data['codePostal'],
-                'ville' => $data['ville'],
+                    'entreprise' => $data['entreprise'],
+                    'date_creation' => $data['dateCreation'],
+                    'adresse' => $data['adresse'] ?? null,
+                    'code_postal' => $data['codePostal'],
+                    'ville' => $data['ville'],
 
-                'chiffre_affaire' => $data['chiffreAffaire'],
-                'chiffre_affaire_cents' => self::toCents($data['chiffreAffaire']),
-                'montant' => $data['montant'],
-                'montant_cents' => self::toCents($data['montant']),
-                'code_commercial' => $data['codeCommercial'] ?? null,
+                    'chiffre_affaire' => $data['chiffreAffaire'],
+                    'chiffre_affaire_cents' => self::toCents($data['chiffreAffaire']),
+                    'montant' => $data['montant'],
+                    'montant_cents' => self::toCents($data['montant']),
+                    'code_commercial' => $data['codeCommercial'] ?? null,
 
-                'site_web' => $data['siteWeb'],
-                'site_web_url' => $data['siteWebUrl'] ?? null,
-                'reseaux' => $data['reseaux'],
-                'reseaux_ou' => $data['reseauxOu'] ?? null,
+                    'site_web' => $data['siteWeb'],
+                    'site_web_url' => $data['siteWebUrl'] ?? null,
+                    'reseaux' => $data['reseaux'],
+                    'reseaux_ou' => $data['reseauxOu'] ?? null,
 
-                'message' => $data['message'] ?? null,
+                    'message' => $data['message'] ?? null,
 
-                // Frozen at submission; the resource also reports them live.
-                'eligible_age' => Eligibility::companyAge($data['dateCreation']),
-                'eligible_revenue' => Eligibility::revenue($data['chiffreAffaire']),
-            ]);
+                    // Frozen at submission; the resource also reports them live.
+                    'eligible_age' => Eligibility::companyAge($data['dateCreation']),
+                    'eligible_revenue' => Eligibility::revenue($data['chiffreAffaire']),
+                ]),
+                function (Lead $lead) use ($request, $store): void {
+                    foreach (self::UPLOAD_FIELDS as $field => $kind) {
+                        if ($request->hasFile($field)) {
+                            $store->put($lead, $request->file($field), $kind);
+                        }
+                    }
 
-            foreach (self::UPLOAD_FIELDS as $field => $kind) {
-                if ($request->hasFile($field)) {
-                    self::storeDocument($lead, $request->file($field), $kind);
-                }
-            }
+                    $lead->recordActivity(
+                        ActivityKind::Creation,
+                        'Demande reçue via le formulaire de financement',
+                    );
+                },
+            ),
+            $store,
+        );
 
-            $lead->recordActivity(
-                ActivityKind::Creation,
-                'Demande reçue via le formulaire de financement',
-            );
-
-            return $lead;
-        });
+        Log::info('Lead de financement enregistré', [
+            'lead_id' => $lead->id,
+            'reference' => $lead->reference,
+            'documents' => $lead->documents()->count(),
+            'eligible' => $lead->eligible_age && $lead->eligible_revenue,
+        ]);
 
         return $this->created($lead);
     }
@@ -101,30 +120,85 @@ class WebsiteLeadController extends Controller
     {
         $data = $request->validated();
 
-        $lead = DB::transaction(function () use ($data): Lead {
-            $lead = Lead::create([
-                'reference' => Lead::nextReference(LeadService::Developpement),
-                'service' => LeadService::Developpement,
-                'prestation' => Prestation::from($data['service']),
-                'status' => LeadStatus::Nouveau,
+        $lead = $this->createWithReference(
+            LeadService::Developpement,
+            fn (string $reference) => tap(
+                Lead::create([
+                    'reference' => $reference,
+                    'service' => LeadService::Developpement,
+                    'prestation' => Prestation::from($data['service']),
+                    'status' => LeadStatus::Nouveau,
 
-                'nom' => $data['nom'],
-                'prenom' => $data['prenom'],
-                'email' => $data['email'],
-                'telephone' => $data['telephone'],
-                'entreprise' => $data['entreprise'],
-                'message' => $data['message'] ?? null,
-            ]);
+                    'nom' => $data['nom'],
+                    'prenom' => $data['prenom'],
+                    'email' => $data['email'],
+                    'telephone' => $data['telephone'],
+                    'entreprise' => $data['entreprise'],
+                    'message' => $data['message'] ?? null,
+                ]),
+                fn (Lead $lead) => $lead->recordActivity(
+                    ActivityKind::Creation,
+                    'Demande reçue via le formulaire de développement',
+                ),
+            ),
+        );
 
-            $lead->recordActivity(
-                ActivityKind::Creation,
-                'Demande reçue via le formulaire de développement',
-            );
-
-            return $lead;
-        });
+        Log::info('Lead de développement enregistré', [
+            'lead_id' => $lead->id,
+            'reference' => $lead->reference,
+            'prestation' => $lead->prestation?->value,
+        ]);
 
         return $this->created($lead);
+    }
+
+    /**
+     * Runs `$make` in a transaction, retrying when the reference collides.
+     *
+     * Files written before a rollback are discarded: the database forgets the
+     * row, and the disk must forget the bytes, or every failed submission
+     * leaves a bank statement nobody can reach or account for.
+     *
+     * @param  callable(string): Lead  $make
+     */
+    private function createWithReference(
+        LeadService $service,
+        callable $make,
+        ?DocumentStore $store = null,
+    ): Lead {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return DB::transaction(
+                    fn (): Lead => $make(Lead::nextReference($service)),
+                );
+            } catch (UniqueConstraintViolationException $e) {
+                $store?->discard();
+
+                if ($attempt >= self::REFERENCE_ATTEMPTS) {
+                    Log::error('Référence de lead introuvable après plusieurs essais', [
+                        'service' => $service->value,
+                        'attempts' => $attempt,
+                    ]);
+
+                    throw $e;
+                }
+
+                Log::warning('Collision de référence, nouvelle tentative', [
+                    'service' => $service->value,
+                    'attempt' => $attempt,
+                ]);
+            } catch (Throwable $e) {
+                $store?->discard();
+
+                Log::error('Échec de création du lead', [
+                    'service' => $service->value,
+                    'exception' => $e::class,
+                    'message' => $e->getMessage(),
+                ]);
+
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -144,21 +218,6 @@ class WebsiteLeadController extends Controller
                 'createdAt' => $lead->created_at?->toIso8601String(),
             ],
         ], 201);
-    }
-
-    private static function storeDocument(Lead $lead, UploadedFile $file, DocumentKind $kind): void
-    {
-        $disk = config('leads.documents_disk');
-
-        $lead->documents()->create([
-            'kind' => $kind,
-            'original_name' => $file->getClientOriginalName(),
-            // Hashed name: two applicants both sending "kbis.pdf" must not collide,
-            // and the stored name should not leak the applicant's own filename.
-            'path' => $file->store("leads/{$lead->id}", $disk),
-            'mime_type' => $file->getClientMimeType(),
-            'size' => $file->getSize(),
-        ]);
     }
 
     /** Integer cents, so totals and sorting never touch a float. */

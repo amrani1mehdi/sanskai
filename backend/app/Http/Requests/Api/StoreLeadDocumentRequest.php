@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api;
 
 use App\Enums\DocumentKind;
+use App\Support\UploadLimits;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,7 +23,7 @@ class StoreLeadDocumentRequest extends FormRequest
             'file' => [
                 'required', 'file',
                 'mimes:'.implode(',', config('leads.accepted_mimes')),
-                'max:'.config('leads.max_upload_kb'),
+                'max:'.UploadLimits::maxKilobytes(),
             ],
         ];
     }
