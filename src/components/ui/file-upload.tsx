@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { FileText, Paperclip, TriangleAlert, Upload, X } from "lucide-react";
+import { FileText, Plus, TriangleAlert, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -13,16 +13,20 @@ export const ACCEPTED_UPLOAD_TYPES = [
 ];
 
 type FileUploadProps = {
+  /** The action, e.g. "Upload ID document" — this is the button's own text. */
   label: string;
   /** Marks the field as not required, so nobody is left guessing. */
   optionalLabel: string;
   hint: string;
-  chooseLabel: string;
   removeLabel: string;
   tooLargeMessage: string;
   wrongTypeMessage: string;
-  file: File | null;
-  onChange: (file: File | null) => void;
+  files: File[];
+  onChange: (files: File[]) => void;
+  /** Bank statements arrive as one file per month, so some fields take several. */
+  multiple?: boolean;
+  addMoreLabel?: string;
+  maxFiles?: number;
 };
 
 function formatSize(bytes: number): string {
@@ -35,7 +39,7 @@ function formatSize(bytes: number): string {
 /**
  * Optional document upload: a drop zone that is also a button.
  *
- * Nothing is transmitted — there is no backend yet — so the chosen file is
+ * Nothing is transmitted — there is no backend yet — so the chosen files are
  * held in the form's state and validated client-side only. Whatever accepts
  * these later has to re-check type and size itself; a browser check keeps
  * honest people from wasting an upload, nothing more.
@@ -44,12 +48,14 @@ export function FileUpload({
   label,
   optionalLabel,
   hint,
-  chooseLabel,
   removeLabel,
   tooLargeMessage,
   wrongTypeMessage,
-  file,
+  files,
   onChange,
+  multiple = false,
+  addMoreLabel,
+  maxFiles = 12,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,79 +63,82 @@ export function FileUpload({
   const inputId = useId();
   const errorId = `${inputId}-error`;
 
-  const accept = (candidate: File) => {
-    if (!ACCEPTED_UPLOAD_TYPES.includes(candidate.type)) {
+  const accept = (candidates: File[]) => {
+    if (candidates.some((file) => !ACCEPTED_UPLOAD_TYPES.includes(file.type))) {
       setError(wrongTypeMessage);
       return;
     }
-    if (candidate.size > MAX_UPLOAD_BYTES) {
+    if (candidates.some((file) => file.size > MAX_UPLOAD_BYTES)) {
       setError(tooLargeMessage);
       return;
     }
 
     setError(null);
-    onChange(candidate);
+    onChange(
+      multiple ? [...files, ...candidates].slice(0, maxFiles) : candidates.slice(0, 1),
+    );
   };
 
-  const clear = () => {
+  const removeAt = (index: number) => {
     setError(null);
-    onChange(null);
+    onChange(files.filter((_, i) => i !== index));
     // Without this the same file cannot be picked again after removing it.
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  const open = () => inputRef.current?.click();
+  const full = multiple ? files.length >= maxFiles : files.length > 0;
+
   return (
     <div>
-      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <label
-          htmlFor={inputId}
-          className="text-xs font-medium text-foreground"
-        >
-          {label}
-        </label>
-        <span className="text-[0.6875rem] uppercase tracking-wide text-muted-foreground">
-          {optionalLabel}
-        </span>
-      </div>
-
       <input
         ref={inputRef}
-        id={inputId}
         type="file"
+        multiple={multiple}
         accept={ACCEPTED_UPLOAD_TYPES.join(",")}
         className="sr-only"
         aria-describedby={error ? errorId : undefined}
+        aria-label={label}
         onChange={(event) => {
-          const chosen = event.target.files?.[0];
-          if (chosen) accept(chosen);
+          const chosen = Array.from(event.target.files ?? []);
+          if (chosen.length) accept(chosen);
         }}
       />
 
-      {file ? (
-        <div className="flex items-center gap-3 rounded-lg border border-accent/30 bg-accent/5 px-4 py-3">
-          <FileText className="size-4 shrink-0 text-accent" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm text-foreground">
-              {file.name}
-            </span>
-            <span className="block text-xs tabular-nums text-muted-foreground">
-              {formatSize(file.size)}
-            </span>
-          </span>
-          <button
-            type="button"
-            onClick={clear}
-            aria-label={removeLabel}
-            title={removeLabel}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-danger"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-        </div>
-      ) : (
+      {files.length > 0 ? (
+        <ul className="space-y-2">
+          {files.map((file, index) => (
+            <li
+              key={`${file.name}-${file.size}-${index}`}
+              className="flex items-center gap-3 rounded-lg border border-accent/30 bg-accent/5 px-4 py-3"
+            >
+              <FileText className="size-4 shrink-0 text-accent" aria-hidden />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm text-foreground">
+                  {file.name}
+                </span>
+                <span className="block text-xs tabular-nums text-muted-foreground">
+                  {formatSize(file.size)}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => removeAt(index)}
+                aria-label={`${removeLabel}: ${file.name}`}
+                title={removeLabel}
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-danger"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {!full ? (
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={open}
           onDragOver={(event) => {
             event.preventDefault();
             setDragging(true);
@@ -138,30 +147,36 @@ export function FileUpload({
           onDrop={(event) => {
             event.preventDefault();
             setDragging(false);
-            const dropped = event.dataTransfer.files?.[0];
-            if (dropped) accept(dropped);
+            const dropped = Array.from(event.dataTransfer.files ?? []);
+            if (dropped.length) accept(dropped);
           }}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg border border-dashed px-4 py-3.5 text-left transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+            files.length > 0 && "mt-2",
             dragging
               ? "border-accent bg-accent/10"
               : "border-border bg-background hover:border-accent/40 hover:bg-secondary/40",
           )}
         >
           <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-accent/10">
-            <Upload className="size-4 text-accent" aria-hidden />
+            {files.length > 0 ? (
+              <Plus className="size-4 text-accent" aria-hidden />
+            ) : (
+              <Upload className="size-4 text-accent" aria-hidden />
+            )}
           </span>
           <span className="min-w-0">
-            <span className="block text-sm text-foreground">{chooseLabel}</span>
+            <span className="block text-sm font-medium text-foreground">
+              {files.length > 0 ? (addMoreLabel ?? label) : label}
+            </span>
             <span className="block text-xs text-muted-foreground">{hint}</span>
           </span>
-          <Paperclip
-            className="ml-auto size-4 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
+          <span className="ml-auto shrink-0 rounded-full border border-border px-2 py-0.5 text-[0.625rem] uppercase tracking-wide text-muted-foreground">
+            {optionalLabel}
+          </span>
         </button>
-      )}
+      ) : null}
 
       {error ? (
         <p

@@ -15,6 +15,15 @@ const inputClass =
 
 type YesNo = "yes" | "no";
 
+type UploadField = "idDocument" | "kbis" | "statements" | "accounting";
+
+const NO_UPLOADS: Record<UploadField, File[]> = {
+  idDocument: [],
+  kbis: [],
+  statements: [],
+  accounting: [],
+};
+
 const EMPTY = {
   nom: "",
   prenom: "",
@@ -47,7 +56,10 @@ export function FinancingForm({
 
   const [values, setValues] = useState(EMPTY);
   const [sent, setSent] = useState(false);
-  const [idDocument, setIdDocument] = useState<File | null>(null);
+  const [uploads, setUploads] = useState<Record<UploadField, File[]>>(NO_UPLOADS);
+
+  const setUpload = (field: UploadField) => (files: File[]) =>
+    setUploads((current) => ({ ...current, [field]: files }));
 
   const set = (key: keyof typeof EMPTY) => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
@@ -94,7 +106,7 @@ export function FinancingForm({
     if (ineligible) return;
 
     setValues(EMPTY);
-    setIdDocument(null);
+    setUploads(NO_UPLOADS);
     setSent(true);
     setTimeout(() => setSent(false), 4000);
   };
@@ -119,15 +131,14 @@ export function FinancingForm({
 
         {/* Sits with the name fields, since it is what backs them up. */}
         <FileUpload
-          label={form.idDocument}
+          label={form.uploadId}
           optionalLabel={form.optional}
           hint={form.fileHint}
-          chooseLabel={form.chooseFile}
           removeLabel={form.removeFile}
           tooLargeMessage={form.fileTooLarge}
           wrongTypeMessage={form.fileWrongType}
-          file={idDocument}
-          onChange={setIdDocument}
+          files={uploads.idDocument}
+          onChange={setUpload("idDocument")}
         />
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -152,6 +163,17 @@ export function FinancingForm({
           value={values.entreprise}
           onChange={set("entreprise")}
           required
+        />
+
+        <FileUpload
+          label={form.uploadKbis}
+          optionalLabel={form.optional}
+          hint={form.fileHint}
+          removeLabel={form.removeFile}
+          tooLargeMessage={form.fileTooLarge}
+          wrongTypeMessage={form.fileWrongType}
+          files={uploads.kbis}
+          onChange={setUpload("kbis")}
         />
 
         <div>
@@ -257,6 +279,34 @@ export function FinancingForm({
             body={form.ineligibleRevenueBody}
           />
         ) : null}
+
+        {/* Six months of statements usually means six files, not one. */}
+        <FileUpload
+          label={form.uploadStatements}
+          optionalLabel={form.optional}
+          hint={form.fileHint}
+          removeLabel={form.removeFile}
+          tooLargeMessage={form.fileTooLarge}
+          wrongTypeMessage={form.fileWrongType}
+          files={uploads.statements}
+          onChange={setUpload("statements")}
+          multiple
+          addMoreLabel={form.addAnotherFile}
+        />
+
+        {/* Accounting papers vary by request, so this one takes several too. */}
+        <FileUpload
+          label={form.uploadAccounting}
+          optionalLabel={form.optional}
+          hint={form.fileHint}
+          removeLabel={form.removeFile}
+          tooLargeMessage={form.fileTooLarge}
+          wrongTypeMessage={form.fileWrongType}
+          files={uploads.accounting}
+          onChange={setUpload("accounting")}
+          multiple
+          addMoreLabel={form.addAnotherFile}
+        />
 
         <Field
           label={form.commercialCode}
