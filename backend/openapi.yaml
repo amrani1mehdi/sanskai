@@ -44,11 +44,14 @@ info:
     field that failed so the site can show it where the applicant can act. The
     browser-side check is a courtesy; this one is the one that counts.
 
+# The deployed server comes first on purpose: this document is read far more
+# often by someone who just opened the link than by someone running the API on
+# their own machine, and Swagger UI sends "Try it out" to whichever is selected.
 servers:
+  - url: http://api.sansekai.72-60-190-211.sslip.io/api
+    description: Serveur de démonstration
   - url: http://localhost:8000/api
-    description: Local
-  - url: https://crm.sansekaisolution.com/api
-    description: Production
+    description: Local (php artisan serve)
 
 tags:
   - name: Website
