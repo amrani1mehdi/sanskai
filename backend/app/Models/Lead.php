@@ -33,6 +33,7 @@ class Lead extends Model
             'prestation' => Prestation::class,
             'status' => LeadStatus::class,
             'date_creation' => 'date',
+            'seen_at' => 'datetime',
             'chiffre_affaire_cents' => 'integer',
             'montant_cents' => 'integer',
             'site_web' => 'boolean',

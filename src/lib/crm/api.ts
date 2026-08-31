@@ -103,6 +103,7 @@ type ApiLead = {
   notes?: ApiNote[];
   activities?: ApiActivity[];
   createdAt: string;
+  seenAt: string | null;
   updatedAt: string;
 };
 
@@ -145,6 +146,7 @@ export function toLead(lead: ApiLead): Lead {
     prestation: lead.prestation ?? undefined,
     status: lead.status,
     createdAt: lead.createdAt,
+    seenAt: lead.seenAt ?? null,
     updatedAt: lead.updatedAt,
 
     nom: lead.nom,
@@ -194,12 +196,30 @@ export function toLead(lead: ApiLead): Lead {
  */
 export async function fetchChangeSignature(): Promise<string> {
   const payload = await call<{
-    data: { count: number; latestId: number | null; updatedAt: string | null };
+    data: {
+      count: number;
+      unseen: number;
+      latestId: number | null;
+      updatedAt: string | null;
+    };
   }>("changes");
 
-  const { count, latestId, updatedAt } = payload.data;
+  const { count, unseen, latestId, updatedAt } = payload.data;
 
-  return `${count}:${latestId ?? "-"}:${updatedAt ?? "-"}`;
+  /* `unseen` belongs in the fingerprint: the other administrator opening a
+     lead changes nothing else about the row, and the badge here has to clear
+     when it does. */
+  return `${count}:${unseen}:${latestId ?? "-"}:${updatedAt ?? "-"}`;
+}
+
+/** Marks one lead seen for the whole back office. */
+export async function markLeadSeen(id: string): Promise<void> {
+  await call(`leads/${id}/seen`, { method: "POST" });
+}
+
+/** Clears every outstanding arrival, for everybody. */
+export async function markAllLeadsSeen(): Promise<void> {
+  await call("leads/seen", { method: "POST" });
 }
 
 /** Every lead, following pagination so the board and filters see the full set. */

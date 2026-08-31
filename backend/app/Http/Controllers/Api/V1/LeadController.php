@@ -122,17 +122,57 @@ class LeadController extends Controller
      * `updatedAt` catches an edit that changes neither — a status moved on the
      * Kanban, say. Any one alone would miss a case.
      */
+    /**
+     * POST /api/v1/leads/{lead}/seen
+     *
+     * Marks one lead as looked at. Shared: it stops being new for the whole
+     * back office, which is the point — two people chasing the same arrival is
+     * the thing the badge is meant to prevent.
+     *
+     * Idempotent, and it keeps the first time rather than the latest: "when did
+     * we notice this" is a fact about the lead, and opening it again later does
+     * not change it.
+     */
+    public function markSeen(Lead $lead): JsonResponse
+    {
+        if ($lead->seen_at === null) {
+            $lead->seen_at = now();
+            $lead->save();
+        }
+
+        return response()->json(['data' => ['seenAt' => $lead->seen_at->toIso8601String()]]);
+    }
+
+    /**
+     * POST /api/v1/leads/seen
+     *
+     * Clears the badge in one go. One statement rather than a row at a time,
+     * since "mark all read" on a busy morning should not be forty round trips
+     * through the model.
+     */
+    public function markAllSeen(): JsonResponse
+    {
+        $marked = Lead::whereNull('seen_at')->update(['seen_at' => now()]);
+
+        return response()->json(['data' => ['marked' => $marked]]);
+    }
+
     public function changes(): JsonResponse
     {
         $row = Lead::query()
             ->selectRaw('count(*) as aggregate_count')
             ->selectRaw('max(id) as latest_id')
             ->selectRaw('max(updated_at) as updated_at')
+            // Part of the fingerprint too: one administrator opening a lead has
+            // to move the other's badge, and nothing else about the row changes
+            // when they do.
+            ->selectRaw('sum(case when seen_at is null then 1 else 0 end) as unseen_count')
             ->first();
 
         return response()->json([
             'data' => [
                 'count' => (int) $row->aggregate_count,
+                'unseen' => (int) $row->unseen_count,
                 'latestId' => $row->latest_id === null ? null : (int) $row->latest_id,
                 // ISO 8601 like every other timestamp the API returns, rather
                 // than the driver's raw datetime string.

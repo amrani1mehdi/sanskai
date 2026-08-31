@@ -100,6 +100,13 @@ export type Lead = {
   status: LeadStatus;
   createdAt: string;
   updatedAt: string;
+  /**
+   * When somebody in the back office first opened it, or null while nobody has.
+   *
+   * Shared by the whole team rather than held per viewer: once one
+   * administrator looks, it stops being new for the other, which is the point.
+   */
+  seenAt: string | null;
 
   // Identity — both forms collect all four.
   nom: string;

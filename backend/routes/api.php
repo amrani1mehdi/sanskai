@@ -89,6 +89,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('activities', [ActivityController::class, 'all'])->name('activities.index');
         Route::get('stats', [LeadController::class, 'stats'])->name('stats');
 
+        /*
+         * Read markers, shared by the whole back office.
+         *
+         * `leads/seen` is declared before `leads/{lead}/seen` so the literal
+         * wins: otherwise "seen" binds as a lead id and the route resolves to a
+         * lead that does not exist.
+         */
+        Route::post('leads/seen', [LeadController::class, 'markAllSeen'])
+            ->name('leads.seen.all');
+        Route::post('leads/{lead}/seen', [LeadController::class, 'markSeen'])
+            ->name('leads.seen');
+
         // Polled by the back office every few seconds; deliberately cheap.
         Route::get('changes', [LeadController::class, 'changes'])->name('changes');
     });

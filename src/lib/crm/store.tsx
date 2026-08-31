@@ -118,69 +118,46 @@ function handle(error: unknown): string {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Ids already acknowledged, kept in the browser.
+ * Which arrivals nobody has looked at yet.
  *
- * Held only in memory this resets on every refresh: a lead that arrived while
- * you were away counts as new once, then is silently forgotten the moment the
- * page reloads. Persisted, "new" survives until somebody marks it read, which
- * is the only version of this worth trusting.
- *
- * Per browser, not per account — a reading marker, not data. The CRM has one
- * administrator, so there is nobody for it to disagree with.
+ * Read from the server, not from this browser. The marker used to live in
+ * localStorage, which was right while there was one administrator and wrong the
+ * moment there were two: each carried a private idea of what was new, so the
+ * same lead was announced to both and chased by both. `seenAt` is one column on
+ * the lead, so one of them opening it clears it for the other.
  */
-const SEEN_KEY = "sansekai.crm.seen";
-
-function readSeen(): Set<string> | null {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem(SEEN_KEY);
-    return raw === null ? null : new Set(JSON.parse(raw) as string[]);
-  } catch {
-    /* Private windows and blocked site data both throw. Failing to remember is
-       survivable; taking the board down over it is not. */
-    return null;
-  }
-}
-
-function writeSeen(ids: Iterable<string>): void {
-  if (typeof window === "undefined") return;
-
-  try {
-    window.localStorage.setItem(SEEN_KEY, JSON.stringify([...ids]));
-  } catch {
-    /* Same again — the badge is then simply per-session. */
-  }
-}
-
 function unseenAfter(leads: Lead[]): string[] {
-  const ids = leads.map((lead) => lead.id);
-  const seen = readSeen();
-
-  if (seen === null) {
-    /* First run in this browser: everything already here is the baseline.
-       Announcing thirty existing leads as new is noise, not news. */
-    writeSeen(ids);
-    return [];
-  }
-
-  // Pruned to what still exists, so the marker cannot grow forever on the back
-  // of leads deleted long ago.
-  writeSeen(ids.filter((id) => seen.has(id)));
-
-  return ids.filter((id) => !seen.has(id));
+  return leads.filter((lead) => lead.seenAt === null).map((lead) => lead.id);
 }
 
-/** Acknowledges arrivals — all of them, or one. */
+/**
+ * Acknowledges arrivals — all of them, or one.
+ *
+ * Optimistic locally so the badge clears under the click, then written to the
+ * server and reloaded: the other administrator's next poll picks the change up,
+ * which is the whole reason this moved off the browser.
+ */
 function acknowledge(ids: string[]): void {
-  const seen = readSeen() ?? new Set<string>();
-  for (const id of ids) seen.add(id);
-  writeSeen(seen);
+  if (ids.length === 0) return;
 
   set({
     ...snapshot,
     unseen: snapshot.unseen.filter((id) => !ids.includes(id)),
   });
+
+  const written =
+    ids.length === snapshot.leads.filter((lead) => lead.seenAt === null).length
+      ? api.markAllLeadsSeen()
+      : Promise.all(ids.map((id) => api.markLeadSeen(id))).then(() => undefined);
+
+  void written
+    .then(() => loadLeads())
+    .catch((error: unknown) => {
+      // Put the badge back rather than leave it cleared against a server that
+      // never agreed.
+      if (error instanceof api.ApiError && error.status === 401) handle(error);
+      else void loadLeads();
+    });
 }
 
 export async function loadLeads(): Promise<void> {

@@ -40,6 +40,11 @@ class LeadResource extends JsonResource
             /* Contextual: `nouveau` reads "Nouveau" on a dossier and
                "Non répondu" on a contact message. Same stored value. */
             'statusLabel' => $this->status->labelFor($this->service),
+
+            /* Null until somebody in the back office has looked. Shared by the
+               whole team, not per viewer: once one of them opens it, it stops
+               being new for everybody. */
+            'seenAt' => $this->seen_at?->toIso8601String(),
             /* What this lead may be set to, so the back office builds its
                picker from the API rather than from a list of its own that
                could drift out of step with what the API will accept. */
