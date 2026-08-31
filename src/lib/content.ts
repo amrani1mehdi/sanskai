@@ -233,7 +233,7 @@ export function getSiteContent(locale: Locale) {
       primaryCta: { label: t.cta.primary, href: "/financement" },
       secondaryCta: {
         label: t.nav.contact,
-        href: "mailto:admin@sansekaisolution.com",
+        href: "/contact",
       },
     },
 
