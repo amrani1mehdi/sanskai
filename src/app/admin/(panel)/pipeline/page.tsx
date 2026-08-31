@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-/** The board moved into the CRM workspace, which is the same thing plus the
-    filters and the selection panel. */
-export default function PipelinePage() {
-  redirect("/admin/crm");
+/** Folded into the Leads board — the pipeline and the contact messages are two
+    views of it now, not separate pages. */
+export default function RetiredPage() {
+  redirect("/admin/leads");
 }

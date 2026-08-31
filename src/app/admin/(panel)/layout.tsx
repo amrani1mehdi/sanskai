@@ -4,7 +4,7 @@ import { AdminShell } from "@/components/crm/admin-shell";
 import { isSignedIn } from "@/lib/crm/session";
 
 export const metadata: Metadata = {
-  title: "CRM — Sansekai Solution",
+  title: "Espace admin — Sansekai Solution",
   description: "Gestion des leads soumis depuis le site.",
   robots: { index: false, follow: false },
 };

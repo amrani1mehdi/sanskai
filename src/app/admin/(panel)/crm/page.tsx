@@ -1,6 +1,6 @@
-import { CrmWorkspace } from "@/components/crm/crm-workspace";
+import { redirect } from "next/navigation";
 
-/** The operational workspace: board, filters, and the selected lead beside it. */
+/** Briefly lived here before the section was named Leads. */
 export default function CrmPage() {
-  return <CrmWorkspace />;
+  redirect("/admin/leads");
 }

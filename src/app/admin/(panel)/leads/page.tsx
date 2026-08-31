@@ -1,8 +1,11 @@
-import { redirect } from "next/navigation";
+import { CrmWorkspace } from "@/components/crm/crm-workspace";
 
-/** The leads table folded into the CRM board — one place to manage leads
-    rather than two views of the same list. Individual leads still have their
-    own page at /admin/leads/[id]. */
+/**
+ * Leads — the operational workspace.
+ *
+ * Sits at /admin/leads so the section and its URL agree, and so a lead's own
+ * page at /admin/leads/[id] reads as a child of it rather than a sibling.
+ */
 export default function LeadsPage() {
-  redirect("/admin/crm");
+  return <CrmWorkspace />;
 }

@@ -5,8 +5,8 @@
  * rail carries its own ink set (see `.crm-theme` in globals.css) because
  * nothing that reads on the light side reads on the dark one.
  *
- * Two destinations only: Dashboard to understand, CRM to manage. Each row is
- * a mark, a label and an optional count.
+ * Two destinations only: Aperçu to understand, Leads to manage. Each row is a
+ * mark, a label and an optional count.
  */
 
 import Image from "next/image";
@@ -37,8 +37,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
    * filters and summaries now, inside the two screens that own them.
    */
   const destinations = [
-    { href: "/admin", label: "Tableau de bord", icon: PieChart, exact: true },
-    { href: "/admin/crm", label: "CRM", icon: LayoutGrid, count: leads.length },
+    { href: "/admin", label: "Aperçu", icon: PieChart, exact: true },
+    { href: "/admin/leads", label: "Leads", icon: LayoutGrid, count: leads.length },
   ];
 
   const isActive = (href: string, exact?: boolean) =>

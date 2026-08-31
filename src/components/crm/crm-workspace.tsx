@@ -133,7 +133,7 @@ export function CrmWorkspace() {
     <div className="flex h-[calc(100vh-1px)] min-w-0">
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 lg:px-6">
-          <h1 className="font-display text-lg font-bold text-foreground">CRM</h1>
+          <h1 className="font-display text-lg font-bold text-foreground">Leads</h1>
 
           {/* Dossiers and messages are different objects with different
               stages, so this switches the board rather than filtering it. */}
