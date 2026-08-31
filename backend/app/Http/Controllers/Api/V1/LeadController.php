@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ActivityKind;
+use App\Enums\LeadService;
 use App\Enums\LeadStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\IndexLeadsRequest;
@@ -11,8 +12,8 @@ use App\Http\Resources\LeadResource;
 use App\Models\Lead;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 /** Back-office lead management. Every route here requires a signed-in admin. */
 class LeadController extends Controller
@@ -114,17 +115,27 @@ class LeadController extends Controller
      */
     public function stats(Request $request): JsonResponse
     {
-        $byStatus = Lead::query()
+        /*
+         * Service enquiries only.
+         *
+         * A contact message is somebody writing in, not a service the company
+         * sells, so counting it here would make `total` disagree with
+         * `byService` — which cannot contain a value that is not a service. It
+         * is reported separately as `messages`.
+         */
+        $dossiers = fn () => Lead::query()->where('service', '!=', LeadService::Contact);
+
+        $byStatus = $dossiers()
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        $byService = Lead::query()
+        $byService = $dossiers()
             ->selectRaw('service, count(*) as total')
             ->groupBy('service')
             ->pluck('total', 'service');
 
-        $byPrestation = Lead::query()
+        $byPrestation = $dossiers()
             ->whereNotNull('prestation')
             ->selectRaw('prestation, count(*) as total')
             ->groupBy('prestation')
@@ -136,7 +147,8 @@ class LeadController extends Controller
 
         return response()->json([
             'data' => [
-                'total' => Lead::count(),
+                'total' => $dossiers()->count(),
+                'messages' => Lead::where('service', LeadService::Contact)->count(),
                 'byStatus' => $byStatus,
                 'byService' => $byService,
                 'byPrestation' => $byPrestation,
@@ -147,8 +159,11 @@ class LeadController extends Controller
                 'tauxReussite' => $decided === 0
                     ? null
                     : (int) round($approuve / $decided * 100),
-                'montantDemande' => (int) Lead::sum('montant_cents') / 100,
-                'montantApprouve' => (int) Lead::where('status', LeadStatus::Approuve)
+                // Amounts only exist on financing dossiers, so the contact
+                // exclusion makes no difference here — kept for consistency.
+                'montantDemande' => (int) $dossiers()->sum('montant_cents') / 100,
+                'montantApprouve' => (int) $dossiers()
+                    ->where('status', LeadStatus::Approuve)
                     ->sum('montant_cents') / 100,
             ],
         ]);

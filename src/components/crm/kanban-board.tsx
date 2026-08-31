@@ -19,7 +19,7 @@ import type { Lead, LeadStatus } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
 
 export function KanbanBoard() {
-  const { leads, setStatus, logContact } = useCrm();
+  const { dossiers: leads, setStatus, logContact } = useCrm();
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<LeadStatus | null>(null);
 

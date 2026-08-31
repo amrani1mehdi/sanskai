@@ -140,16 +140,38 @@ export const SERVICES: ServiceConfig[] = [
     source: "/developpement-entreprise",
     prestations: PRESTATIONS,
   },
-  {
-    id: "contact",
-    label: "Message de contact",
-    shortLabel: "Contact",
-    source: "/contact",
-  },
 ];
 
+/**
+ * Contact messages are not a service.
+ *
+ * Financement and Développement are things the company sells; a contact message
+ * is someone writing in. They share the `leads` table because a message still
+ * has a sender, a status, notes and a trail — but they are deliberately kept
+ * out of `SERVICES`, so the sidebar's Services group, the service filter, the
+ * pipeline and the by-service breakdown never count them as one.
+ */
+export const CONTACT: ServiceConfig = {
+  id: "contact",
+  label: "Message de contact",
+  shortLabel: "Contact",
+  source: "/contact",
+};
+
+/** True for a message from the contact form, false for a service enquiry. */
+export function isMessage(lead: { service: ServiceId }): boolean {
+  return lead.service === CONTACT.id;
+}
+
+/**
+ * Label and source lookup for any lead, contact messages included.
+ *
+ * Deliberately wider than `SERVICES`: that list is what the CRM offers as a
+ * service, this map is how a lead of any origin renders. A detail page that
+ * could not resolve a contact message would crash on it.
+ */
 export const SERVICE_BY_ID = Object.fromEntries(
-  SERVICES.map((service) => [service.id, service]),
+  [...SERVICES, CONTACT].map((service) => [service.id, service]),
 ) as Record<ServiceId, ServiceConfig>;
 
 /**
