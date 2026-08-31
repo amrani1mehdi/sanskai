@@ -1,12 +1,7 @@
-import { MessagesView } from "@/components/crm/messages-view";
+import { redirect } from "next/navigation";
 
-/**
- * Contact-form messages.
- *
- * Deliberately its own page rather than a filter on /admin/leads: a message is
- * someone writing in, not a service enquiry, and it carries none of the fields
- * the leads table is built around.
- */
+/** Contact messages are a board inside the CRM now, with their own two
+    stages — answered and not. */
 export default function MessagesPage() {
-  return <MessagesView />;
+  redirect("/admin/crm");
 }

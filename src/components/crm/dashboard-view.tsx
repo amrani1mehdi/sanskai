@@ -12,13 +12,12 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { ArrowRight, Inbox, Layers, TrendingUp, Wallet } from "lucide-react";
-import { StatusBadge } from "@/components/crm/status-badge";
 import {
   PRESTATION_BY_ID,
   SERVICE_BY_ID,
   STAGE_BY_ID,
 } from "@/lib/crm/config";
-import { formatShortDate, initialsOf } from "@/lib/crm/format";
+import { formatDateTime } from "@/lib/crm/format";
 import {
   byPrestation,
   byService,
@@ -26,8 +25,8 @@ import {
   headline,
   monthlyIntake,
 } from "@/lib/crm/stats";
-import { useCrm } from "@/lib/crm/store";
-import type { Lead } from "@/lib/crm/types";
+import { fetchAllActivities } from "@/lib/crm/api";
+import { useCrm, useCrmListing } from "@/lib/crm/store";
 import { cn } from "@/lib/utils";
 
 const EUROS = new Intl.NumberFormat("fr-FR", {
@@ -40,23 +39,20 @@ export function DashboardView() {
   /* Every figure here is about service enquiries. Counting contact messages
      among them would make the headline totals disagree with the by-service
      breakdown, which cannot include something that is not a service. */
-  const { dossiers: leads, messages } = useCrm();
+  const { dossiers: leads, messages, syncedAt } = useCrm();
+
+  /* The lead list carries counts, not the trail, so the feed fetches its own
+     rows and re-fetches whenever the store reloads — the poll keeps it live. */
+  const { rows: activity, status: activityStatus } = useCrmListing(
+    fetchAllActivities,
+    syncedAt,
+  );
 
   const stats = useMemo(() => headline(leads), [leads]);
   const statuses = useMemo(() => byStatus(leads), [leads]);
   const services = useMemo(() => byService(leads), [leads]);
   const prestations = useMemo(() => byPrestation(leads), [leads]);
   const months = useMemo(() => monthlyIntake(leads), [leads]);
-
-  const recent = useMemo(
-    () =>
-      [...leads]
-        .sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )
-        .slice(0, 5),
-    [leads],
-  );
 
   return (
     <div className="container mx-auto px-4 py-8 lg:py-10">
@@ -69,7 +65,7 @@ export function DashboardView() {
           {messages.length > 0 ? (
             <>
               {" "}
-              <Link href="/admin/messages" className="text-accent hover:underline">
+              <Link href="/admin/crm" className="text-accent hover:underline">
                 {messages.length} message{messages.length > 1 ? "s" : ""} de contact
               </Link>{" "}
               {messages.length > 1 ? "sont comptés" : "est compté"} à part.
@@ -122,7 +118,7 @@ export function DashboardView() {
                 count={slice.count}
                 ratio={slice.ratio}
                 bar={STAGE_BY_ID[slice.id].dot}
-                href={`/admin/leads?statut=${slice.id}`}
+                href="/admin/crm"
               />
             ))}
           </ul>
@@ -166,7 +162,7 @@ export function DashboardView() {
                 count={slice.count}
                 ratio={slice.ratio}
                 bar="bg-accent"
-                href={`/admin/leads?service=${slice.id}`}
+                href="/admin/crm"
               />
             ))}
           </ul>
@@ -186,7 +182,7 @@ export function DashboardView() {
                   count={slice.count}
                   ratio={slice.ratio}
                   bar={PRESTATION_BY_ID[slice.id].bar}
-                  href={`/admin/leads?service=developpement&prestation=${slice.id}`}
+                  href="/admin/crm"
                 />
               ))}
             </ul>
@@ -194,30 +190,66 @@ export function DashboardView() {
         </Panel>
       </div>
 
-      {/* Derniers leads */}
+      {/* What moved lately.
+
+          This used to be the five most recent leads — the same rows the CRM
+          board already shows, one screen away. The dashboard is for
+          understanding, so it carries what happened rather than a second copy
+          of the list you manage elsewhere. */}
       <section className="mt-6 rounded-xl border border-border bg-card">
         <header className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h2 className="font-display text-base font-bold text-foreground">
-              Derniers leads
+              Activité récente
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Les cinq demandes les plus récentes
+              Ce qui a bougé sur les dossiers, le plus récent en premier
             </p>
           </div>
           <Link
-            href="/admin/leads"
+            href="/admin/crm"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
           >
-            Tout voir <ArrowRight size={14} />
+            Ouvrir le CRM <ArrowRight size={14} />
           </Link>
         </header>
 
-        <ul className="divide-y divide-border">
-          {recent.map((lead) => (
-            <RecentRow key={lead.id} lead={lead} />
-          ))}
-        </ul>
+        {activityStatus === "loading" ? (
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+            Chargement de l&apos;activité…
+          </p>
+        ) : activity.length === 0 ? (
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+            Rien ne s&apos;est encore produit sur les dossiers.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {activity.slice(0, 8).map(({ activity: entry, lead }) => (
+              <li key={entry.id} className="flex items-start gap-3 px-6 py-3">
+                <span
+                  aria-hidden
+                  className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-foreground">{entry.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    <Link
+                      href={`/admin/leads/${lead.id}`}
+                      className="font-mono hover:text-accent"
+                    >
+                      {lead.reference}
+                    </Link>
+                    {" · "}
+                    {lead.entreprise}
+                  </p>
+                </div>
+                <p className="shrink-0 text-right text-xs whitespace-nowrap text-muted-foreground">
+                  {formatDateTime(entry.at)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );
@@ -305,33 +337,3 @@ function BarRow({
   );
 }
 
-function RecentRow({ lead }: { lead: Lead }) {
-
-  return (
-    <li>
-      <Link
-        href={`/admin/leads/${lead.id}`}
-        className="flex flex-wrap items-center gap-3 px-6 py-3.5 transition-colors hover:bg-secondary/50"
-      >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground">
-          {initialsOf(lead.prenom, lead.nom)}
-        </span>
-
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-foreground">
-            {lead.prenom} {lead.nom}
-          </span>
-          <span className="block truncate text-xs text-muted-foreground">
-            {lead.entreprise} · {SERVICE_BY_ID[lead.service].shortLabel}
-          </span>
-        </span>
-
-        <StatusBadge status={lead.status} />
-
-        <span className="text-xs whitespace-nowrap text-muted-foreground">
-          {formatShortDate(lead.createdAt)}
-        </span>
-      </Link>
-    </li>
-  );
-}
