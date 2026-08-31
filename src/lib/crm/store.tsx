@@ -7,10 +7,11 @@
  * table and the dashboard all read the same list, so they share a single fetch
  * instead of issuing one each.
  *
- * A mutation writes to the API first and reloads second. Updating the local
- * copy optimistically would let the board show a status the server rejected —
- * on a dossier that decides whether someone gets financed, the screen should
- * only ever show what was actually recorded.
+ * A mutation writes to the API first and reloads second, so the screen only
+ * ever shows what was actually recorded. The one exception is dragging a card
+ * between stages, which lands optimistically and rolls back if the server
+ * refuses — see `moveLead`. A card that does not move when you drop it reads
+ * as broken, and the rollback is what makes showing it early safe.
  */
 
 import {
@@ -91,6 +92,23 @@ export async function loadLeads(): Promise<void> {
       error: null,
       syncedAt: new Date().toISOString(),
     });
+
+    /*
+     * Anything on screen showing one lead in full follows the list.
+     *
+     * The detail cache is filled once, when a lead is opened. Without this a
+     * drag refreshed the board and left the panel beside it rendering the
+     * status it was opened with — the same lead disagreeing with itself on one
+     * screen. Every path that reloads the list comes through here, so a
+     * mutation and a poll both keep the open panel current.
+     *
+     * Only leads with a live subscriber: the cache keeps every lead ever
+     * opened, and refetching all of them on every poll would grow into a
+     * request storm as somebody works through the board.
+     */
+    for (const [id, subscribers] of detailListeners) {
+      if (subscribers.size > 0) void loadLead(id);
+    }
   } catch (error) {
     set({ ...snapshot, hydrated: true, error: handle(error) });
   } finally {
@@ -180,6 +198,40 @@ function subscribe(listener: () => void) {
 const getSnapshot = () => snapshot;
 const getServerSnapshot = () => EMPTY;
 
+/**
+ * Moves a lead to another stage, on screen first.
+ *
+ * The only optimistic write in here, and it earns the exception: a card has to
+ * land where it was dropped, or the board feels broken. Everything else waits
+ * for the server.
+ *
+ * What makes it safe is the rollback. The objection to optimistic updates is
+ * that the screen ends up showing a status the server rejected — on a dossier
+ * that decides whether someone gets financed, that is not acceptable. A failed
+ * call puts the board back exactly as it was and says why, so the wrong value
+ * is never what you are left looking at.
+ */
+async function moveLead(id: string, status: LeadStatus): Promise<void> {
+  const before = snapshot.leads;
+
+  set({
+    ...snapshot,
+    error: null,
+    leads: before.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
+  });
+
+  try {
+    await api.updateStatus(id, status);
+  } catch (error) {
+    // Back to exactly what was on screen before the drag.
+    set({ ...snapshot, leads: before, error: handle(error) });
+    return;
+  }
+
+  // Reconcile: the server also stamped `updated_at` and wrote the trail entry.
+  await loadLeads();
+}
+
 /** Runs a mutation, then reloads so the screen matches the server. */
 async function mutate(action: () => Promise<unknown>): Promise<void> {
   try {
@@ -218,8 +270,7 @@ export function useCrm() {
       refresh: loadLeads,
       getLead,
 
-      setStatus: (id: string, status: LeadStatus) =>
-        void mutate(() => api.updateStatus(id, status)),
+      setStatus: (id: string, status: LeadStatus) => void moveLead(id, status),
 
       addNote: (id: string, body: string) => {
         const trimmed = body.trim();

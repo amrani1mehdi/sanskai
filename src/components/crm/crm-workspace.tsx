@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, TriangleAlert, X } from "lucide-react";
 import { KanbanBoard } from "@/components/crm/kanban-board";
 import { LeadPanel } from "@/components/crm/lead-panel";
 import {
@@ -47,7 +47,7 @@ const selectClass =
   "rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export function CrmWorkspace() {
-  const { dossiers, messages, hydrated, syncedAt, setStatus, logContact } =
+  const { dossiers, messages, hydrated, syncedAt, error, setStatus, logContact } =
     useCrm();
 
   const [board, setBoard] = useState<Board>("dossiers");
@@ -248,6 +248,19 @@ export function CrmWorkspace() {
             ) : null}
           </div>
         </header>
+
+        {/* A drag that the server refuses rolls the card back. Saying why is
+            the other half of that: a card silently returning to where it came
+            from reads as a bug in the board. */}
+        {error ? (
+          <p
+            role="alert"
+            className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger lg:mx-6"
+          >
+            <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
+            {error}
+          </p>
+        ) : null}
 
         {/* No status filter: the board *is* the status, and a filter that can
             empty five of six columns fights the thing it sits above. */}

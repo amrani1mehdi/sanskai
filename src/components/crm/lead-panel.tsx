@@ -57,7 +57,19 @@ export function LeadPanel({
   const { setStatus, addNote, removeLead, logContact } = useCrm();
   /* The board's copy has counts only; this one has the notes and the trail. */
   const { lead: full } = useLead(summary.id);
-  const lead = full ?? summary;
+
+  /*
+   * Detail for the collections, the board's copy for the fields it carries.
+   *
+   * A mutation reloads the list first and the open detail immediately after,
+   * so for one round trip the two disagree. Taking status and timestamps from
+   * the list means dragging a card flips the panel's status as the card lands,
+   * rather than a beat later — and `summary` is never staler than `full` for
+   * the fields both hold.
+   */
+  const lead = full
+    ? { ...full, status: summary.status, updatedAt: summary.updatedAt }
+    : summary;
 
   const [note, setNote] = useState("");
   const [kind, setKind] = useState<KindFilter>("tous");
