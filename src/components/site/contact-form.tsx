@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CircleCheck, Send, TriangleAlert, Upload } from "lucide-react";
+import { CircleCheck, Send, TriangleAlert } from "lucide-react";
+import { FileUpload } from "@/components/ui/file-upload";
 import type { SiteContent } from "@/lib/content";
 import { translateApiError } from "@/lib/leads/errors";
+
+/** Matches `StoreContactLeadRequest::MAX_INVOICES` — the API rejects more. */
+const MAX_INVOICES = 20;
 
 const inputClass =
   "w-full px-4 py-3.5 rounded-lg bg-background text-foreground placeholder:text-muted-foreground border border-border focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all text-sm";
@@ -17,9 +21,11 @@ const EMPTY = {
 };
 
 export function ContactForm({ content }: { content: SiteContent }) {
+  // `form` carries the upload labels the financing page already uses.
   const { contact, form } = content;
 
   const [values, setValues] = useState(EMPTY);
+  const [invoices, setInvoices] = useState<File[]>([]);
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,17 +45,21 @@ export function ContactForm({ content }: { content: SiteContent }) {
     setError(null);
     setPending(true);
 
+    /* multipart, because the invoices ride along. No Content-Type header:
+       fetch adds the multipart boundary, and setting it by hand makes every
+       file unreadable at the other end. */
+    const body = new FormData();
+    body.set("entreprise", values.company);
+    body.set("nomComplet", values.fullName);
+    body.set("email", values.email);
+    if (values.siren) body.set("siren", values.siren);
+    if (values.message) body.set("message", values.message);
+    for (const invoice of invoices) body.append("factures[]", invoice);
+
     try {
       const response = await fetch("/api/leads/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          entreprise: values.company,
-          siren: values.siren || null,
-          nomComplet: values.fullName,
-          email: values.email,
-          message: values.message || null,
-        }),
+        body,
       });
 
       if (!response.ok) {
@@ -71,8 +81,9 @@ export function ContactForm({ content }: { content: SiteContent }) {
       }
 
       // Cleared only once the CRM has it — a failed send must not lose what
-      // they typed.
+      // they typed, or the files they picked.
       setValues(EMPTY);
+      setInvoices([]);
       setSent(true);
     } catch {
       setError(contact.error);
@@ -138,17 +149,22 @@ export function ContactForm({ content }: { content: SiteContent }) {
           />
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-foreground mb-1.5 block">
-            {contact.fields.upload}
-          </label>
-          {/* Presentational on the live site too — there is no file input
-              behind it, and nothing is uploaded. */}
-          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center transition-colors hover:border-accent/30">
-            <Upload size={24} className="text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">{contact.uploadHint}</p>
-          </div>
-        </div>
+        {/* Was a decorative box with no input behind it. It now uploads, and
+            reuses the financing form's component so both pages enforce the
+            same type and size rules. */}
+        <FileUpload
+          label={contact.fields.upload}
+          optionalLabel={form.optional}
+          hint={contact.uploadHint}
+          removeLabel={form.removeFile}
+          tooLargeMessage={form.fileTooLarge}
+          wrongTypeMessage={form.fileWrongType}
+          files={invoices}
+          onChange={setInvoices}
+          multiple
+          addMoreLabel={form.addAnotherFile}
+          maxFiles={MAX_INVOICES}
+        />
 
         {error ? (
           <p
