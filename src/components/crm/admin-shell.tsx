@@ -13,7 +13,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Banknote,
@@ -41,7 +41,7 @@ const SERVICE_ICONS: Record<ServiceId, typeof Banknote> = {
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { leads } = useCrm();
+  const { leads, syncedAt } = useCrm();
   const [open, setOpen] = useState(false);
 
   const close = () => setOpen(false);
@@ -188,6 +188,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="border-t border-sidebar-border px-3 py-4">
+          <LiveIndicator syncedAt={syncedAt} />
+
           <Link
             href="/"
             className="mb-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
@@ -282,5 +284,44 @@ function Row({
         </span>
       )}
     </Link>
+  );
+}
+
+/**
+ * Says the panel is live, and when it last heard from the CRM.
+ *
+ * Without it the polling is invisible: leads appear on their own and nobody
+ * knows whether the screen is current or stale, which is exactly the doubt a
+ * manual refresh button exists to answer.
+ */
+function LiveIndicator({ syncedAt }: { syncedAt: string | null }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    // Only to re-render the relative time; the data refreshes on its own.
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+
+    return () => clearInterval(id);
+  }, []);
+
+  if (!syncedAt) return null;
+
+  const seconds = Math.max(0, Math.round((now - new Date(syncedAt).getTime()) / 1000));
+  const label =
+    seconds < 60
+      ? "à l'instant"
+      : seconds < 3600
+        ? `il y a ${Math.floor(seconds / 60)} min`
+        : `il y a ${Math.floor(seconds / 3600)} h`;
+
+  return (
+    <p className="mb-2 flex items-center gap-2 px-3 text-[11px] text-sidebar-muted">
+      <span className="relative flex h-1.5 w-1.5 shrink-0">
+        {/* Stilled for anyone who asked the OS to reduce motion. */}
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60 motion-reduce:animate-none" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+      </span>
+      En direct · {label}
+    </p>
   );
 }

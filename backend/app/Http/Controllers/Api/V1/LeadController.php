@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 
 /** Back-office lead management. Every route here requires a signed-in admin. */
 class LeadController extends Controller
@@ -105,6 +106,41 @@ class LeadController extends Controller
         $lead->delete();
 
         return response()->noContent();
+    }
+
+    /**
+     * GET /api/v1/changes
+     *
+     * A fingerprint of the CRM's current state, for the back office to poll.
+     *
+     * Three aggregates over one table — the cost does not grow with the number
+     * of leads, which is the whole point: the panel can ask every few seconds
+     * without re-downloading a list that has not changed. It refetches only
+     * when one of these moves.
+     *
+     * `count` catches deletions, `latestId` catches insertions, and
+     * `updatedAt` catches an edit that changes neither — a status moved on the
+     * Kanban, say. Any one alone would miss a case.
+     */
+    public function changes(): JsonResponse
+    {
+        $row = Lead::query()
+            ->selectRaw('count(*) as aggregate_count')
+            ->selectRaw('max(id) as latest_id')
+            ->selectRaw('max(updated_at) as updated_at')
+            ->first();
+
+        return response()->json([
+            'data' => [
+                'count' => (int) $row->aggregate_count,
+                'latestId' => $row->latest_id === null ? null : (int) $row->latest_id,
+                // ISO 8601 like every other timestamp the API returns, rather
+                // than the driver's raw datetime string.
+                'updatedAt' => $row->updated_at === null
+                    ? null
+                    : Carbon::parse($row->updated_at)->toIso8601String(),
+            ],
+        ]);
     }
 
     /**

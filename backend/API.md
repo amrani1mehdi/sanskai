@@ -2,7 +2,7 @@
 
 The REST API between the Next.js website and this Laravel CRM.
 
-- **Spec:** [`openapi.yaml`](./openapi.yaml) — 22 endpoints, fully documented.
+- **Spec:** [`openapi.yaml`](./openapi.yaml) — 23 endpoints, fully documented.
 - **Database:** MySQL. **Documents:** Laravel Storage, on a private disk, each
   row tied to its lead by foreign key.
 - **Browsable:** `GET /api/docs` (Swagger UI). Open to everyone locally, behind

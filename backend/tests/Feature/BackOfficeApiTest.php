@@ -296,6 +296,42 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
+    public function the_change_signature_moves_on_insert_update_and_delete(): void
+    {
+        Sanctum::actingAs($this->admin());
+
+        $signature = fn () => $this->getJson('/api/v1/changes')->assertOk()->json('data');
+
+        $empty = $signature();
+        $this->assertSame(0, $empty['count']);
+        $this->assertNull($empty['latestId']);
+
+        $lead = $this->lead();
+        $afterInsert = $signature();
+        $this->assertNotSame($empty, $afterInsert, 'An insert must move the signature.');
+
+        // An edit changes neither the count nor the highest id, so `updatedAt`
+        // is the only thing that can catch it.
+        $this->travel(1)->second();
+        $lead->forceFill(['status' => LeadStatus::Qualifie])->save();
+        $afterUpdate = $signature();
+        $this->assertNotSame($afterInsert, $afterUpdate, 'An edit must move the signature.');
+
+        // And a deletion moves neither the highest id nor the latest timestamp,
+        // so the count is the only thing that can catch it.
+        $second = $this->lead(['reference' => Lead::nextReference(LeadService::Financement)]);
+        $afterSecond = $signature();
+        $second->delete();
+        $this->assertNotSame($afterSecond, $signature(), 'A delete must move the signature.');
+    }
+
+    #[Test]
+    public function the_change_signature_requires_a_signed_in_admin(): void
+    {
+        $this->getJson('/api/v1/changes')->assertStatus(401);
+    }
+
+    #[Test]
     public function stats_count_service_enquiries_and_report_messages_apart(): void
     {
         Sanctum::actingAs($this->admin());

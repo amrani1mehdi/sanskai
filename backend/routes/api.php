@@ -88,5 +88,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::get('activities', [ActivityController::class, 'all'])->name('activities.index');
         Route::get('stats', [LeadController::class, 'stats'])->name('stats');
+
+        // Polled by the back office every few seconds; deliberately cheap.
+        Route::get('changes', [LeadController::class, 'changes'])->name('changes');
     });
 });

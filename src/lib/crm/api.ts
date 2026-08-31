@@ -185,6 +185,23 @@ export function toLead(lead: ApiLead): Lead {
 /* Endpoints                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * A fingerprint of the CRM's state, for polling.
+ *
+ * Three aggregates over one table, so asking every few seconds costs the same
+ * whether there are thirteen leads or thirteen thousand. The panel compares
+ * this and only re-downloads the list when it moves.
+ */
+export async function fetchChangeSignature(): Promise<string> {
+  const payload = await call<{
+    data: { count: number; latestId: number | null; updatedAt: string | null };
+  }>("changes");
+
+  const { count, latestId, updatedAt } = payload.data;
+
+  return `${count}:${latestId ?? "-"}:${updatedAt ?? "-"}`;
+}
+
 /** Every lead, following pagination so the board and filters see the full set. */
 export async function fetchLeads(): Promise<Lead[]> {
   const leads: Lead[] = [];

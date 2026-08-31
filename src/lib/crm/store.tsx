@@ -23,9 +23,16 @@ type Snapshot = {
   /** False until the first response lands, so views can show a skeleton. */
   hydrated: boolean;
   error: string | null;
+  /** When the list last came back from the API. Drives the live indicator. */
+  syncedAt: string | null;
 };
 
-const EMPTY: Snapshot = { leads: [], hydrated: false, error: null };
+const EMPTY: Snapshot = {
+  leads: [],
+  hydrated: false,
+  error: null,
+  syncedAt: null,
+};
 
 let snapshot: Snapshot = EMPTY;
 let loading = false;
@@ -60,7 +67,23 @@ export async function loadLeads(): Promise<void> {
   loading = true;
 
   try {
-    set({ leads: await api.fetchLeads(), hydrated: true, error: null });
+    /*
+     * Signature first, list second — never the other way round.
+     *
+     * Taken after the list, a lead arriving in between would be inside the
+     * signature but missing from the list, and the panel would consider itself
+     * up to date until something else changed: the lead would simply never
+     * appear. Taken first, the same race only costs one redundant refetch on
+     * the next tick.
+     */
+    signature = await api.fetchChangeSignature().catch(() => null);
+
+    set({
+      leads: await api.fetchLeads(),
+      hydrated: true,
+      error: null,
+      syncedAt: new Date().toISOString(),
+    });
   } catch (error) {
     set({ ...snapshot, hydrated: true, error: handle(error) });
   } finally {
@@ -68,14 +91,82 @@ export async function loadLeads(): Promise<void> {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Live updates                                                                */
+/*                                                                             */
+/* Polling, not websockets: a lead arriving within a few seconds is what the    */
+/* back office needs, and that does not justify running a second daemon on a    */
+/* box already hosting nine other applications. The signature endpoint makes    */
+/* the poll cheap enough that the interval can be short.                        */
+/* -------------------------------------------------------------------------- */
+
+const POLL_MS = 15_000;
+
+/** Last known server state. `null` means "not established yet". */
+let signature: string | null = null;
+let timer: ReturnType<typeof setInterval> | null = null;
+
+async function checkForChanges(): Promise<void> {
+  // Nothing to do for a tab nobody is looking at; `visibilitychange` catches up
+  // the moment it comes back.
+  if (typeof document !== "undefined" && document.hidden) return;
+  if (loading) return;
+
+  try {
+    const next = await api.fetchChangeSignature();
+
+    if (signature === null) {
+      signature = next;
+      return;
+    }
+
+    if (next !== signature) {
+      signature = next;
+      await loadLeads();
+    }
+  } catch (error) {
+    /* An expired session should still bounce to the login form. Anything else
+       is transient — the next tick retries rather than painting an error over
+       a screen that is still perfectly usable. */
+    if (error instanceof api.ApiError && error.status === 401) handle(error);
+  }
+}
+
+const onWake = () => {
+  if (typeof document === "undefined" || !document.hidden) void checkForChanges();
+};
+
+function startPolling(): void {
+  if (timer !== null || typeof window === "undefined") return;
+
+  timer = setInterval(() => void checkForChanges(), POLL_MS);
+
+  // A tab returning to the foreground should be current immediately, not after
+  // up to another full interval.
+  document.addEventListener("visibilitychange", onWake);
+  window.addEventListener("focus", onWake);
+}
+
+function stopPolling(): void {
+  if (timer === null) return;
+
+  clearInterval(timer);
+  timer = null;
+  document.removeEventListener("visibilitychange", onWake);
+  window.removeEventListener("focus", onWake);
+}
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
 
   // First subscriber triggers the load; the rest ride along.
   if (!snapshot.hydrated && !loading) void loadLeads();
+  startPolling();
 
   return () => {
     listeners.delete(listener);
+    // Nothing on screen is reading the store — stop asking the server.
+    if (listeners.size === 0) stopPolling();
   };
 }
 
@@ -116,6 +207,7 @@ export function useCrm() {
       messages: current.leads.filter(isMessage),
       hydrated: current.hydrated,
       error: current.error,
+      syncedAt: current.syncedAt,
       refresh: loadLeads,
       getLead,
 
