@@ -13,7 +13,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ArrowUpRight,
   Banknote,
@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { AccountMenu } from "@/components/crm/account-menu";
 import { CONTACT, CURRENT_ADMIN, SERVICES, isMessage } from "@/lib/crm/config";
+import { formatTime } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
 import type { ServiceId } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
@@ -295,25 +296,13 @@ function Row({
  * manual refresh button exists to answer.
  */
 function LiveIndicator({ syncedAt }: { syncedAt: string | null }) {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    // Only to re-render the relative time; the data refreshes on its own.
-    const id = setInterval(() => setNow(Date.now()), 30_000);
-
-    return () => clearInterval(id);
-  }, []);
-
   if (!syncedAt) return null;
 
-  const seconds = Math.max(0, Math.round((now - new Date(syncedAt).getTime()) / 1000));
-  const label =
-    seconds < 60
-      ? "à l'instant"
-      : seconds < 3600
-        ? `il y a ${Math.floor(seconds / 60)} min`
-        : `il y a ${Math.floor(seconds / 3600)} h`;
+  /* The clock time, not "à l'instant".
 
+     The panel re-syncs every fifteen seconds, so a relative label said
+     "à l'instant" essentially always — true, and completely uninformative.
+     The hour tells you at a glance whether the screen is current. */
   return (
     <p className="mb-2 flex items-center gap-2 px-3 text-[11px] text-sidebar-muted">
       <span className="relative flex h-1.5 w-1.5 shrink-0">
@@ -321,7 +310,7 @@ function LiveIndicator({ syncedAt }: { syncedAt: string | null }) {
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60 motion-reduce:animate-none" />
         <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
       </span>
-      En direct · {label}
+      En direct · {formatTime(syncedAt)}
     </p>
   );
 }

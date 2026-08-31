@@ -14,8 +14,8 @@ import {
 } from "@/lib/crm/config";
 import {
   formatAmount,
-  formatRelative,
   formatShortDate,
+  formatTime,
   initialsOf,
 } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
@@ -46,7 +46,7 @@ function pick<T extends string>(value: string | undefined, allowed: T[]): T | "t
 }
 
 export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
-  const { dossiers: leads, hydrated } = useCrm();
+  const { dossiers: leads } = useCrm();
 
   const [query, setQuery] = useState(initial.q ?? "");
   const [service, setService] = useState<ServiceFilter>(
@@ -222,7 +222,7 @@ export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
         </div>
       </div>
 
-      <LeadTable leads={pageData.rows} hydrated={hydrated} />
+      <LeadTable leads={pageData.rows} />
 
       <Pagination
         page={pageData.page}
@@ -272,7 +272,7 @@ function StatTiles({ leads }: { leads: Lead[] }) {
   );
 }
 
-function LeadTable({ leads, hydrated }: { leads: Lead[]; hydrated: boolean }) {
+function LeadTable({ leads }: { leads: Lead[] }) {
   if (leads.length === 0) {
     return (
       <div className="mt-4 rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
@@ -371,12 +371,12 @@ function LeadTable({ leads, hydrated }: { leads: Lead[]; hydrated: boolean }) {
                 </td>
                 <td className="px-4 py-3 align-top text-sm whitespace-nowrap text-muted-foreground">
                   {formatShortDate(lead.createdAt)}
-                  {/* Relative time depends on `now`, so it waits for the client. */}
-                  {hydrated ? (
-                    <span className="block text-xs text-muted-foreground/70">
-                      {formatRelative(lead.createdAt)}
-                    </span>
-                  ) : null}
+                  {/* The hour, not "il y a 3 min": a relative label goes stale
+                      as soon as you stop looking at it, and the exact time is
+                      what gets quoted back to an applicant on the phone. */}
+                  <span className="block text-xs text-muted-foreground/70">
+                    {formatTime(lead.createdAt)}
+                  </span>
                 </td>
               </tr>
             );

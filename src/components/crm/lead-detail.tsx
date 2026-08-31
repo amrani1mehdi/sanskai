@@ -21,12 +21,12 @@ import { DocumentsPanel } from "@/components/crm/documents-panel";
 import { NotesPanel } from "@/components/crm/notes-panel";
 import { PrestationChip } from "@/components/crm/prestation-chip";
 import { StatusBadge } from "@/components/crm/status-badge";
-import { SERVICE_BY_ID, STAGES } from "@/lib/crm/config";
+import { SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
 import {
   formatAmount,
   formatCompanyAge,
   formatDate,
-  formatRelative,
+  formatDateTime,
   formatYesNo,
   initialsOf,
 } from "@/lib/crm/format";
@@ -45,7 +45,6 @@ export function LeadDetail({ id }: { id: string }) {
   const router = useRouter();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const hydrated = status !== "loading";
 
   if (status === "loading") {
     return (
@@ -110,14 +109,17 @@ export function LeadDetail({ id }: { id: string }) {
               {lead.entreprise} · {service.label}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Reçu le {formatDate(lead.createdAt)}
-              {hydrated ? ` · ${formatRelative(lead.createdAt)}` : ""} · depuis{" "}
+              Reçu le {formatDateTime(lead.createdAt)} · depuis{" "}
               <span className="font-mono">{service.source}</span>
             </p>
           </div>
         </div>
 
-        <StatusBadge status={lead.status} className="self-start px-3 py-1.5 text-sm" />
+        <StatusBadge
+          status={lead.status}
+          service={lead.service}
+          className="self-start px-3 py-1.5 text-sm"
+        />
       </header>
 
       {/* Actions rapides */}
@@ -156,7 +158,10 @@ export function LeadDetail({ id }: { id: string }) {
               }}
               className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30"
             >
-              {STAGES.map((stage) => (
+              {/* Only what this lead's service allows: a message is answered
+                  or not, a dossier moves through the six stages. The API
+                  refuses the rest, so offering them would be a trap. */}
+              {stagesFor(lead.service).map((stage) => (
                 <option key={stage.id} value={stage.id}>
                   {stage.label}
                 </option>

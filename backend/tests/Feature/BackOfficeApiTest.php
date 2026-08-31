@@ -296,6 +296,52 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
+    public function a_contact_message_has_answered_and_unanswered_not_the_pipeline(): void
+    {
+        Sanctum::actingAs($this->admin());
+
+        $message = $this->lead([
+            'reference' => Lead::nextReference(LeadService::Contact),
+            'service' => LeadService::Contact,
+        ]);
+
+        // "Qualifié", "Approuvé" and "Refusé" mean nothing on a question.
+        $this->getJson("/api/v1/leads/{$message->id}")
+            ->assertOk()
+            ->assertJsonPath('data.statusLabel', 'Non répondu')
+            ->assertJsonPath('data.statusOptions', [
+                ['value' => 'nouveau', 'label' => 'Non répondu'],
+                ['value' => 'repondu', 'label' => 'Répondu'],
+            ]);
+
+        $this->patchJson("/api/v1/leads/{$message->id}", ['status' => 'repondu'])
+            ->assertOk()
+            ->assertJsonPath('data.statusLabel', 'Répondu');
+
+        // And the pipeline stages are refused on it.
+        $this->patchJson("/api/v1/leads/{$message->id}", ['status' => 'approuve'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('status');
+    }
+
+    #[Test]
+    public function a_service_dossier_cannot_be_marked_answered(): void
+    {
+        Sanctum::actingAs($this->admin());
+        $lead = $this->lead();
+
+        $this->getJson("/api/v1/leads/{$lead->id}")
+            ->assertOk()
+            // The shared value reads as "Nouveau" on a dossier, not "Non répondu".
+            ->assertJsonPath('data.statusLabel', 'Nouveau')
+            ->assertJsonCount(6, 'data.statusOptions');
+
+        $this->patchJson("/api/v1/leads/{$lead->id}", ['status' => 'repondu'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('status');
+    }
+
+    #[Test]
     public function the_cross_lead_listings_name_the_dossier_each_row_belongs_to(): void
     {
         config()->set('leads.documents_disk', 'documents-test');
