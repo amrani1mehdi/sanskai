@@ -36,19 +36,26 @@ import {
   isCompanyAgeEligible,
   isRevenueEligible,
 } from "@/lib/eligibility";
-import { useCrm } from "@/lib/crm/store";
+import { useCrm, useLead } from "@/lib/crm/store";
 import type { Lead, LeadStatus } from "@/lib/crm/types";
 
 export function LeadDetail({ id }: { id: string }) {
-  const { getLead, hydrated, setStatus, logActivity, removeLead } = useCrm();
+  const { setStatus, removeLead, logContact } = useCrm();
+  const { lead, status, reload } = useLead(id);
   const router = useRouter();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const lead = getLead(id);
+  const hydrated = status !== "loading";
 
-  // The lead disappears from the store the moment it is deleted, a beat before
-  // the redirect lands — without this it would flash "Lead introuvable".
-  if (!lead && deleting) {
+  if (status === "loading") {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <p className="text-sm text-muted-foreground">Chargement du dossier…</p>
+      </div>
+    );
+  }
+
+  if (deleting) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <p className="text-sm text-muted-foreground">Suppression du lead…</p>
@@ -114,13 +121,13 @@ export function LeadDetail({ id }: { id: string }) {
       </header>
 
       {/* Actions rapides */}
-      <ActionBar lead={lead} onLog={logActivity} />
+      <ActionBar lead={lead} onLog={logContact} />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <LeadInformation lead={lead} />
-          <DocumentsPanel lead={lead} />
-          <NotesPanel lead={lead} />
+          <DocumentsPanel lead={lead} onChanged={reload} />
+          <NotesPanel lead={lead} onChanged={reload} />
           <ActivityTimeline lead={lead} />
         </div>
 
@@ -142,7 +149,11 @@ export function LeadDetail({ id }: { id: string }) {
             <select
               id="statut"
               value={lead.status}
-              onChange={(event) => setStatus(lead.id, event.target.value as LeadStatus)}
+              onChange={async (event) => {
+                setStatus(lead.id, event.target.value as LeadStatus);
+                // The list store and this page hold separate copies.
+                setTimeout(() => void reload(), 250);
+              }}
               className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30"
             >
               {STAGES.map((stage) => (
@@ -223,7 +234,7 @@ function ActionBar({
   onLog,
 }: {
   lead: Lead;
-  onLog: ReturnType<typeof useCrm>["logActivity"];
+  onLog: ReturnType<typeof useCrm>["logContact"];
 }) {
   const action =
     "inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-accent/40 hover:bg-secondary";
@@ -233,7 +244,7 @@ function ActionBar({
       {lead.telephone ? (
         <a
           href={`tel:${lead.telephone.replace(/\s/g, "")}`}
-          onClick={() => onLog(lead.id, "appel", `Appel passé au ${lead.telephone}`)}
+          onClick={() => onLog(lead.id, "appel")}
           className={action}
         >
           <Phone size={15} className="text-accent" /> Appeler
@@ -244,7 +255,7 @@ function ActionBar({
         href={`mailto:${lead.email}?subject=${encodeURIComponent(
           `Votre demande ${lead.reference} — Sansekai Solution`,
         )}`}
-        onClick={() => onLog(lead.id, "email", `Email envoyé à ${lead.email}`)}
+        onClick={() => onLog(lead.id, "email")}
         className={action}
       >
         <Mail size={15} className="text-accent" /> Envoyer un email

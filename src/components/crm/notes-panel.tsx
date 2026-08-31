@@ -7,7 +7,13 @@ import { formatDateTime } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
 import type { Lead, LeadNote } from "@/lib/crm/types";
 
-export function NotesPanel({ lead }: { lead: Lead }) {
+export function NotesPanel({
+  lead,
+  onChanged,
+}: {
+  lead: Lead;
+  onChanged?: () => void;
+}) {
   const { addNote, removeNote } = useCrm();
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<LeadNote | null>(null);
@@ -20,6 +26,7 @@ export function NotesPanel({ lead }: { lead: Lead }) {
     event.preventDefault();
     addNote(lead.id, draft);
     setDraft("");
+    setTimeout(() => onChanged?.(), 250);
   };
 
   return (
@@ -98,6 +105,7 @@ export function NotesPanel({ lead }: { lead: Lead }) {
         onConfirm={() => {
           if (pending) removeNote(lead.id, pending.id);
           setPending(null);
+          setTimeout(() => onChanged?.(), 250);
         }}
       />
     </section>

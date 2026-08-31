@@ -360,10 +360,10 @@ function LeadTable({ leads, hydrated }: { leads: Lead[]; hydrated: boolean }) {
                   {lead.service === "financement" ? formatAmount(lead.montant) : "—"}
                 </td>
                 <td className="px-4 py-3 align-top text-sm">
-                  {lead.documents.length > 0 ? (
+                  {lead.documentCount > 0 ? (
                     <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                       <Paperclip size={13} />
-                      {lead.documents.length}
+                      {lead.documentCount}
                     </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>

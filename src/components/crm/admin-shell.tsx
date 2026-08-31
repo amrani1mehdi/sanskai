@@ -44,15 +44,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const close = () => setOpen(false);
 
-  const documentCount = leads.reduce((sum, lead) => sum + lead.documents.length, 0);
-  const activityCount = leads.reduce((sum, lead) => sum + lead.activity.length, 0);
+  const documentCount = leads.reduce((sum, lead) => sum + lead.documentCount, 0);
 
   const destinations = [
     { href: "/admin", label: "Tableau de bord", icon: PieChart, exact: true },
     { href: "/admin/leads", label: "Leads", icon: Users, count: leads.length },
     { href: "/admin/pipeline", label: "Pipeline", icon: LayoutGrid },
     { href: "/admin/documents", label: "Documents", icon: Paperclip, count: documentCount },
-    { href: "/admin/activite", label: "Activité", icon: History, count: activityCount },
+    { href: "/admin/activite", label: "Activité", icon: History },
   ];
 
   const isActive = (href: string, exact?: boolean) =>
