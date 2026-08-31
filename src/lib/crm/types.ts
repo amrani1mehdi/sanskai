@@ -25,12 +25,16 @@ export type ServiceId = "financement" | "developpement" | "contact";
  */
 export type PrestationId = "site_web" | "logo" | "campagne_publicitaire";
 
-/** The four upload slots on the financing form, plus a catch-all. */
+/**
+ * The four upload slots on the financing form, the contact form's invoices,
+ * and a catch-all.
+ */
 export type DocumentKind =
   | "piece_identite"
   | "kbis"
   | "releve_bancaire"
   | "comptable"
+  | "facture"
   | "autre";
 
 export type LeadDocument = {

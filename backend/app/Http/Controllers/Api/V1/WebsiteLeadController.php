@@ -172,6 +172,7 @@ class WebsiteLeadController extends Controller
     {
         $data = $request->validated();
         [$prenom, $nom] = self::splitName($data['nomComplet']);
+        $store = new DocumentStore;
 
         $lead = $this->createWithReference(
             LeadService::Contact,
@@ -191,16 +192,26 @@ class WebsiteLeadController extends Controller
 
                     'message' => $data['message'] ?? null,
                 ]),
-                fn (Lead $lead) => $lead->recordActivity(
-                    ActivityKind::Creation,
-                    'Message reçu via le formulaire de contact',
-                ),
+                function (Lead $lead) use ($request, $store): void {
+                    // Same transaction as the row, so a failed insert never
+                    // leaves an invoice on disk with nothing pointing at it.
+                    foreach (Arr::wrap($request->file('factures', [])) as $file) {
+                        $store->put($lead, $file, DocumentKind::Facture);
+                    }
+
+                    $lead->recordActivity(
+                        ActivityKind::Creation,
+                        'Message reçu via le formulaire de contact',
+                    );
+                },
             ),
+            $store,
         );
 
         Log::info('Message de contact enregistré', [
             'lead_id' => $lead->id,
             'reference' => $lead->reference,
+            'factures' => $lead->documents()->count(),
         ]);
 
         return $this->created($lead);

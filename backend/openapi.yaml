@@ -338,10 +338,19 @@ paths:
       operationId: submitContactLead
       description: |
         Creates a `contact` lead from the `/contact` form — a question, not a
-        dossier. No uploads, and no eligibility gate.
+        dossier. No eligibility gate.
 
         Only the company, the name and the email are required: a blank message
         still tells the back office who to call back.
+
+        Accepts **invoices**: `factures[]`, optional, up to 20, stored as
+        documents of kind `facture` on the resulting lead. They are written in
+        the same transaction as the row, so a failed insert never leaves a file
+        on disk with nothing pointing at it — and one rejected file rejects the
+        whole submission rather than saving a partial set.
+
+        Send `multipart/form-data` when there are files. `application/json` is
+        still accepted for a message without any.
 
         The form asks for a single **nom complet**, which the API splits into
         the `prenom` and `nom` the CRM stores. The first token is the given
@@ -354,42 +363,12 @@ paths:
       requestBody:
         required: true
         content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ContactSubmission"
           application/json:
             schema:
-              type: object
-              required: [entreprise, nomComplet, email]
-              properties:
-                entreprise:
-                  type: string
-                  maxLength: 190
-                  example: Atelier Marchand SARL
-                siren:
-                  type: [string, "null"]
-                  maxLength: 32
-                  description: >
-                    Optional, and free-form: kept as typed, spaces included, and
-                    not length-checked — a company outside France has no SIREN
-                    and refusing a message over it would be absurd.
-                  example: 812 345 678
-                nomComplet:
-                  type: string
-                  maxLength: 190
-                  description: One field, split server-side into prenom and nom.
-                  example: Julien Marchand
-                email:
-                  type: string
-                  format: email
-                  maxLength: 190
-                  example: j.marchand@example.fr
-                telephone:
-                  type: [string, "null"]
-                  maxLength: 40
-                  description: Not on the form today; accepted if you send it.
-                  example: 06 42 18 77 03
-                message:
-                  type: [string, "null"]
-                  maxLength: 5000
-                  example: Bonjour, je souhaite être rappelé cette semaine.
+              $ref: "#/components/schemas/ContactSubmission"
       responses:
         "201":
           description: Message received
@@ -1075,6 +1054,57 @@ components:
             message: Too Many Attempts.
 
   schemas:
+    ContactSubmission:
+      type: object
+      description: >
+        The /contact form. Sent as multipart/form-data when it carries invoices,
+        or as JSON when it does not — the fields are identical either way.
+      required: [entreprise, nomComplet, email]
+      properties:
+        entreprise:
+          type: string
+          maxLength: 190
+          example: Atelier Marchand SARL
+        siren:
+          type: [string, "null"]
+          maxLength: 32
+          description: >
+            Optional, and free-form: kept as typed, spaces included, and not
+            length-checked — a company outside France has no SIREN and refusing
+            a message over it would be absurd.
+          example: 812 345 678
+        nomComplet:
+          type: string
+          maxLength: 190
+          description: One field, split server-side into prenom and nom.
+          example: Julien Marchand
+        email:
+          type: string
+          format: email
+          maxLength: 190
+          example: j.marchand@example.fr
+        telephone:
+          type: [string, "null"]
+          maxLength: 40
+          description: Not on the form today; accepted if you send it.
+          example: 06 42 18 77 03
+        message:
+          type: [string, "null"]
+          maxLength: 5000
+          example: Bonjour, je souhaite être rappelé cette semaine.
+        factures:
+          type: array
+          maxItems: 20
+          description: >
+            Invoices, optional, up to 20. Stored as documents of kind `facture`
+            on the resulting lead. PDF, JPG or PNG, each capped at the smaller
+            of the app's 10 MB and PHP's upload_max_filesize. Send as repeated
+            `factures[]` parts. Multipart only — one rejected file rejects the
+            whole submission, so a partial set is never saved.
+          items:
+            type: string
+            format: binary
+
     LeadService:
       type: string
       description: >
@@ -1098,10 +1128,11 @@ components:
     DocumentKind:
       type: string
       description: >
-        The four upload slots on the financing form, plus a catch-all. All are
-        optional. `piece_identite`, `kbis` and `releve_bancaire` hold one
-        document each; `comptable` and `autre` hold several.
-      enum: [piece_identite, kbis, releve_bancaire, comptable, autre]
+        The financing form's four upload slots, the contact form's invoices,
+        and a catch-all. All are optional. `piece_identite`, `kbis` and
+        `releve_bancaire` hold one document each; `comptable`, `facture` and
+        `autre` hold several.
+      enum: [piece_identite, kbis, releve_bancaire, comptable, facture, autre]
 
     ActivityKind:
       type: string

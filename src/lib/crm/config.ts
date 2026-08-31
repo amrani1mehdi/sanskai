@@ -185,6 +185,7 @@ export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
   kbis: "Kbis / justificatif d'immatriculation",
   releve_bancaire: "Relevé bancaire des 6 derniers mois",
   comptable: "Informations financières / comptables",
+  facture: "Facture",
   autre: "Autre document",
 };
 

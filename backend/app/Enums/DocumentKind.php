@@ -2,13 +2,17 @@
 
 namespace App\Enums;
 
-/** The four upload slots on the financing form, plus a catch-all. */
+/**
+ * The four upload slots on the financing form, the contact form's invoices,
+ * and a catch-all.
+ */
 enum DocumentKind: string
 {
     case PieceIdentite = 'piece_identite';
     case Kbis = 'kbis';
     case ReleveBancaire = 'releve_bancaire';
     case Comptable = 'comptable';
+    case Facture = 'facture';
     case Autre = 'autre';
 
     public function label(): string
@@ -18,6 +22,7 @@ enum DocumentKind: string
             self::Kbis => "Kbis / justificatif d'immatriculation",
             self::ReleveBancaire => 'Relevé bancaire des 6 derniers mois',
             self::Comptable => 'Informations financières / comptables',
+            self::Facture => 'Facture',
             self::Autre => 'Autre document',
         };
     }
@@ -34,7 +39,9 @@ enum DocumentKind: string
     public function allowsMultiple(): bool
     {
         return match ($this) {
-            self::Comptable, self::Autre => true,
+            // Invoices come in batches by their nature — the contact form's
+            // label says "factures", plural, and means it.
+            self::Comptable, self::Facture, self::Autre => true,
             self::PieceIdentite, self::Kbis, self::ReleveBancaire => false,
         };
     }
