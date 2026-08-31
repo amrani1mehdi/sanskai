@@ -124,10 +124,13 @@ export function CrmWorkspace() {
     [unseen],
   );
 
-  const unseenIds = useMemo(
-    () => new Set(unseen.map((lead) => lead.id)),
-    [unseen],
-  );
+  /* Only the newest unread arrival is highlighted on the board.
+
+     Tinting every unread one turns a busy morning into a wall of amber, and
+     the point of the colour is "look at this one". A newer arrival takes the
+     highlight from the one before it, which also answers what should happen to
+     a card nobody got to — it goes back to normal and stays in the bell. */
+  const highlightId = arrivals[0]?.id ?? null;
 
   /* Read from the live list, not held in state: a card that moves stage or is
      deleted must not leave the panel showing a stale copy of it. */
@@ -316,7 +319,7 @@ export function CrmWorkspace() {
               leads={leads}
               stages={stages}
               selectedId={selectedId}
-              unseen={unseenIds}
+              highlightId={highlightId}
               onSelect={(lead, next) => {
                 setFocus(next);
                 setSelectedId((current) =>
