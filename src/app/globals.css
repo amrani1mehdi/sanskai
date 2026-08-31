@@ -179,10 +179,13 @@
   --success: 152 36% 30%;
   --danger: 5 52% 43%;
 
-  /* Lifted on the dark canvas, where the light amber would disappear. */
-  --new: 43 88% 62%;
-  --new-soft: 41 34% 21%;
-  --new-strong: 38 78% 38%;
+  /* The panel is a light canvas — near-white cards, dark ink — so the soft
+     tint has to stay pale. It was carrying a dark-canvas value, which put the
+     notification header and every new lead card at 21% lightness underneath
+     17% ink: a brown bar with writing that could not be read on it. */
+  --new: 38 84% 44%;
+  --new-soft: 44 92% 88%;
+  --new-strong: 33 84% 34%;
 
   /* Status palette — one muted hue per stage, so a badge is legible at a
      glance. All >= 5.68:1 on a panel. Reserved: never reused as series colours. */
