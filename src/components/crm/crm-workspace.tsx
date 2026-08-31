@@ -113,6 +113,18 @@ export function CrmWorkspace() {
     });
   }, [source, board, service, prestation, period, query, showPrestations, syncedAt]);
 
+  /* Everything still waiting, newest first — both boards, because a message
+     nobody has answered is as much a thing to deal with as a dossier. */
+  const untreated = useMemo(
+    () =>
+      [...dossiers, ...messages]
+        .filter((lead) => lead.status === "nouveau")
+        .sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+    [dossiers, messages],
+  );
+
   /* Read from the live list, not held in state: a card that moves stage or is
      deleted must not leave the panel showing a stale copy of it. */
   const selected = selectedId
@@ -252,7 +264,8 @@ export function CrmWorkspace() {
             {/* Beside the filters, not in the sidebar: this is about the board
                 you are looking at, and the rail is navigation only. */}
             <NewLeadsBell
-              leads={unseen}
+              leads={untreated}
+              arrived={new Set(unseen.map((lead) => lead.id))}
               onSeen={markSeen}
               onSelect={(lead) => {
                 /* A new lead can be a message while the dossiers board is up —

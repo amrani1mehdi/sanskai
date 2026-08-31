@@ -1,15 +1,18 @@
 "use client";
 
 /**
- * New arrivals, since this session started.
+ * Leads waiting to be dealt with.
  *
- * The board already updates itself every fifteen seconds, which is the hard
- * part — but a card quietly appearing in a column you are not looking at is
- * indistinguishable from nothing happening. This is the part that says so.
+ * Counts everything still at `nouveau`, so it means something the moment the
+ * CRM opens. Scoping it to "arrived since you loaded the page" was the obvious
+ * reading of *new* and the wrong one — with nothing submitted in the last
+ * minute the badge was empty, which is accurate and useless.
  *
- * "New" means arrived while you were here, not "status is nouveau": the first
- * response of the session is the baseline, so opening the CRM never announces
- * thirty leads you already knew about.
+ * Arrivals still get their own mark. A lead that landed while this session has
+ * been open carries a red dot in the list; the rest are simply untreated. That
+ * keeps the live part of it — a card appearing in a column nobody is looking at
+ * is otherwise indistinguishable from nothing happening — without making the
+ * whole feature depend on somebody submitting a form while you watch.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -21,10 +24,14 @@ import { cn } from "@/lib/utils";
 
 export function NewLeadsBell({
   leads,
+  arrived,
   onSeen,
   onSelect,
 }: {
+  /** Untreated leads — status `nouveau`, newest first. */
   leads: Lead[];
+  /** Of those, the ones that landed while this session has been open. */
+  arrived: Set<string>;
   onSeen: () => void;
   onSelect: (lead: Lead) => void;
 }) {
@@ -67,8 +74,8 @@ export function NewLeadsBell({
         aria-expanded={open}
         aria-label={
           count > 0
-            ? `${count} nouveau${count > 1 ? "x" : ""} lead${count > 1 ? "s" : ""}`
-            : "Nouveaux leads"
+            ? `${count} lead${count > 1 ? "s" : ""} à traiter`
+            : "Leads à traiter"
         }
         className={cn(
           "relative rounded-lg border p-2 transition-colors",
@@ -96,15 +103,15 @@ export function NewLeadsBell({
         >
           <p className="border-b border-border bg-accent/10 px-4 py-2.5 text-xs font-semibold text-foreground">
             {count === 0
-              ? "Aucun nouveau lead"
-              : `${count} lead${count > 1 ? "s" : ""} depuis votre arrivée`}
+              ? "Rien à traiter"
+              : `${count} lead${count > 1 ? "s" : ""} en attente de traitement`}
           </p>
 
           {count === 0 ? (
             <div className="px-4 py-8 text-center">
               <Inbox size={22} className="mx-auto mb-2 text-muted-foreground" aria-hidden />
               <p className="text-xs text-muted-foreground">
-                Les demandes envoyées depuis le site apparaîtront ici.
+                Tous les leads reçus ont été pris en charge.
               </p>
             </div>
           ) : (
@@ -122,7 +129,13 @@ export function NewLeadsBell({
                   >
                     <span
                       aria-hidden
-                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-danger"
+                      title={arrived.has(lead.id) ? "Arrivé à l'instant" : undefined}
+                      className={cn(
+                        "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+                        /* Red only for the ones that landed while you were
+                           here; the rest are simply still untreated. */
+                        arrived.has(lead.id) ? "bg-danger" : "bg-accent/50",
+                      )}
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-foreground">

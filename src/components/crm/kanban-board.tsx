@@ -163,9 +163,17 @@ function KanbanCard({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={cn(
-        "relative rounded-lg border bg-card p-3 transition-shadow",
+        "relative rounded-lg border p-3 transition-shadow",
         dragging ? "opacity-50" : "hover:shadow-md",
-        selected ? "border-accent ring-2 ring-accent/30" : "border-border",
+        /* Untreated leads are tinted in the accent, so what still needs
+           picking up is obvious across the whole board rather than only in
+           the first column. */
+        lead.status === "nouveau" ? "bg-accent/8" : "bg-card",
+        selected
+          ? "border-accent ring-2 ring-accent/30"
+          : lead.status === "nouveau"
+            ? "border-accent/30"
+            : "border-border",
       )}
     >
       <button
