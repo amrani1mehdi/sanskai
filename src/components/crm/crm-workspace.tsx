@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, TriangleAlert, X } from "lucide-react";
 import { KanbanBoard } from "@/components/crm/kanban-board";
 import { LeadPanel } from "@/components/crm/lead-panel";
 import {
@@ -47,7 +47,7 @@ const selectClass =
   "rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export function CrmWorkspace() {
-  const { dossiers, messages, hydrated, syncedAt, setStatus, logContact } =
+  const { dossiers, messages, hydrated, syncedAt, error, setStatus, logContact } =
     useCrm();
 
   const [board, setBoard] = useState<Board>("dossiers");
@@ -56,6 +56,9 @@ export function CrmWorkspace() {
   const [prestation, setPrestation] = useState<PrestationFilter>("tous");
   const [period, setPeriod] = useState<PeriodFilter>("tous");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  /* Set when a card is opened from its paperclip, so the panel scrolls to the
+     pieces rather than making you hunt for them. */
+  const [focus, setFocus] = useState<"documents" | undefined>(undefined);
 
   const source = board === "messages" ? messages : dossiers;
   const stages = board === "messages" ? CONTACT_STAGES : STAGES;
@@ -249,9 +252,24 @@ export function CrmWorkspace() {
           </div>
         </header>
 
+        {/* A drag that the server refuses rolls the card back. Saying why is
+            the other half of that: a card silently returning to where it came
+            from reads as a bug in the board. */}
+        {error ? (
+          <p
+            role="alert"
+            className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger lg:mx-6"
+          >
+            <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
+            {error}
+          </p>
+        ) : null}
+
         {/* No status filter: the board *is* the status, and a filter that can
             empty five of six columns fights the thing it sits above. */}
-        <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 lg:px-6">
+        {/* 20px under the filter bar: enough air that the columns read as
+            content rather than another row of the toolbar. */}
+        <div className="min-h-0 flex-1 overflow-hidden px-4 pt-5 pb-4 lg:px-6">
           {!hydrated ? (
             <p className="rounded-xl border border-dashed border-border px-6 py-16 text-center text-sm text-muted-foreground">
               Chargement des leads…
@@ -267,9 +285,12 @@ export function CrmWorkspace() {
               leads={leads}
               stages={stages}
               selectedId={selectedId}
-              onSelect={(lead) =>
-                setSelectedId((current) => (current === lead.id ? null : lead.id))
-              }
+              onSelect={(lead, next) => {
+                setFocus(next);
+                setSelectedId((current) =>
+                  current === lead.id && !next ? null : lead.id,
+                );
+              }}
               onMove={setStatus}
               onLog={logContact}
             />
@@ -281,7 +302,11 @@ export function CrmWorkspace() {
           third of the board would make the board worse at its one job. */}
       {selected ? (
         <div className="hidden w-96 shrink-0 xl:block">
-          <LeadPanel lead={selected} onClose={() => setSelectedId(null)} />
+          <LeadPanel
+            lead={selected}
+            focus={focus}
+            onClose={() => setSelectedId(null)}
+          />
         </div>
       ) : null}
 
@@ -296,7 +321,11 @@ export function CrmWorkspace() {
             className="flex-1 bg-foreground/40"
           />
           <div className="w-[min(24rem,calc(100vw-3rem))]">
-            <LeadPanel lead={selected} onClose={() => setSelectedId(null)} />
+            <LeadPanel
+            lead={selected}
+            focus={focus}
+            onClose={() => setSelectedId(null)}
+          />
           </div>
         </div>
       ) : null}

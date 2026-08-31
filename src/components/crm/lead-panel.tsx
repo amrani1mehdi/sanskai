@@ -14,25 +14,32 @@
  */
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Building2,
   Mail,
   MapPin,
+  Eye,
+  FileText,
   MessageSquarePlus,
-  Paperclip,
   Phone,
   StickyNote,
   Trash2,
   X,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/crm/confirm-dialog";
+import { DocumentViewer } from "@/components/crm/document-viewer";
 import { StatusBadge } from "@/components/crm/status-badge";
-import { SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
-import { formatAmount, formatDateTime, initialsOf } from "@/lib/crm/format";
+import { DOCUMENT_LABELS, SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
+import {
+  formatAmount,
+  formatDateTime,
+  formatFileSize,
+  initialsOf,
+} from "@/lib/crm/format";
 import { useCrm, useLead } from "@/lib/crm/store";
-import type { ActivityKind, Lead, LeadStatus } from "@/lib/crm/types";
+import type { ActivityKind, Lead, LeadDocument, LeadStatus } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
 
 type KindFilter = ActivityKind | "tous";
@@ -49,19 +56,36 @@ const ACTIVITY_FILTERS: { id: ActivityKind; label: string }[] = [
 
 export function LeadPanel({
   lead: summary,
+  focus,
   onClose,
 }: {
   lead: Lead;
+  /** Which section to bring into view — set by the card that opened it. */
+  focus?: "documents";
   onClose: () => void;
 }) {
   const { setStatus, addNote, removeLead, logContact } = useCrm();
   /* The board's copy has counts only; this one has the notes and the trail. */
   const { lead: full } = useLead(summary.id);
-  const lead = full ?? summary;
+
+  /*
+   * Detail for the collections, the board's copy for the fields it carries.
+   *
+   * A mutation reloads the list first and the open detail immediately after,
+   * so for one round trip the two disagree. Taking status and timestamps from
+   * the list means dragging a card flips the panel's status as the card lands,
+   * rather than a beat later — and `summary` is never staler than `full` for
+   * the fields both hold.
+   */
+  const lead = full
+    ? { ...full, status: summary.status, updatedAt: summary.updatedAt }
+    : summary;
 
   const [note, setNote] = useState("");
   const [kind, setKind] = useState<KindFilter>("tous");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [viewing, setViewing] = useState<LeadDocument | null>(null);
+  const documentsRef = useRef<HTMLElement>(null);
 
   const visible =
     kind === "tous"
@@ -70,6 +94,17 @@ export function LeadPanel({
 
   const service = SERVICE_BY_ID[lead.service];
   const phone = lead.telephone?.replace(/\s/g, "");
+
+  /* Opened from the paperclip on a card, so the pieces should be what you are
+     looking at — not four sections down a panel you have not scrolled. Waits
+     for the detail fetch, since the list carries a count and not the files. */
+  const documentsLoaded = lead.documents.length > 0;
+
+  useEffect(() => {
+    if (focus !== "documents" || !documentsLoaded) return;
+
+    documentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focus, documentsLoaded, summary.id]);
 
   return (
     <aside
@@ -200,21 +235,47 @@ export function LeadPanel({
           </section>
         ) : null}
 
-        <section>
+        <section ref={documentsRef} className="scroll-mt-4">
           <Label>
             Pièces jointes
             <span className="ml-1.5 font-normal text-muted-foreground">
               {lead.documentCount}
             </span>
           </Label>
+
           {lead.documentCount === 0 ? (
             <p className="text-sm text-muted-foreground">Aucune pièce transmise.</p>
+          ) : lead.documents.length === 0 ? (
+            /* The board's copy carries a count, not the files; the detail fetch
+               is what fills this in a moment. */
+            <p className="text-sm text-muted-foreground">Chargement des pièces…</p>
           ) : (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Paperclip size={14} aria-hidden />
-              {lead.documentCount} document{lead.documentCount > 1 ? "s" : ""} —
-              consultables sur la fiche.
-            </p>
+            <ul className="space-y-1.5">
+              {lead.documents.map((document) => (
+                <li key={document.id}>
+                  <button
+                    type="button"
+                    onClick={() => setViewing(document)}
+                    className="flex w-full items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 text-left transition-colors hover:border-accent/40 hover:bg-secondary"
+                  >
+                    <FileText
+                      size={15}
+                      className="shrink-0 text-accent"
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-foreground">
+                        {DOCUMENT_LABELS[document.kind]}
+                      </span>
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {document.name} · {formatFileSize(document.size)}
+                      </span>
+                    </span>
+                    <Eye size={14} className="shrink-0 text-muted-foreground" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 
@@ -329,6 +390,12 @@ export function LeadPanel({
           </button>
         </section>
       </div>
+
+      <DocumentViewer
+        document={viewing}
+        caption={lead.reference}
+        onClose={() => setViewing(null)}
+      />
 
       <ConfirmDialog
         open={confirmingDelete}
