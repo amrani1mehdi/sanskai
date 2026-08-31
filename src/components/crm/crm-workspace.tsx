@@ -267,7 +267,9 @@ export function CrmWorkspace() {
 
         {/* No status filter: the board *is* the status, and a filter that can
             empty five of six columns fights the thing it sits above. */}
-        <div className="min-h-0 flex-1 overflow-hidden px-4 py-4 lg:px-6">
+        {/* 20px under the filter bar: enough air that the columns read as
+            content rather than another row of the toolbar. */}
+        <div className="min-h-0 flex-1 overflow-hidden px-4 pt-5 pb-4 lg:px-6">
           {!hydrated ? (
             <p className="rounded-xl border border-dashed border-border px-6 py-16 text-center text-sm text-muted-foreground">
               Chargement des leads…
