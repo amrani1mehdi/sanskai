@@ -12,6 +12,24 @@ export const ACCEPTED_UPLOAD_TYPES = [
   "image/png",
 ];
 
+/**
+ * The same set as extensions.
+ *
+ * Browsers do not always report a MIME type — a file dragged out of another
+ * application, or one the operating system has no handler for, arrives with
+ * `type` empty. Judging those on the name is the difference between an invoice
+ * being accepted and being refused as the wrong kind of file.
+ */
+const ACCEPTED_UPLOAD_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
+
+function isAccepted(file: File): boolean {
+  if (ACCEPTED_UPLOAD_TYPES.includes(file.type)) return true;
+
+  const name = file.name.toLowerCase();
+
+  return ACCEPTED_UPLOAD_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
 type FileUploadProps = {
   /** The action, e.g. "Upload ID document" — this is the button's own text. */
   label: string;
@@ -67,7 +85,7 @@ export function FileUpload({
   const errorId = `${inputId}-error`;
 
   const accept = (candidates: File[]) => {
-    if (candidates.some((file) => !ACCEPTED_UPLOAD_TYPES.includes(file.type))) {
+    if (candidates.some((file) => !isAccepted(file))) {
       setError(wrongTypeMessage);
       return;
     }
@@ -94,19 +112,49 @@ export function FileUpload({
   const open = () => inputRef.current?.click();
   const full = multiple ? files.length >= maxFiles : files.length > 0;
 
+  /*
+   * Dropping is handled on the wrapper rather than the button: the button is
+   * hidden once the slot is full, and a drop aimed at the file list — or just
+   * short of the button — would otherwise be handled by the browser, which
+   * navigates away to the file and loses the rest of the form.
+   */
+  const onDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setDragging(false);
+
+    const dropped = Array.from(event.dataTransfer.files ?? []);
+    if (dropped.length) accept(dropped);
+  };
+
   return (
-    <div>
+    <div
+      onDragOver={(event) => {
+        event.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={(event) => {
+        // Moving between children fires dragleave on the one being left, so
+        // only a pointer that has actually left the field counts.
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setDragging(false);
+        }
+      }}
+      onDrop={onDrop}
+    >
       <input
         ref={inputRef}
         type="file"
         multiple={multiple}
-        accept={ACCEPTED_UPLOAD_TYPES.join(",")}
+        accept={[...ACCEPTED_UPLOAD_TYPES, ...ACCEPTED_UPLOAD_EXTENSIONS].join(",")}
         className="sr-only"
         aria-describedby={shown ? errorId : undefined}
         aria-label={label}
         onChange={(event) => {
           const chosen = Array.from(event.target.files ?? []);
           if (chosen.length) accept(chosen);
+          // Cleared so picking the same file again still fires a change event;
+          // after a rejection that is exactly what someone tries next.
+          event.target.value = "";
         }}
       />
 
@@ -144,17 +192,6 @@ export function FileUpload({
         <button
           type="button"
           onClick={open}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragging(false);
-            const dropped = Array.from(event.dataTransfer.files ?? []);
-            if (dropped.length) accept(dropped);
-          }}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg border border-dashed px-4 py-3.5 text-left transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
