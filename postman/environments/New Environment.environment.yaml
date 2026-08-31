@@ -1,0 +1,9 @@
+name: New Environment
+values:
+  - key: base_url
+    value: ''
+  - key: token
+    value: ''
+  - key: lead_id
+    value: ''
+color: 0
