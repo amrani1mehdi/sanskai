@@ -26,6 +26,7 @@ export function ContactForm({ content }: { content: SiteContent }) {
 
   const [values, setValues] = useState(EMPTY);
   const [invoices, setInvoices] = useState<File[]>([]);
+  const [invoiceError, setInvoiceError] = useState<string | undefined>(undefined);
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,7 @@ export function ContactForm({ content }: { content: SiteContent }) {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setInvoiceError(undefined);
     setPending(true);
 
     /* multipart, because the invoices ride along. No Content-Type header:
@@ -64,6 +66,15 @@ export function ContactForm({ content }: { content: SiteContent }) {
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
+        const errors = (payload?.errors ?? {}) as Record<string, string[]>;
+
+        // Keyed per file — `factures.0` — so the slot's own name never matches
+        // and the message would otherwise only reach the banner.
+        const invoice = Object.entries(errors).find(([key]) =>
+          key.startsWith("factures"),
+        )?.[1]?.[0];
+
+        setInvoiceError(invoice ? translateApiError(invoice, form) : undefined);
         // Laravel reports per field; the first message is the actionable one,
         // translated because the API answers in English whatever the visitor
         // reads. This form shows one line, so the rest are not needed.
@@ -164,6 +175,7 @@ export function ContactForm({ content }: { content: SiteContent }) {
           multiple
           addMoreLabel={form.addAnotherFile}
           maxFiles={MAX_INVOICES}
+          serverError={invoiceError}
         />
 
         {error ? (
