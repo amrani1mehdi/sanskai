@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { MotionReveal } from "@/components/ui/motion-reveal";
+import { translateApiErrors } from "@/lib/leads/errors";
 import { cn } from "@/lib/utils";
 
 const SERVICE_ICONS = {
@@ -116,13 +117,7 @@ export function BusinessServices({ content }: { content: SiteContent }) {
       const payload = await response.json().catch(() => null);
 
       if (response.status === 422 && payload?.errors) {
-        setFieldErrors(
-          Object.fromEntries(
-            Object.entries(payload.errors as Record<string, string[]>).map(
-              ([field, messages]) => [field, messages[0]],
-            ),
-          ),
-        );
+        setFieldErrors(translateApiErrors(payload.errors, form));
       }
 
       setError(
@@ -130,7 +125,9 @@ export function BusinessServices({ content }: { content: SiteContent }) {
           ? form.errorRateLimit
           : response.status === 503
             ? form.errorUnavailable
-            : (payload?.message ?? form.errorGeneric),
+            : response.status === 422
+              ? form.checkFields
+              : (payload?.message ?? form.errorGeneric),
       );
       setSending(false);
       return;

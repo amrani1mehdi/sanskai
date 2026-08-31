@@ -7,6 +7,7 @@ import type { Locale } from "@/lib/i18n/config";
 import { isCompanyAgeEligible, isRevenueEligible } from "@/lib/eligibility";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FileUpload } from "@/components/ui/file-upload";
+import { translateApiErrors } from "@/lib/leads/errors";
 import { cn } from "@/lib/utils";
 
 /** Shared by every field on the live site's financing form. */
@@ -198,13 +199,7 @@ export function FinancingForm({
       if (response.status === 422 && payload?.errors) {
         // The API reports against its own field names, which is what the
         // notices below are keyed on, so each lands beside the field at fault.
-        setFieldErrors(
-          Object.fromEntries(
-            Object.entries(payload.errors as Record<string, string[]>).map(
-              ([field, messages]) => [field, messages[0]],
-            ),
-          ),
-        );
+        setFieldErrors(translateApiErrors(payload.errors, form));
       }
 
       setError(
@@ -212,7 +207,9 @@ export function FinancingForm({
           ? form.errorRateLimit
           : response.status === 503
             ? form.errorUnavailable
-            : (payload?.message ?? form.errorGeneric),
+            : response.status === 422
+              ? form.checkFields
+              : (payload?.message ?? form.errorGeneric),
       );
       setSending(false);
       return;
@@ -452,6 +449,8 @@ export function FinancingForm({
           serverError={uploadError("documentsComptables")}
           multiple
           addMoreLabel={form.addAnotherFile}
+          // The API's own ceiling for this slot; the component's default is lower.
+          maxFiles={20}
         />
 
         <Field
