@@ -13,6 +13,12 @@ import {
 } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { MotionReveal } from "@/components/ui/motion-reveal";
+import {
+  checkEmail,
+  checkPhone,
+  checkRequired,
+  collect,
+} from "@/lib/leads/validate";
 import { translateApiErrors } from "@/lib/leads/errors";
 import { cn } from "@/lib/utils";
 
@@ -65,12 +71,26 @@ export function BusinessServices({ content }: { content: SiteContent }) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const serviceRef = useRef<HTMLSelectElement>(null);
 
-  const set = (key: keyof typeof EMPTY) => (value: string) =>
+  /** Drops a field's complaint once it is being answered. */
+  const clearFieldError = (key: string) =>
+    setFieldErrors((current) => {
+      if (current[key] === undefined) return current;
+
+      const next = { ...current };
+      delete next[key];
+
+      return next;
+    });
+
+  const set = (key: keyof typeof EMPTY) => (value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
+    clearFieldError(key);
+  };
 
   /** Card button: choose the service, then bring the form into view. */
   const requestService = (value: string) => {
     setValues((current) => ({ ...current, service: value }));
+    clearFieldError("service");
     serviceRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     // Focus after the scroll, so the browser does not jump instead of gliding.
     window.setTimeout(() => serviceRef.current?.focus({ preventScroll: true }), 500);
@@ -85,6 +105,27 @@ export function BusinessServices({ content }: { content: SiteContent }) {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (sending) return;
+
+    /*
+     * Checked here rather than left to the browser's own `required`, whose
+     * message comes out in the language Chrome was installed in — not the one
+     * the visitor is reading the page in.
+     */
+    const invalid = collect({
+      service: checkRequired(values.service, form),
+      nom: checkRequired(values.nom, form),
+      prenom: checkRequired(values.prenom, form),
+      email: checkEmail(values.email, form),
+      telephone: checkPhone(values.telephone, form),
+      entreprise: checkRequired(values.entreprise, form),
+      // message is deliberately absent — it is optional.
+    });
+
+    if (Object.keys(invalid).length > 0) {
+      setFieldErrors(invalid);
+      setError(form.checkFields);
+      return;
+    }
 
     setSending(true);
     setError(null);
@@ -209,7 +250,7 @@ export function BusinessServices({ content }: { content: SiteContent }) {
                   {businessDevelopment.form.description}
                 </p>
 
-                <form onSubmit={onSubmit} className="space-y-4">
+                <form onSubmit={onSubmit} noValidate className="space-y-4">
                   <div>
                     <label
                       htmlFor="business-service"

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CircleCheck, Send, TriangleAlert } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import type { SiteContent } from "@/lib/content";
 import { translateApiError } from "@/lib/leads/errors";
+import { checkEmail, checkRequired, collect } from "@/lib/leads/validate";
+import { cn } from "@/lib/utils";
 
 /** Matches `StoreContactLeadRequest::MAX_INVOICES` — the API rejects more. */
 const MAX_INVOICES = 20;
@@ -27,6 +29,7 @@ export function ContactForm({ content }: { content: SiteContent }) {
   const [values, setValues] = useState(EMPTY);
   const [invoices, setInvoices] = useState<File[]>([]);
   const [invoiceError, setInvoiceError] = useState<string | undefined>(undefined);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +37,14 @@ export function ContactForm({ content }: { content: SiteContent }) {
   const set = (key: keyof typeof EMPTY) => (value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
     setError(null);
+    setFieldErrors((current) => {
+      if (current[key] === undefined) return current;
+
+      const next = { ...current };
+      delete next[key];
+
+      return next;
+    });
   };
 
   /**
@@ -43,8 +54,28 @@ export function ContactForm({ content }: { content: SiteContent }) {
    */
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    /*
+      * Checked here rather than left to the browser's own `required`, whose
+      * message comes out in the language the browser was installed in — not the
+      * one the visitor is reading the page in.
+      */
+    const invalid = collect({
+      entreprise: checkRequired(values.company, form),
+      siren: checkRequired(values.siren, form),
+      nomComplet: checkRequired(values.fullName, form),
+      email: checkEmail(values.email, form),
+      // message and the invoices are deliberately absent — both optional.
+    });
+
+    if (Object.keys(invalid).length > 0) {
+      setFieldErrors(invalid);
+      setError(form.checkFields);
+      return;
+    }
+
     setError(null);
     setInvoiceError(undefined);
+    setFieldErrors({});
     setPending(true);
 
     /* multipart, because the invoices ride along. No Content-Type header:
@@ -122,22 +153,26 @@ export function ContactForm({ content }: { content: SiteContent }) {
       </h3>
       <p className="text-sm text-muted-foreground mb-8">{contact.formDesc}</p>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} noValidate className="space-y-4">
         <Field
           label={contact.fields.company}
           value={values.company}
           onChange={set("company")}
+          error={fieldErrors.entreprise}
           required
         />
         <Field
           label={contact.fields.siren}
           value={values.siren}
           onChange={set("siren")}
+          error={fieldErrors.siren}
+          required
         />
         <Field
           label={contact.fields.fullName}
           value={values.fullName}
           onChange={set("fullName")}
+          error={fieldErrors.nomComplet}
           required
         />
         <Field
@@ -145,6 +180,7 @@ export function ContactForm({ content }: { content: SiteContent }) {
           type="email"
           value={values.email}
           onChange={set("email")}
+          error={fieldErrors.email}
           required
         />
 
@@ -208,23 +244,36 @@ function Field({
   onChange,
   type,
   required,
+  error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   required?: boolean;
+  /** What is wrong with this field, in the visitor's language. */
+  error?: string;
 }) {
+  const errorId = useId();
+
   return (
     <div>
       <label className="text-xs font-medium text-foreground mb-1.5 block">{label}</label>
       <input
         required={required}
         type={type}
-        className={inputClass}
+        aria-invalid={error !== undefined || undefined}
+        aria-describedby={error ? errorId : undefined}
+        className={cn(inputClass, error && "border-danger focus:border-danger")}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
+
+      {error ? (
+        <p id={errorId} className="mt-1.5 text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
