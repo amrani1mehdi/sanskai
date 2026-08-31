@@ -43,9 +43,17 @@ On the Next.js side:
 
 ```dotenv
 # .env.local — no NEXT_PUBLIC_ prefix on either of these
-CRM_API_URL=http://localhost:8000/api
+CRM_API_URL=https://api.sansekai.72-60-190-211.sslip.io/api   # Hostinger VPS
+# CRM_API_URL=http://localhost:8000/api                       # local artisan serve
 CRM_API_KEY=<same value as WEBSITE_API_KEY>
 ```
+
+Point `CRM_API_URL` at the VPS over **https**, not http. The host 301-redirects
+plain HTTP, and `fetch` follows a 301 on a POST by downgrading it to GET and
+dropping the body — login and every write would fail without an error worth
+reading. Unset, the variable falls back to `http://localhost:8000/api`
+(`src/lib/crm/session.ts`), so a missing `.env.local` means the back office
+quietly expects a local backend.
 
 ---
 

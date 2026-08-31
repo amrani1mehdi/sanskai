@@ -8,8 +8,25 @@ French and German.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev      # http://localhost:3000
 ```
+
+## Back office
+
+`/admin` is served by this app but reads everything from the Laravel CRM in
+`backend/`. `CRM_API_URL` in `.env.local` decides which instance it talks to —
+the Hostinger VPS by default, or a local `php artisan serve` if you uncomment
+the other line. Nothing else is wired to a backend, so pointing that one
+variable elsewhere moves the whole back office.
+
+The URL is read server-side only (`src/lib/crm/session.ts`) and the session
+token lives in an httpOnly cookie: every CRM call goes through a route handler
+under `src/app/api/crm/`, which attaches the bearer header itself. Neither the
+URL nor the token is ever exposed to client JavaScript.
+
+Running the CRM locally instead — MySQL, migrations, the admin seeder — is
+documented in [`backend/API.md`](./backend/API.md).
 
 
 ## Stack
