@@ -24,10 +24,24 @@ fail() { printf '\n\033[31m✗ %s\033[0m\n' "$1" >&2; exit 1; }
 [ -f artisan ] || fail "No artisan here. Run this from the Laravel directory."
 [ -f .env ]    || fail "No .env here. The server's environment file is missing."
 
-step "Pulling $BRANCH"
-git fetch origin
-git checkout "$BRANCH"
-git pull origin "$BRANCH"
+# On the Hostinger VPS the app is at /var/www/sansekai-crm/backend, and that box
+# also hosts ~10 unrelated Laravel apps — symloop, rais, zerotouch and others.
+# Never resolve the directory by searching for `artisan` and taking the first
+# hit; it lands in somebody else's project and migrates their database.
+
+if [ -d .git ]; then
+    step "Pulling $BRANCH"
+    git fetch origin
+    git checkout "$BRANCH"
+    git pull origin "$BRANCH"
+else
+    # The VPS deployment is a file copy, not a clone. Upload the archive and
+    # unpack it over the app before running this:
+    #
+    #     scp sansekai-update.tgz root@<host>:/tmp/
+    #     cd /var/www/sansekai-crm/backend && tar -xzf /tmp/sansekai-update.tgz
+    step "No .git here — assuming the files were copied in already"
+fi
 
 step "Reconciling .env"
 
@@ -77,20 +91,31 @@ php artisan config:clear && php artisan config:cache
 php artisan route:clear  && php artisan route:cache
 php artisan view:clear
 
+step "Reloading PHP-FPM"
+# OPcache holds the old class files in memory per worker, so on a box with
+# opcache enabled the new code does not take effect until the pool restarts —
+# the caches above are Laravel's, not PHP's. This has to happen before the
+# check below, or the check interrogates workers still running the old code.
+for v in 8.3 8.2; do
+    if systemctl is-active --quiet "php${v}-fpm" 2>/dev/null; then
+        systemctl reload "php${v}-fpm" && echo "  reloaded php${v}-fpm"
+    fi
+done
+
 step "Checking the new contract is live"
 # One word is the whole test: the token endpoint should now ask for `email`.
+# Host header included because this box serves ~10 vhosts off one address, and
+# a bare request to 127.0.0.1 lands on the default server, not this app.
 answer="$(curl -fsS -X POST http://127.0.0.1/api/v1/auth/token \
+    -H 'Host: api.sansekai.72-60-190-211.sslip.io' \
     -H 'Content-Type: application/json' -H 'Accept: application/json' \
     -d '{}' 2>/dev/null || true)"
 
 case "$answer" in
     *'"email"'*) printf '\n\033[32m✓ Deployed. The API asks for `email`.\033[0m\n' ;;
-    *'"login"'*) fail "The API still asks for \`login\`. A cache survived, or PHP-FPM needs a reload." ;;
+    *'"login"'*) fail "The API still asks for \`login\`. A cache survived the reload." ;;
     *)           printf '\n\033[33m! Deployed, but the local check could not reach the API.\033[0m\n'
                  printf '  Verify from outside:\n'
                  printf '  curl -X POST https://api.sansekai.72-60-190-211.sslip.io/api/v1/auth/token \\\n'
                  printf "      -H 'Content-Type: application/json' -d '{}'\n" ;;
 esac
-
-printf '\nIf the API still behaves as before, reload PHP-FPM:\n'
-printf '  systemctl reload php8.3-fpm   # or the version this box runs\n'
