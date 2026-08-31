@@ -678,6 +678,39 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /v1/changes:
+    get:
+      tags: [Leads]
+      summary: Change fingerprint, for polling
+      operationId: changes
+      description: |
+        Three aggregates over the `leads` table, so the back office can ask
+        every few seconds without re-downloading a list that has not moved. The
+        cost does not grow with the number of leads — which is the point.
+
+        Compare the whole payload to the last one you saw and refetch only when
+        it differs. Each field catches a case the others miss: `count` a
+        deletion, `latestId` an insertion, `updatedAt` an edit that changes
+        neither — a status moved on the Kanban, say.
+
+        Take this **before** the list, never after. Taken after, a lead arriving
+        in between is inside the fingerprint but missing from your copy, and you
+        would consider yourself current until something else changed — the lead
+        would never appear. Taken first, the same race costs one redundant
+        refetch.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                data:
+                  count: 19
+                  latestId: 26
+                  updatedAt: "2026-08-31T11:13:09+00:00"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
   /v1/stats:
     get:
       tags: [Leads]
