@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Enums\LeadService;
+use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Support\Eligibility;
 use Illuminate\Http\Request;
@@ -36,7 +37,19 @@ class LeadResource extends JsonResource
             'prestationLabel' => $this->prestation?->label(),
 
             'status' => $this->status->value,
-            'statusLabel' => $this->status->label(),
+            /* Contextual: `nouveau` reads "Nouveau" on a dossier and
+               "Non répondu" on a contact message. Same stored value. */
+            'statusLabel' => $this->status->labelFor($this->service),
+            /* What this lead may be set to, so the back office builds its
+               picker from the API rather than from a list of its own that
+               could drift out of step with what the API will accept. */
+            'statusOptions' => array_map(
+                fn (LeadStatus $status) => [
+                    'value' => $status->value,
+                    'label' => $status->labelFor($this->service),
+                ],
+                LeadStatus::forService($this->service),
+            ),
 
             // Identity.
             'nom' => $this->nom,

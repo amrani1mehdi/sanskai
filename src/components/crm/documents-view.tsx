@@ -12,20 +12,22 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Download,
-  ExternalLink,
+  Eye,
   FileText,
   Paperclip,
   Search,
   Trash2,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/crm/confirm-dialog";
+import { DocumentViewer } from "@/components/crm/document-viewer";
 import { Pagination, paginate } from "@/components/crm/pagination";
 import { DOCUMENT_LABELS, SERVICE_BY_ID } from "@/lib/crm/config";
 import { formatFileSize, formatShortDate } from "@/lib/crm/format";
-import { useCrm } from "@/lib/crm/store";
-import type { DocumentKind, Lead, LeadDocument } from "@/lib/crm/types";
+import { fetchAllDocuments, type DocumentRow } from "@/lib/crm/api";
+import { useCrm, useCrmListing } from "@/lib/crm/store";
+import type { DocumentKind } from "@/lib/crm/types";
 
-type Row = { document: LeadDocument; lead: Lead };
+type Row = DocumentRow;
 type KindFilter = DocumentKind | "tous";
 
 const PAGE_SIZE = 12;
@@ -34,18 +36,22 @@ const selectClass =
   "rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export function DocumentsView() {
-  const { leads, removeDocument } = useCrm();
+  const { removeDocument, syncedAt } = useCrm();
+
+  /* Fetched, not read off the lead list: `GET /v1/leads` sends `documentCount`
+     rather than the documents themselves, so a table of fifty leads stays one
+     query. Reading `lead.documents` here is why this page was always empty
+     while the sidebar counted correctly. Re-fetches whenever the store
+     reloads, so the poll keeps it live. */
+  const { rows: all, status } = useCrmListing(fetchAllDocuments, syncedAt);
 
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<KindFilter>("tous");
   const [pending, setPending] = useState<Row | null>(null);
+  const [viewing, setViewing] = useState<Row | null>(null);
   const [page, setPage] = useState(1);
 
   const rows = useMemo(() => {
-    const all: Row[] = leads.flatMap((lead) =>
-      lead.documents.map((document) => ({ document, lead })),
-    );
-
     const needle = query.trim().toLowerCase();
 
     return all
@@ -57,7 +63,6 @@ export function DocumentsView() {
           DOCUMENT_LABELS[row.document.kind],
           row.lead.entreprise,
           row.lead.reference,
-          `${row.lead.prenom} ${row.lead.nom}`,
         ].some((field) => field.toLowerCase().includes(needle));
       })
       .sort(
@@ -65,7 +70,7 @@ export function DocumentsView() {
           new Date(b.document.uploadedAt).getTime() -
           new Date(a.document.uploadedAt).getTime(),
       );
-  }, [leads, query, kind]);
+  }, [all, query, kind]);
 
   const totalSize = rows.reduce((sum, row) => sum + row.document.size, 0);
   const pageData = paginate(rows, page, PAGE_SIZE);
@@ -123,12 +128,20 @@ export function DocumentsView() {
         {rows.length} document{rows.length > 1 ? "s" : ""} · {formatFileSize(totalSize)}
       </p>
 
-      {rows.length === 0 ? (
+      {status === "loading" ? (
+        /* Distinct from the empty state on purpose: "Aucun document" while the
+           request is still in flight reads as "there are none". */
+        <p className="mt-4 rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
+          Chargement des documents…
+        </p>
+      ) : rows.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
           <Paperclip size={28} className="mx-auto mb-3 text-muted-foreground" />
           <p className="font-display font-bold text-foreground">Aucun document</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Aucune pièce ne correspond à ces critères.
+            {all.length === 0
+              ? "Aucune pièce n'a encore été transmise."
+              : "Aucune pièce ne correspond à ces critères."}
           </p>
         </div>
       ) : (
@@ -165,14 +178,13 @@ export function DocumentsView() {
               </Link>
 
               <div className="flex shrink-0 items-center gap-1">
-                <a
-                  href={document.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => setViewing({ document, lead })}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                 >
-                  <ExternalLink size={13} /> Consulter
-                </a>
+                  <Eye size={13} /> Consulter
+                </button>
                 <a
                   href={document.url}
                   download={document.name}
@@ -203,6 +215,14 @@ export function DocumentsView() {
         to={pageData.to}
         noun="document"
         onChange={setPage}
+      />
+
+      <DocumentViewer
+        document={viewing?.document ?? null}
+        caption={
+          viewing ? `${viewing.lead.reference} · ${viewing.lead.entreprise}` : undefined
+        }
+        onClose={() => setViewing(null)}
       />
 
       <ConfirmDialog

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -12,7 +13,7 @@ use Illuminate\Support\Str;
  * Only what the back office renders — never the password, the email
  * verification or the MFA columns, all of which the model hides anyway.
  *
- * @mixin \App\Models\User
+ * @mixin User
  */
 class AdminUserResource extends JsonResource
 {

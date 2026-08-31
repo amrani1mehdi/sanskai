@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { AccountMenu } from "@/components/crm/account-menu";
 import { CONTACT, CURRENT_ADMIN, SERVICES, isMessage } from "@/lib/crm/config";
+import { formatTime } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
 import type { ServiceId } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,7 @@ const SERVICE_ICONS: Record<ServiceId, typeof Banknote> = {
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { leads } = useCrm();
+  const { leads, syncedAt } = useCrm();
   const [open, setOpen] = useState(false);
 
   const close = () => setOpen(false);
@@ -188,6 +189,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="border-t border-sidebar-border px-3 py-4">
+          <LiveIndicator syncedAt={syncedAt} />
+
           <Link
             href="/"
             className="mb-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-foreground"
@@ -282,5 +285,32 @@ function Row({
         </span>
       )}
     </Link>
+  );
+}
+
+/**
+ * Says the panel is live, and when it last heard from the CRM.
+ *
+ * Without it the polling is invisible: leads appear on their own and nobody
+ * knows whether the screen is current or stale, which is exactly the doubt a
+ * manual refresh button exists to answer.
+ */
+function LiveIndicator({ syncedAt }: { syncedAt: string | null }) {
+  if (!syncedAt) return null;
+
+  /* The clock time, not "à l'instant".
+
+     The panel re-syncs every fifteen seconds, so a relative label said
+     "à l'instant" essentially always — true, and completely uninformative.
+     The hour tells you at a glance whether the screen is current. */
+  return (
+    <p className="mb-2 flex items-center gap-2 px-3 text-[11px] text-sidebar-muted">
+      <span className="relative flex h-1.5 w-1.5 shrink-0">
+        {/* Stilled for anyone who asked the OS to reduce motion. */}
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60 motion-reduce:animate-none" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
+      </span>
+      En direct · {formatTime(syncedAt)}
+    </p>
   );
 }

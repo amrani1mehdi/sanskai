@@ -2,7 +2,7 @@
 
 The REST API between the Next.js website and this Laravel CRM.
 
-- **Spec:** [`openapi.yaml`](./openapi.yaml) — 22 endpoints, fully documented.
+- **Spec:** [`openapi.yaml`](./openapi.yaml) — 23 endpoints, fully documented.
 - **Database:** MySQL. **Documents:** Laravel Storage, on a private disk, each
   row tied to its lead by foreign key.
 - **Browsable:** `GET /api/docs` (Swagger UI). Open to everyone locally, behind
@@ -228,7 +228,7 @@ posting:
 
 Identical to the front end's `lib/crm/config.ts`:
 
-- **status** — `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`
+- **status** — service enquiries: `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`. Contact messages: `nouveau` (shown as "Non répondu") and `repondu`. A lead carries its own `statusOptions`, and `PATCH` refuses a status that does not apply to its service.
 - **service** — `financement`, `developpement`, `contact`
 - **prestation** — `site_web`, `logo`, `campagne_publicitaire`
 - **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `facture`, `autre`

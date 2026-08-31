@@ -185,6 +185,23 @@ export function toLead(lead: ApiLead): Lead {
 /* Endpoints                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * A fingerprint of the CRM's state, for polling.
+ *
+ * Three aggregates over one table, so asking every few seconds costs the same
+ * whether there are thirteen leads or thirteen thousand. The panel compares
+ * this and only re-downloads the list when it moves.
+ */
+export async function fetchChangeSignature(): Promise<string> {
+  const payload = await call<{
+    data: { count: number; latestId: number | null; updatedAt: string | null };
+  }>("changes");
+
+  const { count, latestId, updatedAt } = payload.data;
+
+  return `${count}:${latestId ?? "-"}:${updatedAt ?? "-"}`;
+}
+
 /** Every lead, following pagination so the board and filters see the full set. */
 export async function fetchLeads(): Promise<Lead[]> {
   const leads: Lead[] = [];
@@ -204,6 +221,89 @@ export async function fetchLeads(): Promise<Lead[]> {
   }
 
   return leads;
+}
+
+/* --------------------------------------------------------------------------
+ * Cross-lead listings
+ *
+ * The Documents and Activité pages need every document and every entry across
+ * all leads. They cannot read them off the lead list: `GET /v1/leads` returns
+ * `documentCount` and `noteCount` rather than the collections themselves, so a
+ * table of fifty leads stays one query. These are the endpoints that carry the
+ * rows, and each one names the lead it belongs to.
+ * -------------------------------------------------------------------------- */
+
+/** A document with the dossier it came from. */
+export type DocumentRow = { document: LeadDocument; lead: DocumentLead };
+
+export type DocumentLead = {
+  id: string;
+  reference: string;
+  entreprise: string;
+  service: ServiceId;
+};
+
+type ApiCrossDocument = ApiDocument & {
+  leadId: number;
+  lead?: { id: number; reference: string; entreprise: string; service: ServiceId };
+};
+
+/** Follows pagination, so the page filters over the whole set rather than page one. */
+async function collect<TApi, TOut>(
+  path: string,
+  map: (row: TApi) => TOut,
+): Promise<TOut[]> {
+  const out: TOut[] = [];
+  let page = 1;
+
+  for (;;) {
+    const payload = await call<{
+      data: TApi[];
+      meta?: { current_page: number; last_page: number };
+    }>(`${path}${path.includes("?") ? "&" : "?"}perPage=100&page=${page}`);
+
+    out.push(...payload.data.map(map));
+
+    const meta = payload.meta;
+    if (!meta || meta.current_page >= meta.last_page) break;
+    page += 1;
+  }
+
+  return out;
+}
+
+export function fetchAllDocuments(): Promise<DocumentRow[]> {
+  return collect<ApiCrossDocument, DocumentRow>("documents", (row) => ({
+    document: toDocument(row),
+    lead: {
+      id: String(row.lead?.id ?? row.leadId),
+      reference: row.lead?.reference ?? "—",
+      entreprise: row.lead?.entreprise ?? "—",
+      service: row.lead?.service ?? "financement",
+    },
+  }));
+}
+
+/** An activity entry with the dossier it belongs to. */
+export type ActivityRow = {
+  activity: Activity;
+  lead: { id: string; reference: string; entreprise: string };
+};
+
+type ApiCrossActivity = ApiActivity & {
+  leadId: number;
+  lead?: { id: number; reference: string; entreprise: string };
+};
+
+export function fetchAllActivities(): Promise<ActivityRow[]> {
+  return collect<ApiCrossActivity, ActivityRow>("activities", (row) => ({
+    activity: toActivity(row),
+    lead: {
+      id: String(row.lead?.id ?? row.leadId),
+      reference: row.lead?.reference ?? "—",
+      entreprise: row.lead?.entreprise ?? "—",
+    },
+  }));
 }
 
 export async function fetchLead(id: string): Promise<Lead> {

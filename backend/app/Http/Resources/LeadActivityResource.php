@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\LeadActivity;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\LeadActivity */
+/** @mixin LeadActivity */
 class LeadActivityResource extends JsonResource
 {
     /** @return array<string, mixed> */

@@ -296,6 +296,119 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
+    public function a_contact_message_has_answered_and_unanswered_not_the_pipeline(): void
+    {
+        Sanctum::actingAs($this->admin());
+
+        $message = $this->lead([
+            'reference' => Lead::nextReference(LeadService::Contact),
+            'service' => LeadService::Contact,
+        ]);
+
+        // "Qualifié", "Approuvé" and "Refusé" mean nothing on a question.
+        $this->getJson("/api/v1/leads/{$message->id}")
+            ->assertOk()
+            ->assertJsonPath('data.statusLabel', 'Non répondu')
+            ->assertJsonPath('data.statusOptions', [
+                ['value' => 'nouveau', 'label' => 'Non répondu'],
+                ['value' => 'repondu', 'label' => 'Répondu'],
+            ]);
+
+        $this->patchJson("/api/v1/leads/{$message->id}", ['status' => 'repondu'])
+            ->assertOk()
+            ->assertJsonPath('data.statusLabel', 'Répondu');
+
+        // And the pipeline stages are refused on it.
+        $this->patchJson("/api/v1/leads/{$message->id}", ['status' => 'approuve'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('status');
+    }
+
+    #[Test]
+    public function a_service_dossier_cannot_be_marked_answered(): void
+    {
+        Sanctum::actingAs($this->admin());
+        $lead = $this->lead();
+
+        $this->getJson("/api/v1/leads/{$lead->id}")
+            ->assertOk()
+            // The shared value reads as "Nouveau" on a dossier, not "Non répondu".
+            ->assertJsonPath('data.statusLabel', 'Nouveau')
+            ->assertJsonCount(6, 'data.statusOptions');
+
+        $this->patchJson("/api/v1/leads/{$lead->id}", ['status' => 'repondu'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('status');
+    }
+
+    #[Test]
+    public function the_cross_lead_listings_name_the_dossier_each_row_belongs_to(): void
+    {
+        config()->set('leads.documents_disk', 'documents-test');
+        Storage::fake('documents-test');
+        Sanctum::actingAs($this->admin());
+
+        $lead = $this->lead();
+
+        $this->post("/api/v1/leads/{$lead->id}/documents", [
+            'kind' => DocumentKind::Kbis->value,
+            'file' => UploadedFile::fake()->create('kbis.pdf', 12, 'application/pdf'),
+        ])->assertCreated();
+
+        /*
+         * The Documents and Activité pages are built on these, and both were
+         * blank because they read `lead.documents` off the lead list instead —
+         * which carries counts, not collections. Each row has to name its
+         * dossier, or the page cannot show which file came from where.
+         */
+        $this->getJson('/api/v1/documents')
+            ->assertOk()
+            ->assertJsonPath('data.0.kind', DocumentKind::Kbis->value)
+            ->assertJsonPath('data.0.lead.reference', $lead->reference)
+            ->assertJsonPath('data.0.lead.entreprise', $lead->entreprise);
+
+        $this->getJson('/api/v1/activities')
+            ->assertOk()
+            ->assertJsonPath('data.0.lead.reference', $lead->reference);
+    }
+
+    #[Test]
+    public function the_change_signature_moves_on_insert_update_and_delete(): void
+    {
+        Sanctum::actingAs($this->admin());
+
+        $signature = fn () => $this->getJson('/api/v1/changes')->assertOk()->json('data');
+
+        $empty = $signature();
+        $this->assertSame(0, $empty['count']);
+        $this->assertNull($empty['latestId']);
+
+        $lead = $this->lead();
+        $afterInsert = $signature();
+        $this->assertNotSame($empty, $afterInsert, 'An insert must move the signature.');
+
+        // An edit changes neither the count nor the highest id, so `updatedAt`
+        // is the only thing that can catch it.
+        $this->travel(1)->second();
+        $lead->forceFill(['status' => LeadStatus::Qualifie])->save();
+        $afterUpdate = $signature();
+        $this->assertNotSame($afterInsert, $afterUpdate, 'An edit must move the signature.');
+
+        // And a deletion moves neither the highest id nor the latest timestamp,
+        // so the count is the only thing that can catch it.
+        $second = $this->lead(['reference' => Lead::nextReference(LeadService::Financement)]);
+        $afterSecond = $signature();
+        $second->delete();
+        $this->assertNotSame($afterSecond, $signature(), 'A delete must move the signature.');
+    }
+
+    #[Test]
+    public function the_change_signature_requires_a_signed_in_admin(): void
+    {
+        $this->getJson('/api/v1/changes')->assertStatus(401);
+    }
+
+    #[Test]
     public function stats_count_service_enquiries_and_report_messages_apart(): void
     {
         Sanctum::actingAs($this->admin());
