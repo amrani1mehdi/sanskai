@@ -37,7 +37,10 @@ const EUROS = new Intl.NumberFormat("fr-FR", {
 });
 
 export function DashboardView() {
-  const { leads } = useCrm();
+  /* Every figure here is about service enquiries. Counting contact messages
+     among them would make the headline totals disagree with the by-service
+     breakdown, which cannot include something that is not a service. */
+  const { dossiers: leads, messages } = useCrm();
 
   const stats = useMemo(() => headline(leads), [leads]);
   const statuses = useMemo(() => byStatus(leads), [leads]);
@@ -62,7 +65,16 @@ export function DashboardView() {
           Tableau de bord
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Vue d&apos;ensemble des demandes reçues depuis le site.
+          Vue d&apos;ensemble des demandes de service reçues depuis le site.
+          {messages.length > 0 ? (
+            <>
+              {" "}
+              <Link href="/admin/messages" className="text-accent hover:underline">
+                {messages.length} message{messages.length > 1 ? "s" : ""} de contact
+              </Link>{" "}
+              {messages.length > 1 ? "sont comptés" : "est compté"} à part.
+            </>
+          ) : null}
         </p>
       </header>
 

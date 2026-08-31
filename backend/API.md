@@ -176,6 +176,23 @@ number would be absurd.
 References are numbered per service, so a contact message takes `CON-2026-0001`
 and does not consume a `FIN-` number.
 
+**A contact message is not a service.** `financement` and `developpement` are
+things the company sells; a message is somebody writing in. It shares the
+`leads` table because it still has a sender, a status, notes and an activity
+trail — reusing them beat rebuilding all four on a second table — but it is
+excluded everywhere the CRM means "service enquiry":
+
+| Where | Contact messages |
+|---|---|
+| `GET /v1/stats` — `total`, `byStatus`, `byService`, `byPrestation`, amounts | excluded; counted separately as `messages` |
+| Back office → Leads list, service filter, pipeline | excluded |
+| Back office → sidebar | own **Messages** group, above Services |
+| Back office → `/admin/messages` | its own page |
+
+`GET /v1/leads?service=contact` still returns them, which is what the messages
+page uses. Nothing stops you filtering for them; they are simply not counted as
+a service anywhere a total is shown.
+
 ### Business development form → `leads`
 
 `POST /v1/website/leads/developpement`, JSON.
