@@ -12,7 +12,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, LayoutGrid, Menu, PieChart, X } from "lucide-react";
 import { AccountMenu } from "@/components/crm/account-menu";
 import { CURRENT_ADMIN } from "@/lib/crm/config";
@@ -22,8 +22,29 @@ import { cn } from "@/lib/utils";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { leads, syncedAt } = useCrm();
+  const { leads, syncedAt, unseen } = useCrm();
   const [open, setOpen] = useState(false);
+
+  /*
+   * The count in the browser tab.
+   *
+   * The bell only helps while you are looking at the CRM, and the whole point
+   * of a lead arriving is that usually you are not. A tab reading "(2) Espace
+   * admin" carries it to a window sitting behind three others — the one place
+   * a notification has to reach to be worth having.
+   *
+   * Set here rather than in the workspace so it holds on every admin page, and
+   * put back on the way out so the title does not follow you to the public site.
+   */
+  useEffect(() => {
+    const base = "Espace admin — Sansekai Solution";
+
+    document.title = unseen.length > 0 ? `(${unseen.length}) ${base}` : base;
+
+    return () => {
+      document.title = base;
+    };
+  }, [unseen.length]);
 
   const close = () => setOpen(false);
 
