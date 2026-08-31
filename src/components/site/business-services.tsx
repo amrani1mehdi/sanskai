@@ -8,7 +8,6 @@ import {
   Monitor,
   Palette,
   Send,
-  Stamp,
 } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { MotionReveal } from "@/components/ui/motion-reveal";
@@ -17,7 +16,6 @@ const SERVICE_ICONS = {
   website: Monitor,
   logo: Palette,
   ads: Megaphone,
-  loyalty: Stamp,
 } as const;
 
 const inputClass =
