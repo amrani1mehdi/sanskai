@@ -10,7 +10,6 @@ use App\Support\Eligibility;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -20,7 +19,7 @@ use Illuminate\Support\Str;
     'reference',
     'service', 'prestation', 'status',
     'nom', 'prenom', 'email', 'telephone',
-    'entreprise', 'date_creation', 'adresse', 'code_postal', 'ville',
+    'entreprise', 'siren', 'date_creation', 'adresse', 'code_postal', 'ville',
     'chiffre_affaire', 'chiffre_affaire_cents', 'montant', 'montant_cents',
     'code_commercial', 'site_web', 'site_web_url', 'reseaux', 'reseaux_ou',
     'message', 'eligible_age', 'eligible_revenue',
@@ -100,7 +99,9 @@ class Lead extends Model
      */
     public static function nextReference(LeadService $service): string
     {
-        $prefix = $service === LeadService::Financement ? 'FIN' : 'DEV';
+        // From the enum, so adding a service cannot silently fall through to
+        // the wrong prefix the way a two-way ternary did.
+        $prefix = $service->referencePrefix();
         $year = now()->year;
 
         // Newest row of this prefix and year carries the highest sequence.

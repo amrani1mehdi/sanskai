@@ -16,8 +16,8 @@ export type LeadStatus =
   | "approuve"
   | "refuse";
 
-/** The two services the site sells. `prestations` detail the second one. */
-export type ServiceId = "financement" | "developpement";
+/** The three ways an enquiry reaches the CRM. `prestations` detail the second. */
+export type ServiceId = "financement" | "developpement" | "contact";
 
 /**
  * Sub-offers bundled under Développement d'entreprise. The enquiry form is a
@@ -96,6 +96,8 @@ export type Lead = {
 
   // Company.
   entreprise: string;
+  /** Contact form only — the company identifier it asks for. */
+  siren?: string;
   /**
    * Date de création, `YYYY-MM-DD`, as produced by the form's date picker.
    * Drives the six-month eligibility rule; the age itself is derived, never

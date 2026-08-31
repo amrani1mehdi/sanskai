@@ -2,7 +2,7 @@
 
 The REST API between the Next.js website and this Laravel CRM.
 
-- **Spec:** [`openapi.yaml`](./openapi.yaml) — 21 endpoints, fully documented.
+- **Spec:** [`openapi.yaml`](./openapi.yaml) — 22 endpoints, fully documented.
 - **Database:** MySQL. **Documents:** Laravel Storage, on a private disk, each
   row tied to its lead by foreign key.
 - **Browsable:** `GET /api/docs` (Swagger UI). Open to everyone locally, behind
@@ -30,22 +30,16 @@ Variables that matter beyond the defaults:
 | Variable | What it does |
 |---|---|
 | `DB_*` | MySQL connection. `DB_DATABASE` defaults to `sansekai_crm`. |
-| `WEBSITE_API_KEY` | Shared secret for the two public submission endpoints. Generate with `php artisan key:generate --show`. |
 | `LEAD_DOCUMENTS_DISK` | Disk for uploads. Defaults to `lead_documents`, which is **private** — keep it that way. |
 | `ADMIN_EMAIL` | The administrator's login. Defaults to `admin@sansekaisolution.com`. |
 | `ADMIN_PASSWORD` | Initial password. Left blank in local, the seeder generates one and prints it once. |
 
-Locally, leaving `WEBSITE_API_KEY` empty allows unauthenticated submissions so
-you can curl the endpoint. In production an empty key is a hard failure rather
-than an open door.
-
 On the Next.js side:
 
 ```dotenv
-# .env.local — no NEXT_PUBLIC_ prefix on either of these
+# .env.local — server-side only, no NEXT_PUBLIC_ prefix
 CRM_API_URL=https://api.sansekai.72-60-190-211.sslip.io/api   # Hostinger VPS
 # CRM_API_URL=http://localhost:8000/api                       # local artisan serve
-CRM_API_KEY=<same value as WEBSITE_API_KEY>
 ```
 
 Point `CRM_API_URL` at the VPS over **https**, not http. The host 301-redirects
@@ -59,11 +53,10 @@ quietly expects a local backend.
 
 ## 2. Authentication
 
-**Website → CRM** (`/v1/website/*`): header `X-Api-Key: <key>`.
-
-This is server-to-server. Call it from a route handler or server action, never
-from the browser — a key in client JavaScript can be read by anyone who opens
-devtools and used to write leads straight into the CRM.
+**Website → CRM** (`/v1/website/*`): **no credential**. These three endpoints are
+called from a public form whose visitor has nothing to present, and they only
+ever write — nothing under `/v1/website/*` reads a lead back. The rate limit,
+6 requests per minute per IP, is what stands in front of them.
 
 **Back office** (everything else): `Authorization: Bearer <token>`, from
 `POST /v1/auth/token`. Only users with `is_admin` are issued one, the same gate
@@ -155,6 +148,34 @@ Uploads: PDF / JPG / PNG. The size ceiling is the **smaller** of
 > post_max_size = 48M
 > ```
 
+### Contact form → `leads`
+
+`POST /v1/website/leads/contact`, JSON. A question, not a dossier: no uploads,
+no eligibility gate.
+
+| Website form field | API field | Column | Required |
+|---|---|---|---|
+| `company` | `entreprise` | `entreprise` | yes |
+| `siren` | `siren` | `siren` | no |
+| `fullName` | `nomComplet` | `nom` + `prenom` | yes |
+| `email` | `email` | `email` | yes |
+| `message` | `message` | `message` | no |
+| — | `telephone` | `telephone` | no — not on the form, accepted if sent |
+
+The form asks for one **nom complet**; the CRM stores `nom` and `prenom`. The
+API splits it: first token is the given name, everything after it the family
+name, and a single word is treated as a surname (`Marchand` → `nom: Marchand`,
+`prenom: ''`). Nothing typed is discarded — the whole string survives across the
+two columns even when the split lands oddly, so the back office always sees what
+the visitor actually wrote.
+
+`siren` is kept as typed, spaces included, and is not length-checked: a company
+outside France has no SIREN, and refusing a contact message over a company
+number would be absurd.
+
+References are numbered per service, so a contact message takes `CON-2026-0001`
+and does not consume a `FIN-` number.
+
 ### Business development form → `leads`
 
 `POST /v1/website/leads/developpement`, JSON.
@@ -183,7 +204,7 @@ posting:
 Identical to the front end's `lib/crm/config.ts`:
 
 - **status** — `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`
-- **service** — `financement`, `developpement`
+- **service** — `financement`, `developpement`, `contact`
 - **prestation** — `site_web`, `logo`, `campagne_publicitaire`
 - **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `autre`
 - **activity kind** — `creation`, `statut`, `note`, `assignation`, `appel`, `email`, `document`
@@ -206,10 +227,7 @@ export async function POST(request: Request) {
     `${process.env.CRM_API_URL}/v1/website/leads/financement`,
     {
       method: "POST",
-      headers: {
-        "X-Api-Key": process.env.CRM_API_KEY!,
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
       body: form,
     },
   );
@@ -280,7 +298,7 @@ export async function GET(
 
 | Status | Meaning | What to do |
 |---|---|---|
-| `401` | Bad or missing key/token | Re-authenticate. On `/website/*`, the key is wrong. |
+| `401` | Bad, missing or revoked token | Re-authenticate. Cannot occur on `/website/*`, which takes no credential. |
 | `429` on login | 5 failed attempts | Per email and IP. |
 | `404` | No such record | |
 | `422` | Validation or eligibility failure | Show `errors[field][0]` against that field. |

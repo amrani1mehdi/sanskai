@@ -374,8 +374,10 @@ export function getSiteContent(locale: Locale) {
       },
       uploadHint: "PDF, max 10MB",
       submit: t.contactPage.submit,
+      sending: t.contactPage.sending,
       success: t.contactPage.success,
       successDesc: t.contactPage.successDesc,
+      error: t.contactPage.error,
       email: "admin@sansekaisolution.com",
     },
 

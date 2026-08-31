@@ -159,7 +159,9 @@ export const translations = {
       "fieldUpload": "Upload invoices (PDF)",
       "submit": "Send",
       "success": "Message sent successfully!",
-      "successDesc": "Our team will contact you within 24 hours."
+      "successDesc": "Our team will contact you within 24 hours.",
+      "error": "Your message could not be sent. Please try again in a moment.",
+      "sending": "Sending…"
     },
     "expertisePage": {
       "badge": "Our Expertise",
@@ -461,7 +463,9 @@ export const translations = {
       "fieldUpload": "Télécharger des factures (PDF)",
       "submit": "Envoyer",
       "success": "Message envoyé avec succès !",
-      "successDesc": "Notre équipe vous contactera dans les 24 heures."
+      "successDesc": "Notre équipe vous contactera dans les 24 heures.",
+      "error": "Votre message n'a pas pu être envoyé. Réessayez dans un instant.",
+      "sending": "Envoi…"
     },
     "expertisePage": {
       "badge": "Notre Expertise",
@@ -763,7 +767,9 @@ export const translations = {
       "fieldUpload": "Rechnungen hochladen (PDF)",
       "submit": "Senden",
       "success": "Nachricht erfolgreich gesendet!",
-      "successDesc": "Unser Team kontaktiert Sie innerhalb von 24 Stunden."
+      "successDesc": "Unser Team kontaktiert Sie innerhalb von 24 Stunden.",
+      "error": "Ihre Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es gleich erneut.",
+      "sending": "Senden…"
     },
     "expertisePage": {
       "badge": "Unsere Expertise",

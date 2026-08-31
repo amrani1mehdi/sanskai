@@ -284,6 +284,7 @@ function ActionBar({
  */
 function LeadInformation({ lead }: { lead: Lead }) {
   const isFinancement = lead.service === "financement";
+  const isContact = lead.service === "contact";
 
   return (
     <section className="rounded-xl border border-border bg-card p-6">
@@ -304,6 +305,10 @@ function LeadInformation({ lead }: { lead: Lead }) {
 
       <FieldGroup icon={Building2} title="Entreprise">
         <Field label="Nom de l'entreprise" value={lead.entreprise} />
+        {/* Only the contact form asks for it. Shown on a contact lead even when
+            blank — it was offered and skipped — and hidden entirely on the
+            other two, where an empty row would just be noise. */}
+        {isContact ? <Field label="SIREN" value={lead.siren} /> : null}
         {isFinancement ? (
           <>
             <Field

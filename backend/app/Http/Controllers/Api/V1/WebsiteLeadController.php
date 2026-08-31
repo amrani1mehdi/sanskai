@@ -8,6 +8,7 @@ use App\Enums\LeadService;
 use App\Enums\LeadStatus;
 use App\Enums\Prestation;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreContactLeadRequest;
 use App\Http\Requests\Api\StoreDevelopmentLeadRequest;
 use App\Http\Requests\Api\StoreFinancingLeadRequest;
 use App\Models\Lead;
@@ -158,6 +159,76 @@ class WebsiteLeadController extends Controller
         ]);
 
         return $this->created($lead);
+    }
+
+    /**
+     * POST /api/v1/website/leads/contact
+     *
+     * The /contact form: a question, not a dossier. No uploads, no eligibility
+     * gate, and only the company, name and email are required — everything the
+     * back office needs to call someone back.
+     */
+    public function contact(StoreContactLeadRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        [$prenom, $nom] = self::splitName($data['nomComplet']);
+
+        $lead = $this->createWithReference(
+            LeadService::Contact,
+            fn (string $reference) => tap(
+                Lead::create([
+                    'reference' => $reference,
+                    'service' => LeadService::Contact,
+                    'status' => LeadStatus::Nouveau,
+
+                    'nom' => $nom,
+                    'prenom' => $prenom,
+                    'email' => $data['email'],
+                    'telephone' => $data['telephone'] ?? null,
+
+                    'entreprise' => $data['entreprise'],
+                    'siren' => $data['siren'] ?? null,
+
+                    'message' => $data['message'] ?? null,
+                ]),
+                fn (Lead $lead) => $lead->recordActivity(
+                    ActivityKind::Creation,
+                    'Message reçu via le formulaire de contact',
+                ),
+            ),
+        );
+
+        Log::info('Message de contact enregistré', [
+            'lead_id' => $lead->id,
+            'reference' => $lead->reference,
+        ]);
+
+        return $this->created($lead);
+    }
+
+    /**
+     * Splits "Mahdi Amrani" into a first and last name.
+     *
+     * The contact form asks for one field, the CRM stores two, and something
+     * has to bridge them. First token is the given name, the rest is the family
+     * name — right for most French entries and wrong for some, which is why the
+     * whole string is preserved across the two columns rather than truncated:
+     * nothing the visitor typed is lost, even when the split lands oddly.
+     *
+     * A single word becomes the family name with an empty given name, since
+     * "Amrani" is far more likely to be a surname than a forename here.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private static function splitName(string $full): array
+    {
+        $parts = preg_split('/\s+/u', trim($full), 2, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return match (count($parts)) {
+            0 => ['', ''],
+            1 => ['', $parts[0]],
+            default => [$parts[0], $parts[1]],
+        };
     }
 
     /**
