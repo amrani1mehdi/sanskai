@@ -1,5 +1,7 @@
-import { KanbanBoard } from "@/components/crm/kanban-board";
+import { redirect } from "next/navigation";
 
-export default function PipelinePage() {
-  return <KanbanBoard />;
+/** Folded into the Leads board — the pipeline and the contact messages are two
+    views of it now, not separate pages. */
+export default function RetiredPage() {
+  redirect("/admin/leads");
 }

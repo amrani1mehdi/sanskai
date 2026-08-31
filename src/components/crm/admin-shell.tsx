@@ -5,40 +5,20 @@
  * rail carries its own ink set (see `.crm-theme` in globals.css) because
  * nothing that reads on the light side reads on the dark one.
  *
- * Every sidebar row — destination, service, sub-service — is the same shape:
- * a mark, a label, and an optional count for the rows that stand for a
- * collection. Views (tableau de bord, pipeline) carry no count.
+ * Two destinations only: Aperçu to understand, Leads to manage. Each row is a
+ * mark, a label and an optional count.
  */
 
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import {
-  ArrowUpRight,
-  Banknote,
-  History,
-  LayoutGrid,
-  Menu,
-  MessageSquare,
-  Paperclip,
-  PieChart,
-  Rocket,
-  Users,
-  X,
-} from "lucide-react";
+import { ArrowUpRight, LayoutGrid, Menu, PieChart, X } from "lucide-react";
 import { AccountMenu } from "@/components/crm/account-menu";
-import { CONTACT, CURRENT_ADMIN, SERVICES, isMessage } from "@/lib/crm/config";
+import { CURRENT_ADMIN } from "@/lib/crm/config";
 import { formatTime } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
-import type { ServiceId } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
-
-const SERVICE_ICONS: Record<ServiceId, typeof Banknote> = {
-  financement: Banknote,
-  developpement: Rocket,
-  contact: MessageSquare,
-};
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -47,16 +27,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   const close = () => setOpen(false);
 
-  const documentCount = leads.reduce((sum, lead) => sum + lead.documentCount, 0);
-  // Everything below counts service enquiries only; messages have their own row.
-  const dossiers = leads.filter((lead) => !isMessage(lead));
-
+  /*
+   * Two destinations, and that is the whole navigation.
+   *
+   * Understand, then manage. Everything the sidebar used to carry — the
+   * per-service rows, the sub-service rows, Documents, Activité, Messages —
+   * was CRM detail sitting in the navigation, which meant filtering happened
+   * in two places and the rail grew a row for every new service. Those are
+   * filters and summaries now, inside the two screens that own them.
+   */
   const destinations = [
-    { href: "/admin", label: "Tableau de bord", icon: PieChart, exact: true },
-    { href: "/admin/leads", label: "Leads", icon: Users, count: dossiers.length },
-    { href: "/admin/pipeline", label: "Pipeline", icon: LayoutGrid },
-    { href: "/admin/documents", label: "Documents", icon: Paperclip, count: documentCount },
-    { href: "/admin/activite", label: "Activité", icon: History },
+    { href: "/admin", label: "Aperçu", icon: PieChart, exact: true },
+    { href: "/admin/leads", label: "Leads", icon: LayoutGrid, count: leads.length },
   ];
 
   const isActive = (href: string, exact?: boolean) =>
@@ -120,72 +102,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             ))}
           </div>
 
-          {/* Its own group, above Services: a contact message is someone
-              writing in, not something the company sells. */}
-          <div>
-            <p className="mb-2 px-3 text-[11px] font-semibold tracking-widest text-sidebar-muted/80 uppercase">
-              Messages
-            </p>
-
-            <div className="space-y-1">
-              <Row
-                href="/admin/messages"
-                icon={MessageSquare}
-                label={CONTACT.shortLabel}
-                count={leads.filter(isMessage).length}
-                active={isActive("/admin/messages")}
-                onNavigate={close}
-              />
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-2 px-3 text-[11px] font-semibold tracking-widest text-sidebar-muted/80 uppercase">
-              Services
-            </p>
-
-            <div className="space-y-1">
-              {SERVICES.map((service) => {
-                const serviceLeads = leads.filter(
-                  (lead) => lead.service === service.id,
-                );
-
-                return (
-                  <div key={service.id} className="space-y-1">
-                    <Row
-                      href={`/admin/leads?service=${service.id}`}
-                      icon={SERVICE_ICONS[service.id]}
-                      label={service.shortLabel}
-                      count={serviceLeads.length}
-                      active={false}
-                      onNavigate={close}
-                    />
-
-                    {/* Sous-services — un lead peut en demander plusieurs. */}
-                    {service.prestations ? (
-                      <div className="ml-5 space-y-1 border-l border-sidebar-border pl-2">
-                        {service.prestations.map((prestation) => (
-                          <Row
-                            key={prestation.id}
-                            href={`/admin/leads?service=${service.id}&prestation=${prestation.id}`}
-                            dot={prestation.bar}
-                            label={prestation.shortLabel}
-                            count={
-                              serviceLeads.filter(
-                                (lead) => lead.prestation === prestation.id,
-                              ).length
-                            }
-                            active={false}
-                            onNavigate={close}
-                          />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </nav>
 
         <div className="border-t border-sidebar-border px-3 py-4">
@@ -245,7 +161,7 @@ function Row({
   count?: number;
   active: boolean;
   onNavigate: () => void;
-  icon?: typeof Banknote;
+  icon?: typeof PieChart;
   dot?: string;
 }) {
   return (
