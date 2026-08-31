@@ -247,9 +247,19 @@ let signature: string | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 
 async function checkForChanges(): Promise<void> {
-  // Nothing to do for a tab nobody is looking at; `visibilitychange` catches up
-  // the moment it comes back.
-  if (typeof document !== "undefined" && document.hidden) return;
+  /*
+   * Deliberately keeps going while the tab is hidden.
+   *
+   * The unread count is written into the tab title precisely so a lead reaches
+   * someone whose CRM is behind three other windows — which is the only state
+   * this poll used to skip. Stopping there meant the count could not move until
+   * you looked, and looking is what it was supposed to save you.
+   *
+   * Browsers clamp timers in a background tab to about once a minute and may
+   * freeze one that has been hidden for several, so the title can lag by that
+   * much. `onWake` still fires the moment the tab is focused, so the worst case
+   * is the count arriving when you return rather than a minute earlier.
+   */
   if (loading) return;
 
   try {
@@ -272,6 +282,7 @@ async function checkForChanges(): Promise<void> {
   }
 }
 
+/** Focus or a tab coming forward: be current now, not on the next tick. */
 const onWake = () => {
   if (typeof document === "undefined" || !document.hidden) void checkForChanges();
 };
