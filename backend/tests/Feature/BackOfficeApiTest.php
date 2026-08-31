@@ -296,6 +296,34 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
+    public function logging_a_call_records_it_on_the_lead(): void
+    {
+        Sanctum::actingAs($this->admin());
+        $lead = $this->lead();
+
+        // Regression: the controller type-hinted StoreContactActivityRequest
+        // without importing it, so PHP looked for the class in the controller's
+        // own namespace and every call to this endpoint was a 500.
+        $this->postJson("/api/v1/leads/{$lead->id}/activities", ['kind' => 'appel'])
+            ->assertCreated();
+
+        $this->assertSame(
+            1,
+            $lead->activities()->where('kind', 'appel')->count(),
+        );
+    }
+
+    #[Test]
+    public function an_unauthenticated_request_gets_401_even_without_an_accept_header(): void
+    {
+        // Regression: with no `Accept: application/json`, Laravel tried to
+        // redirect the guest to a `login` route that does not exist in this
+        // app, and RouteNotFoundException surfaced as a 500.
+        $this->get('/api/v1/leads')->assertStatus(401);
+        $this->get('/api/v1/documents/1/download')->assertStatus(401);
+    }
+
+    #[Test]
     public function a_single_file_slot_refuses_a_second_document(): void
     {
         config()->set('leads.documents_disk', 'documents-test');
