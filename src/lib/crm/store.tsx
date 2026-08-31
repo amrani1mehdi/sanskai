@@ -33,6 +33,8 @@ type Snapshot = {
   error: string | null;
   /** When the list last came back from the API. Drives the live indicator. */
   syncedAt: string | null;
+  /** Ids that arrived since this session started and have not been looked at. */
+  unseen: string[];
 };
 
 const EMPTY: Snapshot = {
@@ -40,6 +42,7 @@ const EMPTY: Snapshot = {
   hydrated: false,
   error: null,
   syncedAt: null,
+  unseen: [],
 };
 
 let snapshot: Snapshot = EMPTY;
@@ -71,6 +74,35 @@ function handle(error: unknown): string {
     : "Impossible de joindre le CRM.";
 }
 
+/* -------------------------------------------------------------------------- */
+/* New arrivals                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Every lead id the session has already seen. `null` until the first load.
+ *
+ * The first response establishes the baseline rather than announcing thirty
+ * leads as new — "new" means arrived while you were looking, which is the only
+ * reading that makes a notification worth having.
+ */
+let known: Set<string> | null = null;
+
+function unseenAfter(leads: Lead[]): string[] {
+  const ids = leads.map((lead) => lead.id);
+
+  if (known === null) {
+    known = new Set(ids);
+    return [];
+  }
+
+  const arrived = ids.filter((id) => !known!.has(id));
+  known = new Set(ids);
+
+  // Kept until acknowledged: a lead that lands while the tab is in the
+  // background should still be waiting when somebody comes back to it.
+  return arrived.length > 0 ? [...snapshot.unseen, ...arrived] : snapshot.unseen;
+}
+
 export async function loadLeads(): Promise<void> {
   loading = true;
 
@@ -86,11 +118,14 @@ export async function loadLeads(): Promise<void> {
      */
     signature = await api.fetchChangeSignature().catch(() => null);
 
+    const leads = await api.fetchLeads();
+
     set({
-      leads: await api.fetchLeads(),
+      leads,
       hydrated: true,
       error: null,
       syncedAt: new Date().toISOString(),
+      unseen: unseenAfter(leads),
     });
 
     /*
@@ -267,6 +302,12 @@ export function useCrm() {
       hydrated: current.hydrated,
       error: current.error,
       syncedAt: current.syncedAt,
+
+      /** Leads that arrived while this session has been open, still unread. */
+      unseen: current.leads.filter((lead) => current.unseen.includes(lead.id)),
+      /** Called when the notifications are opened — they have been seen. */
+      markSeen: () => set({ ...snapshot, unseen: [] }),
+
       refresh: loadLeads,
       getLead,
 
