@@ -296,6 +296,29 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
+    public function stats_count_service_enquiries_and_report_messages_apart(): void
+    {
+        Sanctum::actingAs($this->admin());
+
+        $this->lead();
+        $this->lead(['reference' => Lead::nextReference(LeadService::Contact)]
+            + ['service' => LeadService::Contact]);
+
+        $response = $this->getJson('/api/v1/stats')->assertOk();
+
+        // A contact message is not a service, so counting it in `total` would
+        // make the headline disagree with a `byService` breakdown that cannot
+        // contain it.
+        $response->assertJsonPath('data.total', 1);
+        $response->assertJsonPath('data.messages', 1);
+        $this->assertArrayNotHasKey(
+            'contact',
+            $response->json('data.byService'),
+            'byService must not list contact as a service.',
+        );
+    }
+
+    #[Test]
     public function logging_a_call_records_it_on_the_lead(): void
     {
         Sanctum::actingAs($this->admin());

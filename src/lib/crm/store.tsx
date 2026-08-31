@@ -15,6 +15,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import * as api from "./api";
+import { isMessage } from "./config";
 import type { Lead, LeadStatus } from "./types";
 
 type Snapshot = {
@@ -103,7 +104,16 @@ export function useCrm() {
 
   return useMemo(
     () => ({
+      /** Everything in the CRM — service enquiries and contact messages. */
       leads: current.leads,
+      /**
+       * Split once here rather than in every view, because getting it wrong is
+       * invisible: a message counted as a dossier just makes a number slightly
+       * too big. `dossiers` is what the Leads list, the pipeline and the
+       * by-service figures mean by a lead; `messages` is the contact form.
+       */
+      dossiers: current.leads.filter((lead) => !isMessage(lead)),
+      messages: current.leads.filter(isMessage),
       hydrated: current.hydrated,
       error: current.error,
       refresh: loadLeads,

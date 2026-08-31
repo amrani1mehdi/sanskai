@@ -46,7 +46,7 @@ function pick<T extends string>(value: string | undefined, allowed: T[]): T | "t
 }
 
 export function LeadsView({ initial = {} }: { initial?: InitialFilters }) {
-  const { leads, hydrated } = useCrm();
+  const { dossiers: leads, hydrated } = useCrm();
 
   const [query, setQuery] = useState(initial.q ?? "");
   const [service, setService] = useState<ServiceFilter>(

@@ -28,7 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { AccountMenu } from "@/components/crm/account-menu";
-import { CURRENT_ADMIN, SERVICES } from "@/lib/crm/config";
+import { CONTACT, CURRENT_ADMIN, SERVICES, isMessage } from "@/lib/crm/config";
 import { useCrm } from "@/lib/crm/store";
 import type { ServiceId } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
@@ -47,10 +47,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const close = () => setOpen(false);
 
   const documentCount = leads.reduce((sum, lead) => sum + lead.documentCount, 0);
+  // Everything below counts service enquiries only; messages have their own row.
+  const dossiers = leads.filter((lead) => !isMessage(lead));
 
   const destinations = [
     { href: "/admin", label: "Tableau de bord", icon: PieChart, exact: true },
-    { href: "/admin/leads", label: "Leads", icon: Users, count: leads.length },
+    { href: "/admin/leads", label: "Leads", icon: Users, count: dossiers.length },
     { href: "/admin/pipeline", label: "Pipeline", icon: LayoutGrid },
     { href: "/admin/documents", label: "Documents", icon: Paperclip, count: documentCount },
     { href: "/admin/activite", label: "Activité", icon: History },
@@ -115,6 +117,25 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 onNavigate={close}
               />
             ))}
+          </div>
+
+          {/* Its own group, above Services: a contact message is someone
+              writing in, not something the company sells. */}
+          <div>
+            <p className="mb-2 px-3 text-[11px] font-semibold tracking-widest text-sidebar-muted/80 uppercase">
+              Messages
+            </p>
+
+            <div className="space-y-1">
+              <Row
+                href="/admin/messages"
+                icon={MessageSquare}
+                label={CONTACT.shortLabel}
+                count={leads.filter(isMessage).length}
+                active={isActive("/admin/messages")}
+                onNavigate={close}
+              />
+            </div>
           </div>
 
           <div>

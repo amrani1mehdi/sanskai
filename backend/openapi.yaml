@@ -704,7 +704,14 @@ paths:
       tags: [Leads]
       summary: Dashboard figures
       operationId: stats
-      description: Counts computed in SQL, not by loading every lead.
+      description: |
+        Counts computed in SQL, not by loading every lead.
+
+        Every figure except `messages` covers **service enquiries only**.
+        A contact message is somebody writing in, not a service the company
+        sells, so counting it in `total` would make the headline disagree with
+        a `byService` breakdown that cannot contain it. Messages are reported
+        separately as `messages`.
       responses:
         "200":
           description: OK
@@ -713,6 +720,7 @@ paths:
               example:
                 data:
                   total: 14
+                  messages: 6
                   byStatus: {nouveau: 3, a_examiner: 2, qualifie: 2, en_cours: 2, approuve: 4, refuse: 1}
                   byService: {financement: 9, developpement: 5}
                   byPrestation: {site_web: 2, logo: 1, campagne_publicitaire: 2}
@@ -1069,7 +1077,12 @@ components:
   schemas:
     LeadService:
       type: string
-      description: How the enquiry reached the CRM. References are prefixed FIN-, DEV- and CON- respectively.
+      description: >
+        How the enquiry reached the CRM. References are prefixed FIN-, DEV- and
+        CON- respectively. `financement` and `developpement` are services the
+        company sells; `contact` is a message from the /contact form and is
+        deliberately not one — the dashboard, the service filter and the
+        pipeline all exclude it.
       enum: [financement, developpement, contact]
 
     LeadStatus:
