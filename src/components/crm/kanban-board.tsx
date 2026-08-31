@@ -70,7 +70,12 @@ export function KanbanBoard() {
                 }
                 onDrop={() => drop(stage.id)}
                 className={cn(
-                  "flex w-72 flex-col rounded-xl border bg-secondary/50 transition-colors",
+                  /* Capped to the viewport so the board itself never grows
+                     taller than the screen. Without this, a busy column pushed
+                     the horizontal scrollbar below the fold — you had to scroll
+                     to the bottom of the longest column before you could reach
+                     the columns on the right. */
+                  "flex max-h-[calc(100vh-14rem)] w-72 shrink-0 flex-col rounded-xl border bg-secondary/50 transition-colors",
                   over === stage.id ? "border-accent bg-accent/5" : "border-border",
                 )}
               >
@@ -87,7 +92,9 @@ export function KanbanBoard() {
                   <p className="mt-1 text-[11px] text-muted-foreground">{stage.hint}</p>
                 </header>
 
-                <div className="flex-1 space-y-3 p-3">
+                {/* Each column scrolls on its own; the header above stays put,
+                    so you can always see which stage you are dropping into. */}
+                <div className="min-h-24 flex-1 space-y-3 overflow-y-auto p-3 scrollbar-brand">
                   {list.map((lead) => (
                     <KanbanCard
                       key={lead.id}
