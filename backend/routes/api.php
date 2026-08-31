@@ -26,8 +26,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
     /*
-     * Website -> CRM. Open by design: these two endpoints take a form from the
-     * public site, and the browser has no credential to offer.
+     * Website -> CRM. Open by design: these three endpoints take a form from
+     * the public site, and the browser has no credential to offer.
      *
      * The throttle is therefore the only guard. Six submissions a minute per IP
      * is far above what a human filling in a financing form can do, and far
@@ -42,6 +42,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 ->name('financement');
             Route::post('developpement', [WebsiteLeadController::class, 'developpement'])
                 ->name('developpement');
+            Route::post('contact', [WebsiteLeadController::class, 'contact'])
+                ->name('contact');
         });
 
     // Signing in is public by necessity; the endpoint throttles itself.

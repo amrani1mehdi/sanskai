@@ -20,6 +20,7 @@ import {
   History,
   LayoutGrid,
   Menu,
+  MessageSquare,
   Paperclip,
   PieChart,
   Rocket,
@@ -35,6 +36,7 @@ import { cn } from "@/lib/utils";
 const SERVICE_ICONS: Record<ServiceId, typeof Banknote> = {
   financement: Banknote,
   developpement: Rocket,
+  contact: MessageSquare,
 };
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

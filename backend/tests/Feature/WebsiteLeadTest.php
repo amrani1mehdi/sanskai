@@ -269,4 +269,82 @@ class WebsiteLeadTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('service');
     }
+
+    #[Test]
+    public function it_stores_a_contact_message(): void
+    {
+        $this->postJson('/api/v1/website/leads/contact', [
+            'entreprise' => 'Atelier Marchand SARL',
+            'siren' => '812 345 678',
+            'nomComplet' => 'Julien Marchand',
+            'email' => 'j.marchand@example.fr',
+            'message' => 'Bonjour, je souhaite un rappel.',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.reference', 'CON-'.now()->year.'-0001')
+            ->assertJsonPath('data.status', 'nouveau');
+
+        $lead = Lead::firstOrFail();
+
+        $this->assertSame('contact', $lead->service->value);
+        $this->assertSame('Atelier Marchand SARL', $lead->entreprise);
+        $this->assertSame('812 345 678', $lead->siren);
+        $this->assertSame('Bonjour, je souhaite un rappel.', $lead->message);
+        // The trail opens on submission, like the other two forms.
+        $this->assertSame(1, $lead->activities()->count());
+    }
+
+    #[Test]
+    public function it_splits_the_full_name_into_a_first_and_last_name(): void
+    {
+        $cases = [
+            'Julien Marchand' => ['Julien', 'Marchand'],
+            // Everything after the first token stays together.
+            'Marie Claire Dupont-Fontaine' => ['Marie', 'Claire Dupont-Fontaine'],
+            // A single word is a surname, not a forename.
+            'Marchand' => ['', 'Marchand'],
+            // Stray whitespace must not become part of a name.
+            '  Julien   Marchand  ' => ['Julien', 'Marchand'],
+        ];
+
+        foreach ($cases as $full => [$prenom, $nom]) {
+            $this->postJson('/api/v1/website/leads/contact', [
+                'entreprise' => 'X',
+                'nomComplet' => $full,
+                'email' => 'a@b.fr',
+            ])->assertCreated();
+
+            $lead = Lead::latest('id')->firstOrFail();
+
+            $this->assertSame($prenom, $lead->prenom, "prenom for '{$full}'");
+            $this->assertSame($nom, $lead->nom, "nom for '{$full}'");
+        }
+    }
+
+    #[Test]
+    public function a_contact_message_needs_a_company_a_name_and_an_email(): void
+    {
+        // The message itself is optional — a blank one still says who to call.
+        $this->postJson('/api/v1/website/leads/contact', [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['entreprise', 'nomComplet', 'email']);
+
+        $this->postJson('/api/v1/website/leads/contact', [
+            'entreprise' => 'X',
+            'nomComplet' => 'Julien Marchand',
+            'email' => 'j@example.fr',
+        ])->assertCreated();
+    }
+
+    #[Test]
+    public function contact_references_are_numbered_separately_from_the_others(): void
+    {
+        // Each service counts its own sequence, so a contact message does not
+        // consume a FIN- number and leave a gap in the financing dossiers.
+        $this->post('/api/v1/website/leads/financement', $this->financingPayload());
+
+        $this->postJson('/api/v1/website/leads/contact', [
+            'entreprise' => 'X', 'nomComplet' => 'A B', 'email' => 'a@b.fr',
+        ])->assertJsonPath('data.reference', 'CON-'.now()->year.'-0001');
+    }
 }

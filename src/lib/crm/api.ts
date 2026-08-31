@@ -84,6 +84,7 @@ type ApiLead = {
   email: string;
   telephone: string | null;
   entreprise: string;
+  siren: string | null;
   dateCreation: string | null;
   adresse: string | null;
   codePostal: string | null;
@@ -152,6 +153,7 @@ export function toLead(lead: ApiLead): Lead {
     telephone: lead.telephone ?? undefined,
 
     entreprise: lead.entreprise,
+    siren: lead.siren ?? undefined,
     dateCreation: lead.dateCreation ?? undefined,
     adresse: lead.adresse ?? undefined,
     codePostal: lead.codePostal ?? undefined,

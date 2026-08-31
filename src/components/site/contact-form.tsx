@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CircleCheck, Send, Upload } from "lucide-react";
+import { CircleCheck, Send, TriangleAlert, Upload } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 
 const inputClass =
@@ -20,17 +20,58 @@ export function ContactForm({ content }: { content: SiteContent }) {
 
   const [values, setValues] = useState(EMPTY);
   const [sent, setSent] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const set = (key: keyof typeof EMPTY) => (value: string) =>
+  const set = (key: keyof typeof EMPTY) => (value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
+    setError(null);
+  };
 
-  // The live site writes to Supabase. Without a backend here the form shows the
-  // same confirmation panel and then returns to the empty state.
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  /**
+   * Posts to a route handler on this origin, which forwards to the CRM. The
+   * message lands in the back office as a `contact` lead with its own
+   * CON-YYYY-NNNN reference.
+   */
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setValues(EMPTY);
-    setSent(true);
-    setTimeout(() => setSent(false), 4000);
+    setError(null);
+    setPending(true);
+
+    try {
+      const response = await fetch("/api/leads/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entreprise: values.company,
+          siren: values.siren || null,
+          nomComplet: values.fullName,
+          email: values.email,
+          message: values.message || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        // Laravel reports per field; the first message is the actionable one.
+        const first = payload?.errors
+          ? Object.values(payload.errors as Record<string, string[]>)[0]?.[0]
+          : undefined;
+
+        setError(first ?? payload?.message ?? contact.error);
+        setPending(false);
+        return;
+      }
+
+      // Cleared only once the CRM has it — a failed send must not lose what
+      // they typed.
+      setValues(EMPTY);
+      setSent(true);
+    } catch {
+      setError(contact.error);
+    } finally {
+      setPending(false);
+    }
   };
 
   if (sent) {
@@ -102,11 +143,24 @@ export function ContactForm({ content }: { content: SiteContent }) {
           </div>
         </div>
 
+        {error ? (
+          <p
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+          >
+            <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
+            {error}
+          </p>
+        ) : null}
+
         <button
           type="submit"
-          className="w-full gold-gradient text-accent-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm mt-2"
+          disabled={pending}
+          className={`w-full gold-gradient text-accent-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-opacity text-sm mt-2 ${
+            pending ? "cursor-not-allowed opacity-60" : "hover:opacity-90"
+          }`}
         >
-          {contact.submit} <Send size={16} />
+          {pending ? contact.sending : contact.submit} <Send size={16} />
         </button>
       </form>
     </div>
