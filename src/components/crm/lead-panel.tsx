@@ -32,8 +32,20 @@ import { StatusBadge } from "@/components/crm/status-badge";
 import { SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
 import { formatAmount, formatDateTime, initialsOf } from "@/lib/crm/format";
 import { useCrm, useLead } from "@/lib/crm/store";
-import type { Lead, LeadStatus } from "@/lib/crm/types";
+import type { ActivityKind, Lead, LeadStatus } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
+
+type KindFilter = ActivityKind | "tous";
+
+/** `assignation` is omitted: nothing is assigned, so no lead ever has one. */
+const ACTIVITY_FILTERS: { id: ActivityKind; label: string }[] = [
+  { id: "statut", label: "Statuts" },
+  { id: "note", label: "Notes" },
+  { id: "appel", label: "Appels" },
+  { id: "email", label: "Emails" },
+  { id: "document", label: "Documents" },
+  { id: "creation", label: "Création" },
+];
 
 export function LeadPanel({
   lead: summary,
@@ -48,7 +60,13 @@ export function LeadPanel({
   const lead = full ?? summary;
 
   const [note, setNote] = useState("");
+  const [kind, setKind] = useState<KindFilter>("tous");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  const visible =
+    kind === "tous"
+      ? lead.activity
+      : lead.activity.filter((entry) => entry.kind === kind);
 
   const service = SERVICE_BY_ID[lead.service];
   const phone = lead.telephone?.replace(/\s/g, "");
@@ -240,13 +258,43 @@ export function LeadPanel({
         </section>
 
         <section>
-          <Label>Activité récente</Label>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <Label>
+              Activité
+              <span className="ml-1.5 font-normal text-muted-foreground">
+                {lead.activity.length}
+              </span>
+            </Label>
+
+            {/* Scoped to this lead, not the whole CRM. The feed on the Aperçu
+                answers "what moved today"; this answers "what happened on this
+                dossier", which is the question you have with a card open. */}
+            {lead.activity.length > 0 ? (
+              <select
+                value={kind}
+                onChange={(event) => setKind(event.target.value as KindFilter)}
+                aria-label="Filtrer l'activité de ce lead"
+                className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-accent"
+              >
+                <option value="tous">Tout</option>
+                {ACTIVITY_FILTERS.map((one) => (
+                  <option key={one.id} value={one.id}>
+                    {one.label}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
+
           {lead.activity.length === 0 ? (
             <p className="text-sm text-muted-foreground">Rien pour l&apos;instant.</p>
+          ) : visible.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Aucun évènement de ce type sur ce dossier.
+            </p>
           ) : (
             <ul className="space-y-2.5">
-              {/* Three entries: enough for context, not the whole trail. */}
-              {lead.activity.slice(0, 3).map((entry) => (
+              {visible.slice(0, 6).map((entry) => (
                 <li key={entry.id} className="flex gap-2.5">
                   <span
                     aria-hidden
@@ -262,6 +310,13 @@ export function LeadPanel({
               ))}
             </ul>
           )}
+
+          {visible.length > 6 ? (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              {visible.length - 6} évènement{visible.length - 6 > 1 ? "s" : ""} de plus
+              sur la fiche.
+            </p>
+          ) : null}
         </section>
 
         <section className="border-t border-border pt-4">

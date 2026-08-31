@@ -58,14 +58,14 @@ export function DashboardView() {
     <div className="container mx-auto px-4 py-8 lg:py-10">
       <header className="mb-8">
         <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-          Tableau de bord
+          Aperçu
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Vue d&apos;ensemble des demandes de service reçues depuis le site.
           {messages.length > 0 ? (
             <>
               {" "}
-              <Link href="/admin/crm" className="text-accent hover:underline">
+              <Link href="/admin/leads" className="text-accent hover:underline">
                 {messages.length} message{messages.length > 1 ? "s" : ""} de contact
               </Link>{" "}
               {messages.length > 1 ? "sont comptés" : "est compté"} à part.
@@ -118,7 +118,7 @@ export function DashboardView() {
                 count={slice.count}
                 ratio={slice.ratio}
                 bar={STAGE_BY_ID[slice.id].dot}
-                href="/admin/crm"
+                href="/admin/leads"
               />
             ))}
           </ul>
@@ -162,7 +162,7 @@ export function DashboardView() {
                 count={slice.count}
                 ratio={slice.ratio}
                 bar="bg-accent"
-                href="/admin/crm"
+                href="/admin/leads"
               />
             ))}
           </ul>
@@ -182,7 +182,7 @@ export function DashboardView() {
                   count={slice.count}
                   ratio={slice.ratio}
                   bar={PRESTATION_BY_ID[slice.id].bar}
-                  href="/admin/crm"
+                  href="/admin/leads"
                 />
               ))}
             </ul>
@@ -207,10 +207,10 @@ export function DashboardView() {
             </p>
           </div>
           <Link
-            href="/admin/crm"
+            href="/admin/leads"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline"
           >
-            Ouvrir le CRM <ArrowRight size={14} />
+            Ouvrir les leads <ArrowRight size={14} />
           </Link>
         </header>
 
