@@ -79,28 +79,69 @@ function handle(error: unknown): string {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Every lead id the session has already seen. `null` until the first load.
+ * Ids already acknowledged, kept in the browser.
  *
- * The first response establishes the baseline rather than announcing thirty
- * leads as new — "new" means arrived while you were looking, which is the only
- * reading that makes a notification worth having.
+ * Held only in memory this resets on every refresh: a lead that arrived while
+ * you were away counts as new once, then is silently forgotten the moment the
+ * page reloads. Persisted, "new" survives until somebody marks it read, which
+ * is the only version of this worth trusting.
+ *
+ * Per browser, not per account — a reading marker, not data. The CRM has one
+ * administrator, so there is nobody for it to disagree with.
  */
-let known: Set<string> | null = null;
+const SEEN_KEY = "sansekai.crm.seen";
+
+function readSeen(): Set<string> | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(SEEN_KEY);
+    return raw === null ? null : new Set(JSON.parse(raw) as string[]);
+  } catch {
+    /* Private windows and blocked site data both throw. Failing to remember is
+       survivable; taking the board down over it is not. */
+    return null;
+  }
+}
+
+function writeSeen(ids: Iterable<string>): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(SEEN_KEY, JSON.stringify([...ids]));
+  } catch {
+    /* Same again — the badge is then simply per-session. */
+  }
+}
 
 function unseenAfter(leads: Lead[]): string[] {
   const ids = leads.map((lead) => lead.id);
+  const seen = readSeen();
 
-  if (known === null) {
-    known = new Set(ids);
+  if (seen === null) {
+    /* First run in this browser: everything already here is the baseline.
+       Announcing thirty existing leads as new is noise, not news. */
+    writeSeen(ids);
     return [];
   }
 
-  const arrived = ids.filter((id) => !known!.has(id));
-  known = new Set(ids);
+  // Pruned to what still exists, so the marker cannot grow forever on the back
+  // of leads deleted long ago.
+  writeSeen(ids.filter((id) => seen.has(id)));
 
-  // Kept until acknowledged: a lead that lands while the tab is in the
-  // background should still be waiting when somebody comes back to it.
-  return arrived.length > 0 ? [...snapshot.unseen, ...arrived] : snapshot.unseen;
+  return ids.filter((id) => !seen.has(id));
+}
+
+/** Acknowledges arrivals — all of them, or one. */
+function acknowledge(ids: string[]): void {
+  const seen = readSeen() ?? new Set<string>();
+  for (const id of ids) seen.add(id);
+  writeSeen(seen);
+
+  set({
+    ...snapshot,
+    unseen: snapshot.unseen.filter((id) => !ids.includes(id)),
+  });
 }
 
 export async function loadLeads(): Promise<void> {
@@ -305,8 +346,10 @@ export function useCrm() {
 
       /** Leads that arrived while this session has been open, still unread. */
       unseen: current.leads.filter((lead) => current.unseen.includes(lead.id)),
-      /** Called when the notifications are opened — they have been seen. */
-      markSeen: () => set({ ...snapshot, unseen: [] }),
+      /** Marks every arrival read. */
+      markAllSeen: () => acknowledge(snapshot.unseen),
+      /** Marks one read, for dismissing a single notification. */
+      markSeen: (id: string) => acknowledge([id]),
 
       refresh: loadLeads,
       getLead,
