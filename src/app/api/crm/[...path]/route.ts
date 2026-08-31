@@ -42,13 +42,27 @@ async function proxy(request: Request, path: string[]): Promise<Response> {
 
   // A download streams straight back with its own headers.
   if (!response.headers.get("content-type")?.includes("application/json")) {
+    const upstream = response.headers.get("content-disposition") ?? "attachment";
+
+    /*
+     * `?inline=1` asks the browser to render the file rather than save it,
+     * which is what the viewer needs to show a PDF in an iframe. The API always
+     * says `attachment` — right for a download link, and the reason "Consulter"
+     * used to save the file instead of opening it.
+     *
+     * Only the disposition changes; the filename it carries is preserved.
+     */
+    const wantsInline = new URL(request.url).searchParams.get("inline") === "1";
+    const disposition = wantsInline
+      ? upstream.replace(/^\s*attachment/i, "inline")
+      : upstream;
+
     return new Response(response.body, {
       status: response.status,
       headers: {
         "Content-Type":
           response.headers.get("content-type") ?? "application/octet-stream",
-        "Content-Disposition":
-          response.headers.get("content-disposition") ?? "attachment",
+        "Content-Disposition": disposition,
       },
     });
   }

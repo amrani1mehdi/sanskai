@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 import { Pagination, paginate } from "@/components/crm/pagination";
 import { formatDateTime } from "@/lib/crm/format";
-import { useCrm } from "@/lib/crm/store";
-import type { Activity, ActivityKind, Lead } from "@/lib/crm/types";
+import { fetchAllActivities, type ActivityRow } from "@/lib/crm/api";
+import { useCrm, useCrmListing } from "@/lib/crm/store";
+import type { ActivityKind } from "@/lib/crm/types";
 
 const ICONS: Record<ActivityKind, typeof History> = {
   creation: Sparkles,
@@ -50,26 +51,32 @@ const DAY = new Intl.DateTimeFormat("fr-FR", {
 
 const TIME = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-type Entry = { activity: Activity; lead: Lead };
+type Entry = ActivityRow;
 type KindFilter = ActivityKind | "tous";
 
 const PAGE_SIZE = 25;
 
 export function ActivityView() {
-  const { leads } = useCrm();
+  const { syncedAt } = useCrm();
+
+  /* Fetched, not read off the lead list: `GET /v1/leads` carries counts, not
+     the activity trail, so `lead.activity` is always empty there — which is
+     why this page showed nothing. Re-fetches whenever the store reloads, so
+     the poll keeps it live. */
+  const { rows: all, status } = useCrmListing(fetchAllActivities, syncedAt);
+
   const [kind, setKind] = useState<KindFilter>("tous");
   const [page, setPage] = useState(1);
 
   const entries = useMemo(
     () =>
-      leads
-        .flatMap((lead) => lead.activity.map((activity) => ({ activity, lead })))
+      all
         .filter((entry) => kind === "tous" || entry.activity.kind === kind)
         .sort(
           (a, b) =>
             new Date(b.activity.at).getTime() - new Date(a.activity.at).getTime(),
         ),
-    [leads, kind],
+    [all, kind],
   );
 
   const pageData = paginate(entries, page, PAGE_SIZE);
@@ -169,12 +176,20 @@ export function ActivityView() {
           </section>
         ))}
 
-        {days.length === 0 ? (
+        {status === "loading" ? (
+          /* Distinct from the empty state on purpose: "Aucune activité" while
+             the request is still in flight reads as "nothing has happened". */
+          <p className="rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center text-sm text-muted-foreground">
+            Chargement de l&apos;activité…
+          </p>
+        ) : days.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center">
             <History size={28} className="mx-auto mb-3 text-muted-foreground" />
             <p className="font-display font-bold text-foreground">Aucune activité</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Aucun évènement de ce type pour l&apos;instant.
+              {all.length === 0
+                ? "Rien ne s'est encore produit sur les dossiers."
+                : "Aucun évènement de ce type pour l'instant."}
             </p>
           </div>
         ) : null}

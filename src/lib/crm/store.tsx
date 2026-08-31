@@ -13,7 +13,14 @@
  * only ever show what was actually recorded.
  */
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import * as api from "./api";
 import { isMessage } from "./config";
 import type { Lead, LeadStatus } from "./types";
@@ -234,6 +241,55 @@ export function useCrm() {
     }),
     [current, getLead],
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cross-lead listings                                                         */
+/*                                                                             */
+/* The Documents and Activité pages need rows the lead list does not carry —    */
+/* it sends counts, not collections. They fetch their own, and re-fetch         */
+/* whenever the shared store reloads, so the poll keeps them live too.          */
+/* -------------------------------------------------------------------------- */
+
+export function useCrmListing<T>(
+  load: () => Promise<T[]>,
+  /** Changes on every store reload, including the ones the poll triggers. */
+  syncedAt: string | null,
+) {
+  const [rows, setRows] = useState<T[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+
+  // The loader is defined inline by callers, so it is a new function on every
+  // render; the sync marker is what should actually drive a refetch. Assigned
+  // in an effect rather than during render, which React forbids.
+  const loader = useRef(load);
+
+  useEffect(() => {
+    loader.current = load;
+  });
+
+  useEffect(() => {
+    let alive = true;
+
+    loader
+      .current()
+      .then((next) => {
+        if (!alive) return;
+        setRows(next);
+        setStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (!alive) return;
+        handle(error);
+        setStatus("error");
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [syncedAt]);
+
+  return { rows, status };
 }
 
 /* -------------------------------------------------------------------------- */

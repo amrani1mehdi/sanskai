@@ -296,6 +296,37 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
+    public function the_cross_lead_listings_name_the_dossier_each_row_belongs_to(): void
+    {
+        config()->set('leads.documents_disk', 'documents-test');
+        Storage::fake('documents-test');
+        Sanctum::actingAs($this->admin());
+
+        $lead = $this->lead();
+
+        $this->post("/api/v1/leads/{$lead->id}/documents", [
+            'kind' => DocumentKind::Kbis->value,
+            'file' => UploadedFile::fake()->create('kbis.pdf', 12, 'application/pdf'),
+        ])->assertCreated();
+
+        /*
+         * The Documents and Activité pages are built on these, and both were
+         * blank because they read `lead.documents` off the lead list instead —
+         * which carries counts, not collections. Each row has to name its
+         * dossier, or the page cannot show which file came from where.
+         */
+        $this->getJson('/api/v1/documents')
+            ->assertOk()
+            ->assertJsonPath('data.0.kind', DocumentKind::Kbis->value)
+            ->assertJsonPath('data.0.lead.reference', $lead->reference)
+            ->assertJsonPath('data.0.lead.entreprise', $lead->entreprise);
+
+        $this->getJson('/api/v1/activities')
+            ->assertOk()
+            ->assertJsonPath('data.0.lead.reference', $lead->reference);
+    }
+
+    #[Test]
     public function the_change_signature_moves_on_insert_update_and_delete(): void
     {
         Sanctum::actingAs($this->admin());

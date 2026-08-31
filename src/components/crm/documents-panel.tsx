@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Download, ExternalLink, FileText, Paperclip, Trash2 } from "lucide-react";
+import { Download, Eye, FileText, Paperclip, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/crm/confirm-dialog";
+import { DocumentViewer } from "@/components/crm/document-viewer";
 import { DOCUMENT_LABELS } from "@/lib/crm/config";
 import { formatFileSize, formatShortDate } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
@@ -21,6 +22,7 @@ export function DocumentsPanel({
 }) {
   const { removeDocument } = useCrm();
   const [pending, setPending] = useState<LeadDocument | null>(null);
+  const [viewing, setViewing] = useState<LeadDocument | null>(null);
 
   return (
     <section
@@ -61,14 +63,13 @@ export function DocumentsPanel({
               </div>
 
               <div className="flex shrink-0 items-center gap-1">
-                <a
-                  href={document.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => setViewing(document)}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                 >
-                  <ExternalLink size={13} /> Consulter
-                </a>
+                  <Eye size={13} /> Consulter
+                </button>
                 <a
                   href={document.url}
                   download={document.name}
@@ -90,6 +91,12 @@ export function DocumentsPanel({
           ))}
         </ul>
       )}
+
+      <DocumentViewer
+        document={viewing}
+        caption={lead.reference}
+        onClose={() => setViewing(null)}
+      />
 
       <ConfirmDialog
         open={pending !== null}
