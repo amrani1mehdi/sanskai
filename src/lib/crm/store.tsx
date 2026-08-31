@@ -57,6 +57,36 @@ function set(next: Snapshot) {
 /** Latched once a 401 has sent us to the form, so it happens exactly once. */
 let redirecting = false;
 
+/**
+ * Drops the session, then shows the form.
+ *
+ * Clearing the cookie is the part that matters. The server's guard asks only
+ * whether the cookie is present, not whether the token behind it still works,
+ * so a token the API has stopped accepting leaves the two pages throwing the
+ * visitor between them: the login page sees a cookie and forwards to the panel,
+ * the panel calls the API, gets a 401, and sends them back. Removing the cookie
+ * is what ends that — and it is the honest thing to do anyway, since a session
+ * the API refuses is not a session.
+ */
+async function signOut(): Promise<void> {
+  // The route clears the cookie whether or not the API can be reached, so a
+  // CRM that is down still lets someone out of the panel.
+  await fetch("/api/crm/session", { method: "DELETE" }).catch(() => {});
+
+  if (window.location.pathname.startsWith("/admin/login")) {
+    // Already on the form: the cookie is gone now, so a reload is enough to
+    // stop the server bouncing them back to the panel.
+    window.location.reload();
+    return;
+  }
+
+  /* A hard navigation on purpose: the session is gone, and a client-side push
+     would carry the stale store into the login page. This is module scope, so
+     there is no router to reach for anyway. */
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+  window.location.assign("/admin/login");
+}
+
 /** Sends an expired session back to the form rather than showing an empty board. */
 function handle(error: unknown): string {
   if (error instanceof api.ApiError && error.status === 401) {
@@ -66,18 +96,9 @@ function handle(error: unknown): string {
        long as the tab stayed open. */
     stopPolling();
 
-    /* Already on the form — including the reload this would itself cause — so
-       there is nowhere to send them. Without this the assign() below re-enters
-       the login page over and over. */
-    const atLogin = window.location.pathname.startsWith("/admin/login");
-
-    if (!redirecting && !atLogin) {
+    if (!redirecting) {
       redirecting = true;
-      /* A hard navigation on purpose: the session is gone, and a client-side
-         push would carry the stale store into the login page. This is module
-         scope, so there is no router to reach for anyway. */
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.assign("/admin/login");
+      void signOut();
     }
 
     return "Session expirée.";
