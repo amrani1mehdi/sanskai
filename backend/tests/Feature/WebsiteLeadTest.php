@@ -21,7 +21,6 @@ class WebsiteLeadTest extends TestCase
     {
         parent::setUp();
 
-        config()->set('leads.website_api_key', 'test-key');
         config()->set('leads.documents_disk', 'documents-test');
         Storage::fake('documents-test');
     }
@@ -52,20 +51,34 @@ class WebsiteLeadTest extends TestCase
     }
 
     #[Test]
-    public function it_refuses_a_submission_without_the_api_key(): void
+    public function the_submission_endpoints_need_no_credential(): void
     {
+        // Open by design — the public form's browser has nothing to present.
+        // A bare POST reaches validation rather than being turned away at the
+        // door, which is what a 422 here proves.
         $this->postJson('/api/v1/website/leads/developpement', [])
-            ->assertUnauthorized();
+            ->assertStatus(422);
 
         $this->assertSame(0, Lead::count());
     }
 
     #[Test]
+    public function the_submission_endpoints_are_rate_limited(): void
+    {
+        // With no key in front of them, the throttle is the only guard left, so
+        // it is worth a test of its own rather than trusting the annotation.
+        for ($i = 0; $i < 6; $i++) {
+            $this->postJson('/api/v1/website/leads/developpement', []);
+        }
+
+        $this->postJson('/api/v1/website/leads/developpement', [])
+            ->assertStatus(429);
+    }
+
+    #[Test]
     public function it_stores_a_financing_lead_with_its_documents(): void
     {
-        $response = $this
-            ->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $this->financingPayload());
+        $response = $this->post('/api/v1/website/leads/financement', $this->financingPayload());
 
         $response->assertCreated()
             ->assertJsonPath('data.reference', 'FIN-'.now()->year.'-0001')
@@ -90,10 +103,9 @@ class WebsiteLeadTest extends TestCase
     #[Test]
     public function it_rejects_a_company_younger_than_six_months(): void
     {
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $this->financingPayload([
-                'dateCreation' => now()->subMonths(2)->format('Y-m-d'),
-            ]))
+        $this->post('/api/v1/website/leads/financement', $this->financingPayload([
+            'dateCreation' => now()->subMonths(2)->format('Y-m-d'),
+        ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors('dateCreation');
 
@@ -103,10 +115,9 @@ class WebsiteLeadTest extends TestCase
     #[Test]
     public function it_rejects_revenue_below_the_floor(): void
     {
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $this->financingPayload([
-                'chiffreAffaire' => '4200',
-            ]))
+        $this->post('/api/v1/website/leads/financement', $this->financingPayload([
+            'chiffreAffaire' => '4200',
+        ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors('chiffreAffaire');
     }
@@ -123,8 +134,7 @@ class WebsiteLeadTest extends TestCase
 
         // Every slot is optional: a dossier missing its papers is a lead to
         // chase, not a submission to refuse.
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $payload)
+        $this->post('/api/v1/website/leads/financement', $payload)
             ->assertCreated();
 
         $this->assertSame(0, Lead::firstOrFail()->documents()->count());
@@ -141,8 +151,7 @@ class WebsiteLeadTest extends TestCase
             ],
         ]);
 
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $payload)
+        $this->post('/api/v1/website/leads/financement', $payload)
             ->assertCreated();
 
         $lead = Lead::firstOrFail();
@@ -163,10 +172,9 @@ class WebsiteLeadTest extends TestCase
             range(1, StoreFinancingLeadRequest::MAX_ACCOUNTING_FILES + 1),
         );
 
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $this->financingPayload([
-                'documentsComptables' => $tooMany,
-            ]))
+        $this->post('/api/v1/website/leads/financement', $this->financingPayload([
+            'documentsComptables' => $tooMany,
+        ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors('documentsComptables');
     }
@@ -178,8 +186,7 @@ class WebsiteLeadTest extends TestCase
         Lead::creating(fn () => throw new \RuntimeException('boom'));
 
         try {
-            $this->withHeader('X-Api-Key', 'test-key')
-                ->post('/api/v1/website/leads/financement', $this->financingPayload());
+            $this->post('/api/v1/website/leads/financement', $this->financingPayload());
         } catch (\Throwable) {
             // The failure is the point; what matters is the disk afterwards.
         }
@@ -204,10 +211,9 @@ class WebsiteLeadTest extends TestCase
         // PNG bytes, a .pdf name, and a client type claiming PDF.
         $liar = new UploadedFile($path, 'kbis.pdf', 'application/pdf', null, true);
 
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $this->financingPayload([
-                'kbis' => $liar,
-            ]))
+        $this->post('/api/v1/website/leads/financement', $this->financingPayload([
+            'kbis' => $liar,
+        ]))
             ->assertCreated();
 
         $kbis = LeadDocument::where('kind', DocumentKind::Kbis)->firstOrFail();
@@ -218,12 +224,11 @@ class WebsiteLeadTest extends TestCase
     #[Test]
     public function it_sanitises_a_hostile_filename(): void
     {
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->post('/api/v1/website/leads/financement', $this->financingPayload([
-                'kbis' => UploadedFile::fake()->create(
-                    '../../etc/passwd"; rm -rf /.pdf', 12, 'application/pdf',
-                ),
-            ]))
+        $this->post('/api/v1/website/leads/financement', $this->financingPayload([
+            'kbis' => UploadedFile::fake()->create(
+                '../../etc/passwd"; rm -rf /.pdf', 12, 'application/pdf',
+            ),
+        ]))
             ->assertCreated();
 
         $name = LeadDocument::where('kind', DocumentKind::Kbis)->value('original_name');
@@ -237,15 +242,14 @@ class WebsiteLeadTest extends TestCase
     public function it_numbers_references_in_sequence(): void
     {
         foreach (range(1, 3) as $expected) {
-            $this->withHeader('X-Api-Key', 'test-key')
-                ->postJson('/api/v1/website/leads/developpement', [
-                    'service' => 'site_web',
-                    'nom' => 'Bertrand',
-                    'prenom' => 'Alice',
-                    'email' => 'alice@example.fr',
-                    'telephone' => '0788214015',
-                    'entreprise' => 'Bertrand Immobilier',
-                ])
+            $this->postJson('/api/v1/website/leads/developpement', [
+                'service' => 'site_web',
+                'nom' => 'Bertrand',
+                'prenom' => 'Alice',
+                'email' => 'alice@example.fr',
+                'telephone' => '0788214015',
+                'entreprise' => 'Bertrand Immobilier',
+            ])
                 ->assertCreated()
                 ->assertJsonPath(
                     'data.reference',
@@ -257,12 +261,11 @@ class WebsiteLeadTest extends TestCase
     #[Test]
     public function it_rejects_an_unknown_sub_service(): void
     {
-        $this->withHeader('X-Api-Key', 'test-key')
-            ->postJson('/api/v1/website/leads/developpement', [
-                'service' => 'consulting_quantique',
-                'nom' => 'A', 'prenom' => 'B',
-                'email' => 'a@b.fr', 'telephone' => '06', 'entreprise' => 'C',
-            ])
+        $this->postJson('/api/v1/website/leads/developpement', [
+            'service' => 'consulting_quantique',
+            'nom' => 'A', 'prenom' => 'B',
+            'email' => 'a@b.fr', 'telephone' => '06', 'entreprise' => 'C',
+        ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('service');
     }

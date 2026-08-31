@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Route;
 |
 | Two audiences, two ways in:
 |
-|  - `website/*` is the public site submitting a form. No user is signed in,
-|    so it is guarded by the shared `X-Api-Key` and throttled hard.
+|  - `website/*` is the public site submitting a form. No user is signed in and
+|    no key is required; the rate limit is the only thing in front of it.
 |  - everything else is the back office, on a Sanctum bearer token.
 |
 | Versioned in the path so the website can keep calling v1 while a v2 is built
@@ -26,10 +26,15 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
     /*
-     * Website -> CRM. Six submissions a minute per IP is far above what a human
-     * filling in a financing form can do, and far below what a script wants.
+     * Website -> CRM. Open by design: these two endpoints take a form from the
+     * public site, and the browser has no credential to offer.
+     *
+     * The throttle is therefore the only guard. Six submissions a minute per IP
+     * is far above what a human filling in a financing form can do, and far
+     * below what a script wants. They only ever write — nothing here reads a
+     * lead back, so an abusive caller can create junk, not read anyone's file.
      */
-    Route::middleware(['website.key', 'throttle:6,1'])
+    Route::middleware(['throttle:6,1'])
         ->prefix('website/leads')
         ->name('website.leads.')
         ->group(function () {
