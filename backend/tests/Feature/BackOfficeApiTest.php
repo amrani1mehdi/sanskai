@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Enums\DocumentKind;
 use App\Enums\LeadService;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -21,7 +24,6 @@ class BackOfficeApiTest extends TestCase
     {
         return User::forceCreate(array_merge([
             'name' => 'Sansekai Admin',
-            'username' => 'admin',
             'email' => 'admin@example.fr',
             'password' => Hash::make('MotDePasseTest123!'),
             'is_admin' => true,
@@ -49,17 +51,41 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
-    public function it_issues_a_token_for_a_username_or_an_email(): void
+    public function it_issues_a_token_for_an_email_and_password(): void
     {
         $this->admin();
 
-        foreach (['admin', 'admin@example.fr'] as $login) {
-            $this->postJson('/api/v1/auth/token', [
-                'login' => $login,
-                'password' => 'MotDePasseTest123!',
-                'deviceName' => 'test',
-            ])->assertCreated()->assertJsonStructure(['data' => ['token', 'user']]);
-        }
+        $this->postJson('/api/v1/auth/token', [
+            'email' => 'admin@example.fr',
+            'password' => 'MotDePasseTest123!',
+            'deviceName' => 'test',
+        ])->assertCreated()->assertJsonStructure(['data' => ['token', 'user']]);
+    }
+
+    #[Test]
+    public function it_accepts_the_email_whatever_the_case(): void
+    {
+        $this->admin();
+
+        // Nobody types their own address in the case it was registered in.
+        $this->postJson('/api/v1/auth/token', [
+            'email' => 'Admin@Example.FR',
+            'password' => 'MotDePasseTest123!',
+            'deviceName' => 'test',
+        ])->assertCreated();
+    }
+
+    #[Test]
+    public function it_rejects_a_login_that_is_not_an_email(): void
+    {
+        $this->admin();
+
+        // The username is gone: 'admin' is no longer a credential.
+        $this->postJson('/api/v1/auth/token', [
+            'email' => 'admin',
+            'password' => 'MotDePasseTest123!',
+            'deviceName' => 'test',
+        ])->assertStatus(422)->assertJsonValidationErrors('email');
     }
 
     #[Test]
@@ -68,28 +94,28 @@ class BackOfficeApiTest extends TestCase
         $this->admin();
 
         $wrongPassword = $this->postJson('/api/v1/auth/token', [
-            'login' => 'admin', 'password' => 'faux', 'deviceName' => 't',
+            'email' => 'admin@example.fr', 'password' => 'faux', 'deviceName' => 't',
         ]);
 
         $unknownAccount = $this->postJson('/api/v1/auth/token', [
-            'login' => 'personne', 'password' => 'faux', 'deviceName' => 't',
+            'email' => 'personne@example.fr', 'password' => 'faux', 'deviceName' => 't',
         ]);
 
         $wrongPassword->assertStatus(422);
         $unknownAccount->assertStatus(422);
         $this->assertSame(
-            $wrongPassword->json('errors.login'),
-            $unknownAccount->json('errors.login'),
+            $wrongPassword->json('errors.email'),
+            $unknownAccount->json('errors.email'),
         );
     }
 
     #[Test]
     public function it_refuses_a_token_to_a_non_admin(): void
     {
-        $this->admin(['is_admin' => false, 'username' => 'staff', 'email' => 's@example.fr']);
+        $this->admin(['is_admin' => false, 'email' => 's@example.fr']);
 
         $this->postJson('/api/v1/auth/token', [
-            'login' => 'staff', 'password' => 'MotDePasseTest123!', 'deviceName' => 't',
+            'email' => 's@example.fr', 'password' => 'MotDePasseTest123!', 'deviceName' => 't',
         ])->assertStatus(422);
     }
 
@@ -267,5 +293,49 @@ class BackOfficeApiTest extends TestCase
             'password' => 'NouveauMotDePasse456!',
             'password_confirmation' => 'NouveauMotDePasse456!',
         ])->assertStatus(422)->assertJsonValidationErrors('currentPassword');
+    }
+
+    #[Test]
+    public function a_single_file_slot_refuses_a_second_document(): void
+    {
+        config()->set('leads.documents_disk', 'documents-test');
+        Storage::fake('documents-test');
+        Sanctum::actingAs($this->admin());
+
+        $lead = $this->lead();
+        $url = "/api/v1/leads/{$lead->id}/documents";
+
+        $this->post($url, [
+            'kind' => DocumentKind::Kbis->value,
+            'file' => UploadedFile::fake()->create('kbis.pdf', 12, 'application/pdf'),
+        ])->assertCreated();
+
+        // A second Kbis would leave two on the dossier with nothing saying
+        // which is current; the first has to be deleted deliberately.
+        $this->post($url, [
+            'kind' => DocumentKind::Kbis->value,
+            'file' => UploadedFile::fake()->create('kbis-2.pdf', 12, 'application/pdf'),
+        ])->assertStatus(422)->assertJsonValidationErrors('kind');
+
+        $this->assertSame(1, $lead->documents()->count());
+    }
+
+    #[Test]
+    public function the_accounting_slot_stacks_as_many_as_needed(): void
+    {
+        config()->set('leads.documents_disk', 'documents-test');
+        Storage::fake('documents-test');
+        Sanctum::actingAs($this->admin());
+
+        $lead = $this->lead();
+
+        foreach (['bilan.pdf', 'compte-resultat.pdf', 'liasse.pdf'] as $name) {
+            $this->post("/api/v1/leads/{$lead->id}/documents", [
+                'kind' => DocumentKind::Comptable->value,
+                'file' => UploadedFile::fake()->create($name, 12, 'application/pdf'),
+            ])->assertCreated();
+        }
+
+        $this->assertSame(3, $lead->documents()->count());
     }
 }

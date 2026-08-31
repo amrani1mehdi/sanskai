@@ -19,50 +19,49 @@ use Illuminate\Validation\ValidationException;
  * The Filament panel keeps its session login; this is for the Next.js admin,
  * which is a separate origin and cannot share that cookie.
  *
- * The CRM runs on a single administrator: the account is created at
- * installation with a username and a password, and the password is changed
- * from here afterwards.
+ * The CRM runs on a single administrator, identified by email address. The
+ * account is created at installation with an initial password, changed from
+ * here afterwards.
  */
 class AuthController extends Controller
 {
     /**
      * POST /api/v1/auth/token
      *
-     * `login` takes the username or the email — the account is handed out with
-     * a username, and Filament signs in on email, so both resolve here.
+     * Email and password. The email is the account's only identifier — it is
+     * what the Filament panel signs in with too, so there is one credential to
+     * remember rather than two that drift apart.
      *
-     * Throttled per login and IP, and answering with the same message whether
+     * Throttled per email and IP, and answering with the same message whether
      * the account is unknown or the password is wrong: a login endpoint should
      * not tell an attacker which half they got right.
      */
     public function store(Request $request): JsonResponse
     {
         $credentials = $request->validate([
-            'login' => ['required', 'string', 'max:190'],
+            'email' => ['required', 'string', 'email:rfc', 'max:190'],
             'password' => ['required', 'string'],
             'deviceName' => ['required', 'string', 'max:100'],
         ]);
 
-        $key = 'auth:'.strtolower($credentials['login']).'|'.$request->ip();
+        $email = strtolower($credentials['email']);
+        $key = 'auth:'.$email.'|'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             throw ValidationException::withMessages([
-                'login' => 'Trop de tentatives. Réessayez dans '
+                'email' => 'Trop de tentatives. Réessayez dans '
                     .RateLimiter::availableIn($key).' secondes.',
             ])->status(429);
         }
 
-        $user = User::query()
-            ->where('username', $credentials['login'])
-            ->orWhere('email', $credentials['login'])
-            ->first();
+        $user = User::query()->where('email', $email)->first();
 
         // The panel gate applies here too: a non-admin user gets no API token.
         if (! $user || ! $user->is_admin || ! Hash::check($credentials['password'], $user->password)) {
             RateLimiter::hit($key);
 
             throw ValidationException::withMessages([
-                'login' => 'Identifiants invalides.',
+                'email' => 'Identifiants invalides.',
             ]);
         }
 

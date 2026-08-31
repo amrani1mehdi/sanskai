@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\DocumentKind;
+use App\Http\Requests\Api\StoreFinancingLeadRequest;
 use App\Models\Lead;
 use App\Models\LeadDocument;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,7 +44,10 @@ class WebsiteLeadTest extends TestCase
             'reseaux' => false,
             'kbis' => UploadedFile::fake()->create('kbis.pdf', 12, 'application/pdf'),
             'relevesBancaires' => UploadedFile::fake()->create('releves.pdf', 12, 'application/pdf'),
-            'documentsComptables' => UploadedFile::fake()->create('comptes.pdf', 12, 'application/pdf'),
+            // The accounting slot is a list, however many pieces there are.
+            'documentsComptables' => [
+                UploadedFile::fake()->create('bilan.pdf', 12, 'application/pdf'),
+            ],
         ], $overrides);
     }
 
@@ -108,15 +112,63 @@ class WebsiteLeadTest extends TestCase
     }
 
     #[Test]
-    public function it_requires_the_three_mandatory_uploads(): void
+    public function it_accepts_a_submission_with_no_documents_at_all(): void
     {
         $payload = $this->financingPayload();
-        unset($payload['kbis']);
+        unset(
+            $payload['kbis'],
+            $payload['relevesBancaires'],
+            $payload['documentsComptables'],
+        );
+
+        // Every slot is optional: a dossier missing its papers is a lead to
+        // chase, not a submission to refuse.
+        $this->withHeader('X-Api-Key', 'test-key')
+            ->post('/api/v1/website/leads/financement', $payload)
+            ->assertCreated();
+
+        $this->assertSame(0, Lead::firstOrFail()->documents()->count());
+    }
+
+    #[Test]
+    public function the_accounting_slot_takes_several_files(): void
+    {
+        $payload = $this->financingPayload([
+            'documentsComptables' => [
+                UploadedFile::fake()->create('bilan.pdf', 12, 'application/pdf'),
+                UploadedFile::fake()->create('compte-resultat.pdf', 12, 'application/pdf'),
+                UploadedFile::fake()->create('liasse.pdf', 12, 'application/pdf'),
+            ],
+        ]);
 
         $this->withHeader('X-Api-Key', 'test-key')
             ->post('/api/v1/website/leads/financement', $payload)
+            ->assertCreated();
+
+        $lead = Lead::firstOrFail();
+
+        $this->assertSame(
+            3,
+            $lead->documents()->where('kind', DocumentKind::Comptable)->count(),
+        );
+        // One each for identity-less payload: kbis + statement + the three.
+        $this->assertCount(5, $lead->documents);
+    }
+
+    #[Test]
+    public function it_rejects_more_accounting_files_than_the_ceiling(): void
+    {
+        $tooMany = array_map(
+            fn (int $n) => UploadedFile::fake()->create("piece-{$n}.pdf", 12, 'application/pdf'),
+            range(1, StoreFinancingLeadRequest::MAX_ACCOUNTING_FILES + 1),
+        );
+
+        $this->withHeader('X-Api-Key', 'test-key')
+            ->post('/api/v1/website/leads/financement', $this->financingPayload([
+                'documentsComptables' => $tooMany,
+            ]))
             ->assertStatus(422)
-            ->assertJsonValidationErrors('kbis');
+            ->assertJsonValidationErrors('documentsComptables');
     }
 
     #[Test]

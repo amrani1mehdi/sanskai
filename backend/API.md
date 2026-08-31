@@ -32,7 +32,7 @@ Variables that matter beyond the defaults:
 | `DB_*` | MySQL connection. `DB_DATABASE` defaults to `sansekai_crm`. |
 | `WEBSITE_API_KEY` | Shared secret for the two public submission endpoints. Generate with `php artisan key:generate --show`. |
 | `LEAD_DOCUMENTS_DISK` | Disk for uploads. Defaults to `lead_documents`, which is **private** — keep it that way. |
-| `ADMIN_USERNAME` | The administrator's login. Defaults to `admin`. |
+| `ADMIN_EMAIL` | The administrator's login. Defaults to `admin@sansekaisolution.com`. |
 | `ADMIN_PASSWORD` | Initial password. Left blank in local, the seeder generates one and prints it once. |
 
 Locally, leaving `WEBSITE_API_KEY` empty allows unauthenticated submissions so
@@ -71,10 +71,20 @@ the Filament panel applies. The token is shown once.
 
 The CRM has **one administrator account** and no responsables — nothing is
 assigned to anyone, so there is no owners table and no endpoint to manage one.
-The account is created at installation with a username and a password;
-`login` accepts either the username or the email, and the password is changed
-afterwards through `PATCH /v1/auth/password`, which revokes every other token
-on success.
+
+The account is identified by its **email address**, which is also what the
+Filament panel signs in with — one credential rather than two that drift apart.
+Matching is case-insensitive.
+
+```jsonc
+// POST /v1/auth/token
+{ "email": "admin@sansekaisolution.com", "password": "…", "deviceName": "back-office" }
+```
+
+The password is changed afterwards through `PATCH /v1/auth/password`, which
+requires the current password and revokes every other token on success — a
+stolen token alone cannot lock the owner out, and sessions opened with a leaked
+password do not survive the change.
 
 ---
 
@@ -103,13 +113,31 @@ on success.
 | `reseaux` | `reseaux` | `reseaux` | yes | boolean |
 | `reseauxOu` | `reseauxOu` | `reseaux_ou` | if `reseaux` | |
 | `message` | `message` | `message` | no | |
-| `uploads.idDocument` | `pieceIdentite` | `lead_documents` | no | kind `piece_identite` |
-| `uploads.kbis` | `kbis` | `lead_documents` | **yes** | kind `kbis` |
-| `uploads.statements` | `relevesBancaires` | `lead_documents` | **yes** | kind `releve_bancaire` |
-| `uploads.accounting` | `documentsComptables` | `lead_documents` | **yes** | kind `comptable` |
+| `uploads.idDocument` | `pieceIdentite` | `lead_documents` | no | kind `piece_identite`, one file |
+| `uploads.kbis` | `kbis` | `lead_documents` | no | kind `kbis`, one file |
+| `uploads.statements` | `relevesBancaires` | `lead_documents` | no | kind `releve_bancaire`, one file |
+| `uploads.accounting` | `documentsComptables[]` | `lead_documents` | no | kind `comptable`, **an array**, up to 20 files |
 
 Set server-side, never sent: `reference` (`FIN-2026-0142`), `service`
 (`financement`), `status` (`nouveau`), `eligible_age`, `eligible_revenue`.
+
+**Every document slot is optional.** A dossier that arrives without its Kbis is
+a lead to chase, not a submission to refuse — the back office attaches what is
+missing afterwards through `POST /v1/leads/{lead}/documents`.
+
+How many files each slot holds:
+
+| Slot | Files | Why |
+|---|---|---|
+| `pieceIdentite` | one | One identity document. |
+| `kbis` | one | One registration certificate. |
+| `relevesBancaires` | one | Six months of statements come as a single export, not six files. |
+| `documentsComptables[]` | up to 20 | Balance sheet, P&L, tax return — as many pieces as the dossier has. Send repeated `documentsComptables[]` parts. |
+
+The same rule is enforced on the admin upload endpoint: posting a second
+document to a single-file slot returns **422** on `kind`, and the existing one
+has to be deleted first. That is deliberate — two Kbis on a dossier with nothing
+saying which is current is worse than an explicit delete-then-add.
 
 Uploads: PDF / JPG / PNG. The size ceiling is the **smaller** of
 `leads.max_upload_kb` (10 MB) and PHP's own `upload_max_filesize`.
@@ -253,10 +281,10 @@ export async function GET(
 | Status | Meaning | What to do |
 |---|---|---|
 | `401` | Bad or missing key/token | Re-authenticate. On `/website/*`, the key is wrong. |
-| `429` on login | 5 failed attempts | Per login and IP. |
+| `429` on login | 5 failed attempts | Per email and IP. |
 | `404` | No such record | |
 | `422` | Validation or eligibility failure | Show `errors[field][0]` against that field. |
-| `429` | Rate limited | Back off. Submissions allow 6/min per IP; logins 5 per login+IP. |
+| `429` | Rate limited | Back off. Submissions allow 6/min per IP; logins 5 per email+IP. |
 
 ---
 

@@ -13,7 +13,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { KeyRound, LogOut, Settings, UserRound, X } from "lucide-react";
-import { signOut } from "@/lib/crm/api";
+import { ApiError, changePassword, signOut } from "@/lib/crm/api";
 import { CURRENT_ADMIN } from "@/lib/crm/config";
 import { useCrm } from "@/lib/crm/store";
 import { cn } from "@/lib/utils";
@@ -202,9 +202,9 @@ function ProfilePanel({
       </dl>
 
       <p className="mt-5 rounded-lg border border-border bg-secondary/60 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-        Le CRM fonctionne avec un compte administrateur unique. Le nom
-        d&apos;utilisateur et le mot de passe initial sont fournis avec
-        l&apos;installation ; le mot de passe se change ensuite depuis ce menu.
+        Le CRM fonctionne avec un compte administrateur unique, identifié par
+        son adresse email. Le mot de passe initial est fourni avec
+        l&apos;installation ; il se change ensuite depuis ce menu.
       </p>
     </Sheet>
   );
@@ -229,15 +229,19 @@ type Errors = Partial<Record<keyof typeof EMPTY, string>>;
 function PasswordPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
+  const [pending, setPending] = useState(false);
+  const [done, setDone] = useState(false);
 
   const set = (key: keyof typeof EMPTY) => (value: string) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
   };
 
-  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    /* Checked here so the obvious mistakes are caught without a round trip.
+       The API applies the same rules again — this is a courtesy, not the gate. */
     const found: Errors = {};
     if (values.current === "") found.current = "Le mot de passe actuel est requis.";
     if (values.next.length < 8) found.next = "Au moins 8 caractères.";
@@ -248,23 +252,59 @@ function PasswordPanel({ open, onClose }: { open: boolean; onClose: () => void }
     setErrors(found);
     if (Object.values(found).some(Boolean)) return;
 
-    /* Deliberately not wired to anything here: changing a password is the API's
-       job (PATCH /v1/auth/password), and a browser store is no place to hold or
-       verify one. The form validates, then says where the change happens. */
-    setErrors({
-      current:
-        "Le changement de mot de passe passe par l'API du CRM, qui n'est pas encore branchée sur ce tableau de bord.",
-    });
+    setPending(true);
+
+    try {
+      await changePassword(values.current, values.next, values.confirm);
+      setValues(EMPTY);
+      setDone(true);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        // Laravel reports per field; show each message where it applies and
+        // fall back to the summary when it names a field we do not render.
+        setErrors({
+          current: error.errors.currentPassword?.[0],
+          next: error.errors.password?.[0],
+          confirm:
+            error.errors.password_confirmation?.[0] ??
+            (error.errors.currentPassword || error.errors.password
+              ? undefined
+              : error.message),
+        });
+      } else {
+        setErrors({ current: "Le CRM est injoignable." });
+      }
+    } finally {
+      setPending(false);
+    }
   };
 
   const close = () => {
     setValues(EMPTY);
     setErrors({});
+    setDone(false);
     onClose();
   };
 
   return (
     <Sheet open={open} title="Changer le mot de passe" onClose={close}>
+      {done ? (
+        <div className="space-y-5">
+          <p className="rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
+            Mot de passe mis à jour. Les autres sessions ouvertes ont été
+            déconnectées ; celle-ci reste active.
+          </p>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={close}
+              className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      ) : (
       <form onSubmit={submit} noValidate className="space-y-4">
         <Field
           id="current-password"
@@ -299,12 +339,17 @@ function PasswordPanel({ open, onClose }: { open: boolean; onClose: () => void }
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity hover:opacity-90"
+            disabled={pending}
+            className={cn(
+              "rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-opacity",
+              pending ? "cursor-not-allowed opacity-60" : "hover:opacity-90",
+            )}
           >
-            Mettre à jour
+            {pending ? "Mise à jour…" : "Mettre à jour"}
           </button>
         </div>
       </form>
+      )}
     </Sheet>
   );
 }
