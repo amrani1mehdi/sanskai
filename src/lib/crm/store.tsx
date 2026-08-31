@@ -296,6 +296,10 @@ async function moveLead(id: string, status: LeadStatus): Promise<void> {
     leads: before.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
   });
 
+  /* Acting on a lead is reading it: once you have moved it, it is no longer
+     something that just turned up unnoticed. */
+  acknowledge([id]);
+
   try {
     await api.updateStatus(id, status);
   } catch (error) {

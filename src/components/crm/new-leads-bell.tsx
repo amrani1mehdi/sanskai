@@ -71,7 +71,7 @@ export function NewLeadsBell({
         className={cn(
           "relative rounded-lg border p-2 transition-colors",
           count > 0
-            ? "border-new/40 bg-new-soft text-new hover:bg-new-soft/70"
+            ? "border-new/50 bg-new-soft text-foreground hover:border-new"
             : "border-border bg-card text-muted-foreground hover:text-foreground",
         )}
       >
