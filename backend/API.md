@@ -30,22 +30,16 @@ Variables that matter beyond the defaults:
 | Variable | What it does |
 |---|---|
 | `DB_*` | MySQL connection. `DB_DATABASE` defaults to `sansekai_crm`. |
-| `WEBSITE_API_KEY` | Shared secret for the two public submission endpoints. Generate with `php artisan key:generate --show`. |
 | `LEAD_DOCUMENTS_DISK` | Disk for uploads. Defaults to `lead_documents`, which is **private** — keep it that way. |
 | `ADMIN_EMAIL` | The administrator's login. Defaults to `admin@sansekaisolution.com`. |
 | `ADMIN_PASSWORD` | Initial password. Left blank in local, the seeder generates one and prints it once. |
 
-Locally, leaving `WEBSITE_API_KEY` empty allows unauthenticated submissions so
-you can curl the endpoint. In production an empty key is a hard failure rather
-than an open door.
-
 On the Next.js side:
 
 ```dotenv
-# .env.local — no NEXT_PUBLIC_ prefix on either of these
+# .env.local — server-side only, no NEXT_PUBLIC_ prefix
 CRM_API_URL=https://api.sansekai.72-60-190-211.sslip.io/api   # Hostinger VPS
 # CRM_API_URL=http://localhost:8000/api                       # local artisan serve
-CRM_API_KEY=<same value as WEBSITE_API_KEY>
 ```
 
 Point `CRM_API_URL` at the VPS over **https**, not http. The host 301-redirects
@@ -59,11 +53,10 @@ quietly expects a local backend.
 
 ## 2. Authentication
 
-**Website → CRM** (`/v1/website/*`): header `X-Api-Key: <key>`.
-
-This is server-to-server. Call it from a route handler or server action, never
-from the browser — a key in client JavaScript can be read by anyone who opens
-devtools and used to write leads straight into the CRM.
+**Website → CRM** (`/v1/website/*`): **no credential**. These two endpoints are
+called from a public form whose visitor has nothing to present, and they only
+ever write — nothing under `/v1/website/*` reads a lead back. The rate limit,
+6 requests per minute per IP, is what stands in front of them.
 
 **Back office** (everything else): `Authorization: Bearer <token>`, from
 `POST /v1/auth/token`. Only users with `is_admin` are issued one, the same gate
@@ -206,10 +199,7 @@ export async function POST(request: Request) {
     `${process.env.CRM_API_URL}/v1/website/leads/financement`,
     {
       method: "POST",
-      headers: {
-        "X-Api-Key": process.env.CRM_API_KEY!,
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
       body: form,
     },
   );
@@ -280,7 +270,7 @@ export async function GET(
 
 | Status | Meaning | What to do |
 |---|---|---|
-| `401` | Bad or missing key/token | Re-authenticate. On `/website/*`, the key is wrong. |
+| `401` | Bad, missing or revoked token | Re-authenticate. Cannot occur on `/website/*`, which takes no credential. |
 | `429` on login | 5 failed attempts | Per email and IP. |
 | `404` | No such record | |
 | `422` | Validation or eligibility failure | Show `errors[field][0]` against that field. |
