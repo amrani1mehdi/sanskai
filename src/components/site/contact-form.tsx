@@ -16,7 +16,6 @@ const EMPTY = {
   siren: "",
   fullName: "",
   email: "",
-  phone: "",
   message: "",
 };
 
@@ -53,7 +52,6 @@ export function ContactForm({ content }: { content: SiteContent }) {
     body.set("nomComplet", values.fullName);
     body.set("email", values.email);
     if (values.siren) body.set("siren", values.siren);
-    if (values.phone) body.set("telephone", values.phone);
     if (values.message) body.set("message", values.message);
     for (const invoice of invoices) body.append("factures[]", invoice);
 
@@ -130,15 +128,6 @@ export function ContactForm({ content }: { content: SiteContent }) {
           value={values.email}
           onChange={set("email")}
           required
-        />
-
-        {/* Optional, like the API. A message without a number is still a lead
-            worth having; refusing one over it would lose the enquiry. */}
-        <Field
-          label={contact.fields.phone}
-          type="tel"
-          value={values.phone}
-          onChange={set("phone")}
         />
 
         <div>

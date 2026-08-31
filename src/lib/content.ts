@@ -369,7 +369,6 @@ export function getSiteContent(locale: Locale) {
         siren: t.contactPage.fieldSiren,
         fullName: t.contactPage.fieldFullName,
         email: t.contactPage.fieldEmail,
-        phone: t.contactPage.fieldPhone,
         message: t.contactPage.fieldMessage,
         upload: t.contactPage.fieldUpload,
       },
