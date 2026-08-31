@@ -72,13 +72,27 @@ class CreateAdminCommand extends Command
             return self::FAILURE;
         }
 
-        $attributes = ['name' => $name, 'is_admin' => true, 'email_verified_at' => now()];
+        /*
+         * Assigned one by one, not through updateOrCreate().
+         *
+         * The model declares #[Fillable(['name', 'email', 'password'])], so
+         * mass assignment drops `is_admin` without a word — the account is
+         * created, the command reports success, and the person still cannot
+         * reach the panel. Setting the property directly bypasses that guard,
+         * which is the point: granting exactly this flag is what the command
+         * is for.
+         */
+        $user = User::firstOrNew(['email' => $email]);
+
+        $user->name = $name;
+        $user->is_admin = true;
+        $user->email_verified_at ??= now();
 
         if ($password !== '') {
-            $attributes['password'] = Hash::make($password);
+            $user->password = Hash::make($password);
         }
 
-        User::updateOrCreate(['email' => $email], $attributes);
+        $user->save();
 
         $this->info(
             $existing
