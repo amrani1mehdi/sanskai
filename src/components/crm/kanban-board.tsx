@@ -31,7 +31,7 @@ export function KanbanBoard({
   leads: Lead[];
   stages: StageConfig[];
   selectedId: string | null;
-  onSelect: (lead: Lead) => void;
+  onSelect: (lead: Lead, focus?: "documents") => void;
   onMove: (id: string, status: LeadStatus) => void;
   onLog: (id: string, kind: "appel" | "email") => void;
 }) {
@@ -108,7 +108,7 @@ export function KanbanBoard({
                     lead={lead}
                     dragging={dragging === lead.id}
                     selected={selectedId === lead.id}
-                    onSelect={() => onSelect(lead)}
+                    onSelect={(focus) => onSelect(lead, focus)}
                     onDragStart={() => setDragging(lead.id)}
                     onDragEnd={() => {
                       setDragging(null);
@@ -144,7 +144,7 @@ function KanbanCard({
   lead: Lead;
   dragging: boolean;
   selected: boolean;
-  onSelect: () => void;
+  onSelect: (focus?: "documents") => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onLog: (id: string, kind: "appel" | "email") => void;
@@ -170,7 +170,7 @@ function KanbanCard({
     >
       <button
         type="button"
-        onClick={onSelect}
+        onClick={() => onSelect()}
         aria-label={`Voir ${lead.prenom} ${lead.nom}, ${lead.reference}`}
         aria-pressed={selected}
         className="absolute inset-0 cursor-grab rounded-lg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none active:cursor-grabbing"
@@ -207,21 +207,33 @@ function KanbanCard({
       </div>
 
       <div className="relative mt-3 flex items-center gap-3 border-t border-border pt-2.5 text-[11px] text-muted-foreground">
-        <span className="pointer-events-none flex items-center gap-3">
-          {lead.documentCount > 0 ? (
-            <span className="inline-flex items-center gap-1">
-              <Paperclip size={11} />
-              {lead.documentCount}
-            </span>
-          ) : null}
+        {lead.documentCount > 0 ? (
+          /* Straight to the pieces. Everywhere else on the card selects the
+             lead; this selects it *and* opens its documents, because a
+             paperclip with a number on it is a thing you expect to click. */
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect("documents");
+            }}
+            title={`Consulter les ${lead.documentCount} pièce${
+              lead.documentCount > 1 ? "s" : ""
+            } de ${lead.reference}`}
+            aria-label={`Consulter les pièces jointes de ${lead.reference}`}
+            className="relative z-10 inline-flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors hover:bg-secondary hover:text-accent"
+          >
+            <Paperclip size={11} aria-hidden />
+            {lead.documentCount}
+          </button>
+        ) : null}
 
-          {lead.noteCount > 0 ? (
-            <span className="inline-flex items-center gap-1">
-              <StickyNote size={11} />
-              {lead.noteCount}
-            </span>
-          ) : null}
-        </span>
+        {lead.noteCount > 0 ? (
+          <span className="pointer-events-none inline-flex items-center gap-1">
+            <StickyNote size={11} />
+            {lead.noteCount}
+          </span>
+        ) : null}
 
         {/* Shortcuts — only the ones the lead actually gave us a contact for. */}
         <span className="relative z-10 ml-auto flex items-center gap-1">
