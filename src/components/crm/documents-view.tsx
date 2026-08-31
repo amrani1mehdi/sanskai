@@ -34,7 +34,7 @@ const selectClass =
   "rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export function DocumentsView() {
-  const { leads, logActivity, removeDocument } = useCrm();
+  const { leads, removeDocument } = useCrm();
 
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<KindFilter>("tous");
@@ -169,13 +169,6 @@ export function DocumentsView() {
                   href={document.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() =>
-                    logActivity(
-                      lead.id,
-                      "document",
-                      `Document consulté : ${document.name}`,
-                    )
-                  }
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                 >
                   <ExternalLink size={13} /> Consulter
@@ -183,13 +176,6 @@ export function DocumentsView() {
                 <a
                   href={document.url}
                   download={document.name}
-                  onClick={() =>
-                    logActivity(
-                      lead.id,
-                      "document",
-                      `Document téléchargé : ${document.name}`,
-                    )
-                  }
                   className="inline-flex items-center justify-center rounded-lg border border-border p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   aria-label={`Télécharger ${document.name}`}
                 >

@@ -19,7 +19,7 @@ import type { Lead, LeadStatus } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
 
 export function KanbanBoard() {
-  const { leads, setStatus, logActivity } = useCrm();
+  const { leads, setStatus, logContact } = useCrm();
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<LeadStatus | null>(null);
 
@@ -98,7 +98,7 @@ export function KanbanBoard() {
                         setDragging(null);
                         setOver(null);
                       }}
-                      onLog={logActivity}
+                      onLog={logContact}
                     />
                   ))}
 
@@ -128,7 +128,7 @@ function KanbanCard({
   dragging: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
-  onLog: ReturnType<typeof useCrm>["logActivity"];
+  onLog: ReturnType<typeof useCrm>["logContact"];
 }) {
 
   return (
@@ -175,17 +175,17 @@ function KanbanCard({
       ) : null}
 
       <div className="mt-3 flex items-center gap-3 border-t border-border pt-2.5 text-[11px] text-muted-foreground">
-        {lead.documents.length > 0 ? (
+        {lead.documentCount > 0 ? (
           <span className="inline-flex items-center gap-1">
             <Paperclip size={11} />
-            {lead.documents.length}
+            {lead.documentCount}
           </span>
         ) : null}
 
-        {lead.notes.length > 0 ? (
+        {lead.noteCount > 0 ? (
           <span className="inline-flex items-center gap-1">
             <StickyNote size={11} />
-            {lead.notes.length}
+            {lead.noteCount}
           </span>
         ) : null}
 
@@ -195,7 +195,7 @@ function KanbanCard({
             <CardAction
               href={`tel:${lead.telephone.replace(/\s/g, "")}`}
               label={`Appeler ${lead.prenom} ${lead.nom} au ${lead.telephone}`}
-              onClick={() => onLog(lead.id, "appel", `Appel passé au ${lead.telephone}`)}
+              onClick={() => onLog(lead.id, "appel")}
             >
               <Phone size={13} />
             </CardAction>
@@ -206,7 +206,7 @@ function KanbanCard({
               `Votre demande ${lead.reference} — Sansekai Solution`,
             )}`}
             label={`Envoyer un email à ${lead.email}`}
-            onClick={() => onLog(lead.id, "email", `Email envoyé à ${lead.email}`)}
+            onClick={() => onLog(lead.id, "email")}
           >
             <Mail size={13} />
           </CardAction>

@@ -12,8 +12,14 @@ import type { Lead, LeadDocument } from "@/lib/crm/types";
  * Documents submitted with the application, kept attached to their lead.
  * Opening one is logged to the activity trail so the history shows who looked.
  */
-export function DocumentsPanel({ lead }: { lead: Lead }) {
-  const { logActivity, removeDocument } = useCrm();
+export function DocumentsPanel({
+  lead,
+  onChanged,
+}: {
+  lead: Lead;
+  onChanged?: () => void;
+}) {
+  const { removeDocument } = useCrm();
   const [pending, setPending] = useState<LeadDocument | null>(null);
 
   return (
@@ -59,13 +65,6 @@ export function DocumentsPanel({ lead }: { lead: Lead }) {
                   href={document.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() =>
-                    logActivity(
-                      lead.id,
-                      "document",
-                      `Document consulté : ${document.name}`,
-                    )
-                  }
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-secondary"
                 >
                   <ExternalLink size={13} /> Consulter
@@ -73,13 +72,6 @@ export function DocumentsPanel({ lead }: { lead: Lead }) {
                 <a
                   href={document.url}
                   download={document.name}
-                  onClick={() =>
-                    logActivity(
-                      lead.id,
-                      "document",
-                      `Document téléchargé : ${document.name}`,
-                    )
-                  }
                   className="inline-flex items-center justify-center rounded-lg border border-border p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                   aria-label={`Télécharger ${document.name}`}
                 >
@@ -109,6 +101,7 @@ export function DocumentsPanel({ lead }: { lead: Lead }) {
         onConfirm={() => {
           if (pending) removeDocument(lead.id, pending.id);
           setPending(null);
+          setTimeout(() => onChanged?.(), 250);
         }}
       />
     </section>

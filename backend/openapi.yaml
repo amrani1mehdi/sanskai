@@ -1,0 +1,1229 @@
+openapi: 3.1.0
+
+info:
+  title: Sansekai Solution — CRM API
+  version: "1.0.0"
+  description: |
+    REST API between the Sansekai Solution website (Next.js) and the CRM (Laravel 13 + Filament 5).
+
+    ## Two audiences, two ways in
+
+    | Group | Who calls it | Auth |
+    |---|---|---|
+    | `/v1/website/*` | The website submitting a form | `X-Api-Key` header (shared secret) |
+    | everything else | The back office | `Authorization: Bearer <token>` (Sanctum) |
+
+    **The API key is server-to-server.** It belongs in a Next.js route handler or
+    server action, never in the browser and never behind `NEXT_PUBLIC_`. A key
+    shipped to the client can be read by anyone who opens devtools and used to
+    write leads into the CRM directly.
+
+    ## Conventions
+
+    - All request and response bodies are JSON, except the financing submission,
+      which is `multipart/form-data` because it carries files.
+    - Response payloads are wrapped in `data`. Paginated ones also carry `links`
+      and `meta`.
+    - Field names are camelCase and match the website's own form fields exactly,
+      so a response maps onto the front end's `Lead` type without translation.
+    - Dates are ISO 8601. `dateCreation` is a plain `YYYY-MM-DD` calendar date,
+      as produced by the form's date picker.
+    - Validation failures are `422` in Laravel's standard shape.
+
+    ## Eligibility
+
+    Financing submissions are gated server-side on the same two rules the public
+    form applies, ported in `app/Support/Eligibility.php` from the website's
+    `src/lib/eligibility.ts`:
+
+    - the company has at least **6 months** of trading history, and
+    - stated monthly revenue is at least **€7,000**.
+
+    Both are inclusive — exactly six months, or exactly €7,000, passes. A
+    submission failing either is rejected with `422`, with the message on the
+    field that failed so the site can show it where the applicant can act. The
+    browser-side check is a courtesy; this one is the one that counts.
+
+# The deployed server comes first on purpose: this document is read far more
+# often by someone who just opened the link than by someone running the API on
+# their own machine, and Swagger UI sends "Try it out" to whichever is selected.
+servers:
+  - url: http://api.sansekai.72-60-190-211.sslip.io/api
+    description: Serveur de démonstration
+  - url: http://localhost:8000/api
+    description: Local (php artisan serve)
+
+tags:
+  - name: Website
+    description: Public form submissions. Called by the Next.js server, not the browser.
+  - name: Auth
+    description: Bearer tokens for the back office.
+  - name: Leads
+  - name: Documents
+  - name: Notes
+  - name: Activity
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ---------------------------------------------------------------- Website --
+  /v1/website/leads/financement:
+    post:
+      tags: [Website]
+      summary: Submit a financing request
+      operationId: submitFinancingLead
+      description: |
+        Creates a `financement` lead from the `/financement` form, stores its
+        four upload slots and opens its activity trail — all in one transaction,
+        so a dossier never exists without the documents it was accepted on.
+
+        Rate limited to **6 requests per minute per IP**.
+      security:
+        - websiteApiKey: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - nom
+                - prenom
+                - telephone
+                - email
+                - entreprise
+                - dateCreation
+                - codePostal
+                - ville
+                - chiffreAffaire
+                - montant
+                - siteWeb
+                - reseaux
+                - kbis
+                - relevesBancaires
+                - documentsComptables
+              properties:
+                nom:
+                  type: string
+                  maxLength: 120
+                  example: Marchand
+                prenom:
+                  type: string
+                  maxLength: 120
+                  example: Julien
+                telephone:
+                  type: string
+                  maxLength: 40
+                  example: 06 42 18 77 03
+                email:
+                  type: string
+                  format: email
+                  maxLength: 190
+                  example: j.marchand@atelier-marchand.fr
+                entreprise:
+                  type: string
+                  maxLength: 190
+                  example: Atelier Marchand SARL
+                dateCreation:
+                  type: string
+                  format: date
+                  description: >
+                    `YYYY-MM-DD`. Must be today or earlier, and at least 6 months
+                    ago or the request is rejected.
+                  example: "2020-04-14"
+                adresse:
+                  type: string
+                  maxLength: 190
+                  example: 18 rue des Ébénistes
+                codePostal:
+                  type: string
+                  maxLength: 20
+                  example: "69003"
+                ville:
+                  type: string
+                  maxLength: 120
+                  example: Lyon
+                chiffreAffaire:
+                  type: string
+                  maxLength: 60
+                  description: >
+                    Monthly revenue, as typed. Parsed leniently — "48000",
+                    "48 000", "48,000" and "48 000 €" all read as 48000. Must
+                    reach €7,000.
+                  example: 48 000 €
+                montant:
+                  type: string
+                  maxLength: 60
+                  description: Amount requested, as typed. Parsed the same way.
+                  example: "75000"
+                codeCommercial:
+                  type: string
+                  maxLength: 60
+                  example: SNK-LYO-04
+                siteWeb:
+                  type: boolean
+                  description: Send `true`/`false`, or `1`/`0` in multipart.
+                  example: true
+                siteWebUrl:
+                  type: string
+                  maxLength: 190
+                  description: Required when `siteWeb` is true.
+                  example: atelier-marchand.fr
+                reseaux:
+                  type: boolean
+                  example: true
+                reseauxOu:
+                  type: string
+                  maxLength: 190
+                  description: Required when `reseaux` is true.
+                  example: Instagram, Facebook
+                message:
+                  type: string
+                  maxLength: 5000
+                pieceIdentite:
+                  type: string
+                  format: binary
+                  description: >
+                    Optional. PDF, JPG or PNG. Max size is the smaller of the
+                    app's 10 MB and PHP's upload_max_filesize — see API.md.
+                kbis:
+                  type: string
+                  format: binary
+                  description: Required. PDF, JPG or PNG. See the size note on pieceIdentite.
+                relevesBancaires:
+                  type: string
+                  format: binary
+                  description: Required. Six most recent business bank statements.
+                documentsComptables:
+                  type: string
+                  format: binary
+                  description: Required. Accounting documents.
+      responses:
+        "201":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SubmissionReceipt"
+              example:
+                data:
+                  id: 142
+                  reference: FIN-2026-0142
+                  status: nouveau
+                  createdAt: "2026-08-30T09:12:00+00:00"
+        "401":
+          $ref: "#/components/responses/MissingApiKey"
+        "422":
+          description: Validation or eligibility failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+              examples:
+                ineligibleAge:
+                  summary: Company too young
+                  value:
+                    message: >
+                      Votre entreprise doit avoir au moins 6 mois d'activité pour
+                      déposer une demande.
+                    errors:
+                      dateCreation:
+                        - >
+                          Votre entreprise doit avoir au moins 6 mois d'activité
+                          pour déposer une demande.
+                missingDocument:
+                  summary: Required upload absent
+                  value:
+                    message: Le champ Kbis est obligatoire.
+                    errors:
+                      kbis:
+                        - Le champ Kbis est obligatoire.
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/website/leads/developpement:
+    post:
+      tags: [Website]
+      summary: Submit a business development enquiry
+      operationId: submitDevelopmentLead
+      description: |
+        Creates a `developpement` lead from the `/developpement-entreprise`
+        enquiry form. The form is a single select, so a lead carries exactly one
+        sub-service. No uploads.
+
+        Rate limited to **6 requests per minute per IP**.
+      security:
+        - websiteApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [service, nom, prenom, email, telephone, entreprise]
+              properties:
+                service:
+                  $ref: "#/components/schemas/Prestation"
+                nom:
+                  type: string
+                  maxLength: 120
+                prenom:
+                  type: string
+                  maxLength: 120
+                email:
+                  type: string
+                  format: email
+                telephone:
+                  type: string
+                  maxLength: 40
+                entreprise:
+                  type: string
+                  maxLength: 190
+                message:
+                  type: string
+                  maxLength: 5000
+            example:
+              service: site_web
+              nom: Bertrand
+              prenom: Alice
+              email: contact@bertrand-immo.fr
+              telephone: 07 88 21 40 15
+              entreprise: Bertrand Immobilier
+              message: Nous lançons une nouvelle agence.
+      responses:
+        "201":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SubmissionReceipt"
+              example:
+                data:
+                  id: 88
+                  reference: DEV-2026-0088
+                  status: nouveau
+                  createdAt: "2026-08-30T16:40:00+00:00"
+        "401":
+          $ref: "#/components/responses/MissingApiKey"
+        "422":
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  # ------------------------------------------------------------------- Auth --
+  /v1/auth/token:
+    delete:
+      tags: [Auth]
+      summary: Revoke the current token
+      operationId: revokeToken
+      description: Revokes only the token that made the call, not every session.
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      tags: [Auth]
+      summary: Exchange credentials for a bearer token
+      operationId: createToken
+      description: |
+        The CRM runs on a single administrator account, created at installation
+        with a username and a password.
+
+        `login` accepts **either** the username or the email — the account is
+        handed out with a username, and the Filament panel signs in on email.
+
+        Only users with `is_admin` receive a token. Throttled to 5 attempts per
+        login and IP; the response is identical whether the account is unknown or
+        the password is wrong. The token is shown once.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [login, password, deviceName]
+              properties:
+                login:
+                  type: string
+                  maxLength: 190
+                  description: Username or email.
+                  example: admin
+                password:
+                  type: string
+                  format: password
+                deviceName:
+                  type: string
+                  maxLength: 100
+                  description: Free label, shown in the token list.
+                  example: back-office-nextjs
+      responses:
+        "201":
+          description: Token issued
+          content:
+            application/json:
+              example:
+                data:
+                  token: 3|Xq7pW2vK9mN4tR8sL1cD6bY0hJ5fA3gE
+                  user:
+                    id: 1
+                    name: Sansekai Admin
+                    username: admin
+                    email: admin@sansekaisolution.com
+                    initials: SA
+        "422":
+          description: Invalid credentials
+          content:
+            application/json:
+              example:
+                message: Identifiants invalides.
+                errors:
+                  login: [Identifiants invalides.]
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: The signed-in user
+      operationId: currentUser
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AdminUser"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /v1/auth/password:
+    patch:
+      tags: [Auth]
+      summary: Change the administrator's password
+      operationId: updatePassword
+      description: |
+        Requires the current password, so a stolen token alone cannot lock the
+        owner out of their own account.
+
+        Every **other** token is revoked on success — if the password changed
+        because it leaked, sessions opened with the old one must not survive. The
+        token making the call keeps working.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, password, password_confirmation]
+              properties:
+                currentPassword:
+                  type: string
+                  format: password
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                password_confirmation:
+                  type: string
+                  format: password
+                  description: Must match `password`.
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              example:
+                data:
+                  message: Mot de passe mis à jour.
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          description: Wrong current password, too short, or mismatched confirmation
+          content:
+            application/json:
+              example:
+                message: Le mot de passe actuel est incorrect.
+                errors:
+                  currentPassword: [Le mot de passe actuel est incorrect.]
+
+  # ------------------------------------------------------------------ Leads --
+  /v1/leads:
+    get:
+      tags: [Leads]
+      summary: List leads
+      operationId: listLeads
+      description: |
+        Paginated, newest first. Rows carry `documentCount` and `noteCount`
+        rather than the collections themselves — fetch a single lead for those.
+      parameters:
+        - name: service
+          in: query
+          schema:
+            $ref: "#/components/schemas/LeadService"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/LeadStatus"
+        - name: prestation
+          in: query
+          schema:
+            $ref: "#/components/schemas/Prestation"
+        - name: search
+          in: query
+          description: >
+            Matches reference, nom, prenom, entreprise, email, telephone, ville.
+          schema:
+            type: string
+            maxLength: 190
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 15
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Paginated"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          description: Unknown filter value
+
+  /v1/leads/{lead}:
+    parameters:
+      - name: lead
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Leads]
+      summary: One lead, with documents, notes and activity
+      operationId: showLead
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Leads]
+      operationId: updateLead
+      summary: Move a lead to another stage
+      description: |
+        The status is the only mutable field. Submitted values are never
+        editable: what the applicant sent is evidence, and quietly correcting it
+        would break the audit trail. The change is recorded in the lead's
+        activity with the stage it came from.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/LeadStatus"
+            example: {status: qualifie}
+      responses:
+        "200":
+          description: Updated lead
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Lead"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          description: Unknown or missing status
+    delete:
+      tags: [Leads]
+      summary: Delete a lead and everything attached to it
+      operationId: deleteLead
+      description: >
+        Removes notes, activity and documents by cascade, and deletes the files
+        from disk — a deleted dossier should not leave a bank statement behind.
+        Irreversible.
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/stats:
+    get:
+      tags: [Leads]
+      summary: Dashboard figures
+      operationId: stats
+      description: Counts computed in SQL, not by loading every lead.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                data:
+                  total: 14
+                  byStatus: {nouveau: 3, a_examiner: 2, qualifie: 2, en_cours: 2, approuve: 4, refuse: 1}
+                  byService: {financement: 9, developpement: 5}
+                  byPrestation: {site_web: 2, logo: 1, campagne_publicitaire: 2}
+                  aTraiter: 5
+                  tauxReussite: 80
+                  montantDemande: 665000
+                  montantApprouve: 190000
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  # -------------------------------------------------------------- Documents --
+  /v1/leads/{lead}/documents:
+    parameters:
+      - name: lead
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Documents]
+      summary: Documents on a lead
+      operationId: listLeadDocuments
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Document"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      tags: [Documents]
+      summary: Attach a document to a lead
+      operationId: uploadLeadDocument
+      description: For an admin adding a piece that arrived later, by email say.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [kind, file]
+              properties:
+                kind:
+                  $ref: "#/components/schemas/DocumentKind"
+                file:
+                  type: string
+                  format: binary
+                  description: PDF, JPG or PNG, 10 MB max.
+      responses:
+        "201":
+          description: Stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Document"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          description: Wrong type, too large, or unknown kind
+
+  /v1/documents:
+    get:
+      tags: [Documents]
+      summary: Every document, across all leads
+      operationId: listDocuments
+      parameters:
+        - name: kind
+          in: query
+          schema:
+            $ref: "#/components/schemas/DocumentKind"
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Paginated"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Document"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /v1/documents/{document}/download:
+    parameters:
+      - name: document
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Documents]
+      summary: Download a document
+      operationId: downloadDocument
+      description: |
+        Streams the file from the private disk under the caller's own token.
+        There is no public URL for any of these files, so the browser cannot
+        fetch one directly with an `<a href>` — proxy it through a Next.js route
+        handler that forwards the bearer token.
+
+        Reading a document is recorded in the lead's activity.
+      responses:
+        "200":
+          description: The file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Row exists but the file is missing from the disk
+
+  /v1/documents/{document}:
+    parameters:
+      - name: document
+        in: path
+        required: true
+        schema:
+          type: integer
+    delete:
+      tags: [Documents]
+      summary: Delete a document
+      operationId: deleteDocument
+      description: Removes the row and the file. The activity trail keeps the record.
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ------------------------------------------------------------------ Notes --
+  /v1/leads/{lead}/notes:
+    parameters:
+      - name: lead
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Notes]
+      summary: Internal notes on a lead
+      operationId: listLeadNotes
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Note"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+    post:
+      tags: [Notes]
+      summary: Add an internal note
+      operationId: createLeadNote
+      description: The author is taken from the token, not the body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body:
+                  type: string
+                  maxLength: 5000
+            example:
+              body: Dossier complet transmis au partenaire le 27/08.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Note"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          description: Empty or over-long note
+
+  /v1/notes/{note}:
+    parameters:
+      - name: note
+        in: path
+        required: true
+        schema:
+          type: integer
+    delete:
+      tags: [Notes]
+      summary: Delete a note
+      operationId: deleteNote
+      description: >
+        The note goes; the activity trail keeps the fact that one existed and
+        was removed.
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # --------------------------------------------------------------- Activity --
+  /v1/leads/{lead}/activities:
+    parameters:
+      - name: lead
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [Activity]
+      summary: One dossier's history
+      operationId: listLeadActivities
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Activity"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /v1/activities:
+    get:
+      tags: [Activity]
+      summary: The team feed
+      operationId: listActivities
+      description: >
+        Everything that happened across every lead, newest first. Append-only —
+        there is no endpoint to edit or delete an entry.
+      parameters:
+        - name: kind
+          in: query
+          schema:
+            $ref: "#/components/schemas/ActivityKind"
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Paginated"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Activity"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+components:
+  # Order matters: Swagger UI lists these in the Authorize dialog exactly as
+  # they appear here, and submitting a lead is the first thing anyone tries.
+  securitySchemes:
+    websiteApiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: >
+        FOR THE TWO /website/leads/* ENDPOINTS. Paste the value of
+        WEBSITE_API_KEY from the backend's .env — not a token. Server-to-server
+        only: never send this from a browser in production.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        FOR EVERY OTHER ENDPOINT. A Sanctum token from POST /v1/auth/token —
+        paste the token itself, without the word "Bearer". Leave this blank if
+        you are only submitting a lead.
+
+  responses:
+    Unauthenticated:
+      description: Missing, expired or revoked token
+      content:
+        application/json:
+          example:
+            message: Unauthenticated.
+    MissingApiKey:
+      description: Missing or wrong `X-Api-Key`
+      content:
+        application/json:
+          example:
+            message: Clé API invalide ou absente.
+    NotFound:
+      description: No such record
+      content:
+        application/json:
+          example:
+            message: No query results for model.
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          example:
+            message: Too Many Attempts.
+
+  schemas:
+    LeadService:
+      type: string
+      enum: [financement, developpement]
+
+    LeadStatus:
+      type: string
+      description: The six pipeline stages, in order.
+      enum: [nouveau, a_examiner, qualifie, en_cours, approuve, refuse]
+
+    Prestation:
+      type: string
+      description: Sub-services under Développement d'entreprise. Exactly one per lead.
+      enum: [site_web, logo, campagne_publicitaire]
+
+    DocumentKind:
+      type: string
+      description: The four upload slots on the financing form, plus a catch-all.
+      enum: [piece_identite, kbis, releve_bancaire, comptable, autre]
+
+    ActivityKind:
+      type: string
+      enum: [creation, statut, note, appel, email, document]
+
+    SubmissionReceipt:
+      type: object
+      description: >
+        Deliberately minimal. The submitter already knows what they typed, and
+        the browser has no business seeing internal ids or the audit trail — but
+        the reference is worth showing them and worth quoting on the phone.
+      properties:
+        id:
+          type: integer
+        reference:
+          type: string
+          example: FIN-2026-0142
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        createdAt:
+          type: string
+          format: date-time
+
+    Lead:
+      type: object
+      description: |
+        Financing-only fields (`chiffreAffaire`, `montant`, `siteWeb`,
+        `eligibilite`, …) are **absent entirely** on a Développement lead rather
+        than present and null — check `service` before reading them.
+
+        `documents`, `notes` and `activities` appear only on the single-lead
+        endpoint. The list returns `documentCount` and `noteCount` instead.
+      properties:
+        id: {type: integer}
+        reference: {type: string, example: FIN-2026-0142}
+        service:
+          $ref: "#/components/schemas/LeadService"
+        serviceLabel: {type: string, example: Demande de financement}
+        source:
+          type: string
+          description: The page it was submitted from.
+          example: /financement
+        prestation:
+          oneOf:
+            - $ref: "#/components/schemas/Prestation"
+            - type: "null"
+        prestationLabel: {type: [string, "null"]}
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        statusLabel: {type: string, example: Nouveau}
+        nom: {type: string}
+        prenom: {type: string}
+        email: {type: string, format: email}
+        telephone: {type: [string, "null"]}
+        entreprise: {type: string}
+        dateCreation: {type: [string, "null"], format: date}
+        ancienneteMois:
+          type: [integer, "null"]
+          description: Derived on read, never stored, so it cannot go stale.
+        adresse: {type: [string, "null"]}
+        codePostal: {type: [string, "null"]}
+        ville: {type: [string, "null"]}
+        chiffreAffaire:
+          type: string
+          description: As typed by the applicant.
+        chiffreAffaireValeur:
+          type: [number, "null"]
+          description: Parsed value in euros, for sorting and totals.
+        montant: {type: string}
+        montantValeur: {type: [number, "null"]}
+        codeCommercial: {type: [string, "null"]}
+        siteWeb: {type: [boolean, "null"]}
+        siteWebUrl: {type: [string, "null"]}
+        reseaux: {type: [boolean, "null"]}
+        reseauxOu: {type: [string, "null"]}
+        eligibilite:
+          type: object
+          description: >
+            `*AuDepot` is what the rules said when the lead was submitted, frozen
+            so that raising a threshold later cannot retroactively reject a
+            dossier accepted under the old one. `*Actuel` re-runs today's rules.
+          properties:
+            ageAuDepot: {type: [boolean, "null"]}
+            revenuAuDepot: {type: [boolean, "null"]}
+            ageActuel: {type: boolean}
+            revenuActuel: {type: boolean}
+            seuilMois: {type: integer, example: 6}
+            seuilRevenu: {type: integer, example: 7000}
+        message: {type: [string, "null"]}
+        documentCount: {type: integer}
+        noteCount: {type: integer}
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+        notes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Note"
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Activity"
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+      example:
+        id: 142
+        reference: FIN-2026-0142
+        service: financement
+        serviceLabel: Demande de financement
+        source: /financement
+        prestation: null
+        status: nouveau
+        statusLabel: Nouveau
+        nom: Marchand
+        prenom: Julien
+        email: j.marchand@atelier-marchand.fr
+        telephone: 06 42 18 77 03
+        entreprise: Atelier Marchand SARL
+        dateCreation: "2020-04-14"
+        ancienneteMois: 76
+        adresse: 18 rue des Ébénistes
+        codePostal: "69003"
+        ville: Lyon
+        chiffreAffaire: 48 000 €
+        chiffreAffaireValeur: 48000
+        montant: "75000"
+        montantValeur: 75000
+        codeCommercial: SNK-LYO-04
+        siteWeb: true
+        siteWebUrl: atelier-marchand.fr
+        reseaux: true
+        reseauxOu: Instagram, Facebook
+        eligibilite:
+          ageAuDepot: true
+          revenuAuDepot: true
+          ageActuel: true
+          revenuActuel: true
+          seuilMois: 6
+          seuilRevenu: 7000
+        message: Trois commandes signées à honorer avant fin octobre.
+        documentCount: 3
+        noteCount: 0
+        createdAt: "2026-08-29T09:12:00+00:00"
+        updatedAt: "2026-08-29T09:12:00+00:00"
+
+    Document:
+      type: object
+      properties:
+        id: {type: integer}
+        leadId: {type: integer}
+        kind:
+          $ref: "#/components/schemas/DocumentKind"
+        kindLabel: {type: string, example: "Kbis / justificatif d'immatriculation"}
+        name:
+          type: string
+          description: Name as submitted, used as the download filename.
+          example: extrait-kbis.pdf
+        mimeType: {type: string, example: application/pdf}
+        size: {type: integer, description: Bytes., example: 184320}
+        uploadedAt: {type: string, format: date-time}
+        downloadUrl:
+          type: string
+          description: >
+            An API route, not a public file URL — it requires the bearer token.
+          example: https://crm.sansekaisolution.com/api/v1/documents/7/download
+
+    Note:
+      type: object
+      properties:
+        id: {type: integer}
+        leadId: {type: integer}
+        author:
+          type: string
+          description: Kept on the row, so a deleted user's notes still show who wrote them.
+        authorId: {type: [integer, "null"]}
+        body: {type: string}
+        createdAt: {type: string, format: date-time}
+
+    Activity:
+      type: object
+      properties:
+        id: {type: integer}
+        leadId: {type: integer}
+        kind:
+          $ref: "#/components/schemas/ActivityKind"
+        label:
+          type: string
+          description: Already in French, ready to render.
+          example: Statut passé de Nouveau à À examiner
+        actor:
+          type: string
+          description: '"Site web" for submissions, the user''s name otherwise.'
+        at: {type: string, format: date-time}
+        lead:
+          type: object
+          description: Present on the cross-lead feed only.
+          properties:
+            id: {type: integer}
+            reference: {type: string}
+            entreprise: {type: string}
+
+    AdminUser:
+      type: object
+      description: >
+        The signed-in administrator. The CRM has one account and no
+        responsables — nothing is assigned, so there is no owners table and no
+        endpoint to manage one.
+      properties:
+        id: {type: integer}
+        name: {type: string, example: Sansekai Admin}
+        username: {type: [string, "null"], example: admin}
+        email: {type: string, format: email}
+        initials: {type: string, example: SA}
+
+    Paginated:
+      type: object
+      properties:
+        links:
+          type: object
+          properties:
+            first: {type: [string, "null"]}
+            last: {type: [string, "null"]}
+            prev: {type: [string, "null"]}
+            next: {type: [string, "null"]}
+        meta:
+          type: object
+          properties:
+            current_page: {type: integer}
+            from: {type: [integer, "null"]}
+            last_page: {type: integer}
+            per_page: {type: integer}
+            to: {type: [integer, "null"]}
+            total: {type: integer}
+
+    ValidationError:
+      type: object
+      description: Laravel's standard 422 shape.
+      properties:
+        message: {type: string}
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: {type: string}
