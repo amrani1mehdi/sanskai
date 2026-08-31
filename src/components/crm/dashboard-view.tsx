@@ -129,19 +129,33 @@ export function DashboardView() {
           title="Demandes reçues par mois"
           subtitle="Six derniers mois d'activité"
         >
-          <div className="flex h-52 items-end gap-2">
+          {/*
+            Stretch, not items-end.
+            
+            Aligning the columns to the end left each one as tall as its own
+            label, so the track below it had no height for the bar's percentage
+            to resolve against and every bar came out at nothing. The columns
+            fill the panel now; the bar is bottom-aligned inside its own track.
+          */}
+          <div className="flex h-52 gap-2">
             {months.map((month) => (
               <div key={month.key} className="flex flex-1 flex-col items-center gap-2">
-                <span className="text-xs font-semibold text-foreground">
-                  {month.count > 0 ? month.count : ""}
-                </span>
-                <div className="flex w-full flex-1 items-end">
+                {/* The count rides on top of its own bar, so a short month's
+                    figure is not left stranded at the ceiling. */}
+                <div className="flex w-full flex-1 flex-col items-center justify-end gap-1">
+                  <span className="text-xs font-semibold text-foreground">
+                    {month.count > 0 ? month.count : ""}
+                  </span>
                   <div
                     title={`${month.label} : ${month.count} lead${
                       month.count > 1 ? "s" : ""
                     }`}
-                    style={{ height: `${Math.max(month.ratio * 100, 2)}%` }}
-                    className="w-full rounded-t-[4px] bg-accent transition-opacity hover:opacity-80"
+                    /* Against 88% rather than the full track: the label sits
+                       above the bar and needs the headroom, or the tallest
+                       month pushes its own figure out of the panel. The 2%
+                       floor keeps an empty month visible as a baseline. */
+                    style={{ height: `${Math.max(month.ratio * 88, 2)}%` }}
+                    className="w-full shrink-0 rounded-t-[4px] bg-accent transition-opacity hover:opacity-80"
                   />
                 </div>
                 <span className="text-xs text-muted-foreground">{month.label}</span>
