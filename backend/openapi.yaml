@@ -13,7 +13,7 @@ info:
     | `/v1/website/*` | The website submitting a form | **None** — open, rate limited |
     | everything else | The back office | `Authorization: Bearer <token>` (Sanctum) |
 
-    **The two submission endpoints take no credential.** They are called from a
+    **The three submission endpoints take no credential.** They are called from a
     public form whose visitor has nothing to present, and they only ever write:
     nothing under `/v1/website/*` reads a lead back. The rate limit — 6 requests
     per minute per IP — is what stands in front of them.
@@ -328,6 +328,95 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ValidationError"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/website/leads/contact:
+    post:
+      tags: [Website]
+      summary: Submit a contact message
+      operationId: submitContactLead
+      description: |
+        Creates a `contact` lead from the `/contact` form — a question, not a
+        dossier. No uploads, and no eligibility gate.
+
+        Only the company, the name and the email are required: a blank message
+        still tells the back office who to call back.
+
+        The form asks for a single **nom complet**, which the API splits into
+        the `prenom` and `nom` the CRM stores. The first token is the given
+        name, everything after it the family name, and a single word is treated
+        as a surname. Nothing typed is discarded — the whole string survives
+        across the two columns even when the split lands oddly.
+
+        Rate limited to **6 requests per minute per IP**.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entreprise, nomComplet, email]
+              properties:
+                entreprise:
+                  type: string
+                  maxLength: 190
+                  example: Atelier Marchand SARL
+                siren:
+                  type: [string, "null"]
+                  maxLength: 32
+                  description: >
+                    Optional, and free-form: kept as typed, spaces included, and
+                    not length-checked — a company outside France has no SIREN
+                    and refusing a message over it would be absurd.
+                  example: 812 345 678
+                nomComplet:
+                  type: string
+                  maxLength: 190
+                  description: One field, split server-side into prenom and nom.
+                  example: Julien Marchand
+                email:
+                  type: string
+                  format: email
+                  maxLength: 190
+                  example: j.marchand@example.fr
+                telephone:
+                  type: [string, "null"]
+                  maxLength: 40
+                  description: Not on the form today; accepted if you send it.
+                  example: 06 42 18 77 03
+                message:
+                  type: [string, "null"]
+                  maxLength: 5000
+                  example: Bonjour, je souhaite être rappelé cette semaine.
+      responses:
+        "201":
+          description: Message received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SubmissionReceipt"
+              example:
+                data:
+                  id: 214
+                  reference: CON-2026-0031
+                  status: nouveau
+                  createdAt: "2026-08-31T11:05:00+00:00"
+        "422":
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+              example:
+                message: Le champ nom complet est obligatoire.
+                errors:
+                  nomComplet:
+                    - Le champ nom complet est obligatoire.
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
@@ -980,7 +1069,8 @@ components:
   schemas:
     LeadService:
       type: string
-      enum: [financement, developpement]
+      description: How the enquiry reached the CRM. References are prefixed FIN-, DEV- and CON- respectively.
+      enum: [financement, developpement, contact]
 
     LeadStatus:
       type: string
@@ -1054,6 +1144,9 @@ components:
         email: {type: string, format: email}
         telephone: {type: [string, "null"]}
         entreprise: {type: string}
+        siren:
+          type: [string, "null"]
+          description: Contact leads only; null on the other two.
         dateCreation: {type: [string, "null"], format: date}
         ancienneteMois:
           type: [integer, "null"]

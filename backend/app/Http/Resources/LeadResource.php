@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Enums\LeadService;
+use App\Models\Lead;
 use App\Support\Eligibility;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -15,7 +16,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * layer. Related collections are only included when eager-loaded, so the list
  * endpoint stays one query.
  *
- * @mixin \App\Models\Lead
+ * @mixin Lead
  */
 class LeadResource extends JsonResource
 {
@@ -45,6 +46,8 @@ class LeadResource extends JsonResource
 
             // Company.
             'entreprise' => $this->entreprise,
+            /** Only the contact form asks for it; null on the other two. */
+            'siren' => $this->siren,
             'dateCreation' => $this->date_creation?->format('Y-m-d'),
             /** Derived on read, so it is never a stale stored number. */
             'ancienneteMois' => $this->companyAgeMonths(),

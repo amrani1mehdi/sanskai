@@ -140,6 +140,12 @@ export const SERVICES: ServiceConfig[] = [
     source: "/developpement-entreprise",
     prestations: PRESTATIONS,
   },
+  {
+    id: "contact",
+    label: "Message de contact",
+    shortLabel: "Contact",
+    source: "/contact",
+  },
 ];
 
 export const SERVICE_BY_ID = Object.fromEntries(
