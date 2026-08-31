@@ -1,38 +1,35 @@
 "use client";
 
 /**
- * Leads waiting to be dealt with.
+ * Leads that have arrived and not been read.
  *
- * Counts everything still at `nouveau`, so it means something the moment the
- * CRM opens. Scoping it to "arrived since you loaded the page" was the obvious
- * reading of *new* and the wrong one — with nothing submitted in the last
- * minute the badge was empty, which is accurate and useless.
+ * The board refreshes itself every fifteen seconds, which is the hard part —
+ * but a card appearing in a column nobody is looking at is indistinguishable
+ * from nothing happening. This is what says so.
  *
- * Arrivals still get their own mark. A lead that landed while this session has
- * been open carries a red dot in the list; the rest are simply untreated. That
- * keeps the live part of it — a card appearing in a column nobody is looking at
- * is otherwise indistinguishable from nothing happening — without making the
- * whole feature depend on somebody submitting a form while you watch.
+ * "New" is arrival, not status: a lead sitting untreated for a week is not
+ * news, and a lead that landed a minute ago is, whatever column it is in. The
+ * marker is kept in the browser, so it survives a refresh and only clears when
+ * somebody actually marks it read.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Bell, Inbox } from "lucide-react";
+import { Bell, BellOff, Check, CheckCheck } from "lucide-react";
 import { SERVICE_BY_ID } from "@/lib/crm/config";
-import { formatTime } from "@/lib/crm/format";
+import { formatShortDate, formatTime } from "@/lib/crm/format";
 import type { Lead } from "@/lib/crm/types";
 import { cn } from "@/lib/utils";
 
 export function NewLeadsBell({
   leads,
-  arrived,
-  onSeen,
+  onMarkAll,
+  onMarkOne,
   onSelect,
 }: {
-  /** Untreated leads — status `nouveau`, newest first. */
+  /** Arrivals not yet read, newest first. */
   leads: Lead[];
-  /** Of those, the ones that landed while this session has been open. */
-  arrived: Set<string>;
-  onSeen: () => void;
+  onMarkAll: () => void;
+  onMarkOne: (id: string) => void;
   onSelect: (lead: Lead) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -63,24 +60,18 @@ export function NewLeadsBell({
     <div ref={container} className="relative">
       <button
         type="button"
-        onClick={() => {
-          const next = !open;
-          setOpen(next);
-          // Opening them is what marks them read — the badge should not sit
-          // there after you have looked at exactly what it was pointing to.
-          if (next) onSeen();
-        }}
+        onClick={() => setOpen((current) => !current)}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={
           count > 0
-            ? `${count} lead${count > 1 ? "s" : ""} à traiter`
-            : "Leads à traiter"
+            ? `${count} nouveau${count > 1 ? "x" : ""} lead${count > 1 ? "s" : ""}`
+            : "Aucun nouveau lead"
         }
         className={cn(
           "relative rounded-lg border p-2 transition-colors",
           count > 0
-            ? "border-accent/40 bg-accent/10 text-accent hover:bg-accent/15"
+            ? "border-new/40 bg-new-soft text-new hover:bg-new-soft/70"
             : "border-border bg-card text-muted-foreground hover:text-foreground",
         )}
       >
@@ -99,43 +90,60 @@ export function NewLeadsBell({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
+          className="absolute right-0 z-50 mt-2 w-84 overflow-hidden rounded-xl border border-border bg-card shadow-lg"
         >
-          <p className="border-b border-border bg-accent/10 px-4 py-2.5 text-xs font-semibold text-foreground">
-            {count === 0
-              ? "Rien à traiter"
-              : `${count} lead${count > 1 ? "s" : ""} en attente de traitement`}
-          </p>
+          <div className="flex items-center gap-2 border-b border-border bg-new-soft px-4 py-2.5">
+            <p className="flex-1 text-xs font-semibold text-foreground">
+              {count === 0
+                ? "Aucun nouveau lead"
+                : `${count} nouveau${count > 1 ? "x" : ""} lead${
+                    count > 1 ? "s" : ""
+                  }`}
+            </p>
+
+            {count > 0 ? (
+              <button
+                type="button"
+                onClick={onMarkAll}
+                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+              >
+                <CheckCheck size={13} aria-hidden /> Tout marquer comme lu
+              </button>
+            ) : null}
+          </div>
 
           {count === 0 ? (
             <div className="px-4 py-8 text-center">
-              <Inbox size={22} className="mx-auto mb-2 text-muted-foreground" aria-hidden />
+              <BellOff
+                size={22}
+                className="mx-auto mb-2 text-muted-foreground"
+                aria-hidden
+              />
               <p className="text-xs text-muted-foreground">
-                Tous les leads reçus ont été pris en charge.
+                Les demandes envoyées depuis le site apparaîtront ici.
               </p>
             </div>
           ) : (
             <ul className="max-h-80 overflow-y-auto scrollbar-brand">
               {leads.map((lead) => (
-                <li key={lead.id}>
+                <li
+                  key={lead.id}
+                  className="flex items-start gap-1 border-b border-border last:border-b-0"
+                >
                   <button
                     type="button"
                     role="menuitem"
                     onClick={() => {
                       onSelect(lead);
+                      // Opening it is reading it.
+                      onMarkOne(lead.id);
                       setOpen(false);
                     }}
-                    className="flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-secondary"
+                    className="flex min-w-0 flex-1 items-start gap-3 py-3 pl-4 text-left transition-colors hover:bg-secondary"
                   >
                     <span
                       aria-hidden
-                      title={arrived.has(lead.id) ? "Arrivé à l'instant" : undefined}
-                      className={cn(
-                        "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-                        /* Red only for the ones that landed while you were
-                           here; the rest are simply still untreated. */
-                        arrived.has(lead.id) ? "bg-danger" : "bg-accent/50",
-                      )}
+                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-danger"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-foreground">
@@ -144,10 +152,22 @@ export function NewLeadsBell({
                       <span className="block truncate text-xs text-muted-foreground">
                         {lead.entreprise} · {SERVICE_BY_ID[lead.service].shortLabel}
                       </span>
+                      <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                        {formatShortDate(lead.createdAt)} ·{" "}
+                        {formatTime(lead.createdAt)}
+                      </span>
                     </span>
-                    <span className="shrink-0 text-[11px] whitespace-nowrap text-muted-foreground">
-                      {formatTime(lead.createdAt)}
-                    </span>
+                  </button>
+
+                  {/* Dismiss without opening — some arrivals only need noting. */}
+                  <button
+                    type="button"
+                    onClick={() => onMarkOne(lead.id)}
+                    title="Marquer comme lu"
+                    aria-label={`Marquer ${lead.reference} comme lu`}
+                    className="mt-2.5 mr-2 shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-accent"
+                  >
+                    <Check size={14} />
                   </button>
                 </li>
               ))}

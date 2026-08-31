@@ -55,6 +55,7 @@ export function CrmWorkspace() {
     error,
     unseen,
     markSeen,
+    markAllSeen,
     setStatus,
     logContact,
   } = useCrm();
@@ -113,16 +114,19 @@ export function CrmWorkspace() {
     });
   }, [source, board, service, prestation, period, query, showPrestations, syncedAt]);
 
-  /* Everything still waiting, newest first — both boards, because a message
-     nobody has answered is as much a thing to deal with as a dossier. */
-  const untreated = useMemo(
+  /* Unread arrivals, newest first — across both boards, because a contact
+     message landing is as much news as a dossier. */
+  const arrivals = useMemo(
     () =>
-      [...dossiers, ...messages]
-        .filter((lead) => lead.status === "nouveau")
-        .sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        ),
-    [dossiers, messages],
+      [...unseen].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
+    [unseen],
+  );
+
+  const unseenIds = useMemo(
+    () => new Set(unseen.map((lead) => lead.id)),
+    [unseen],
   );
 
   /* Read from the live list, not held in state: a card that moves stage or is
@@ -264,9 +268,9 @@ export function CrmWorkspace() {
             {/* Beside the filters, not in the sidebar: this is about the board
                 you are looking at, and the rail is navigation only. */}
             <NewLeadsBell
-              leads={untreated}
-              arrived={new Set(unseen.map((lead) => lead.id))}
-              onSeen={markSeen}
+              leads={arrivals}
+              onMarkAll={markAllSeen}
+              onMarkOne={markSeen}
               onSelect={(lead) => {
                 /* A new lead can be a message while the dossiers board is up —
                    land on the right one rather than selecting something the
@@ -312,6 +316,7 @@ export function CrmWorkspace() {
               leads={leads}
               stages={stages}
               selectedId={selectedId}
+              unseen={unseenIds}
               onSelect={(lead, next) => {
                 setFocus(next);
                 setSelectedId((current) =>

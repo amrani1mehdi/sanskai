@@ -24,6 +24,7 @@ export function KanbanBoard({
   leads,
   stages,
   selectedId,
+  unseen,
   onSelect,
   onMove,
   onLog,
@@ -32,6 +33,8 @@ export function KanbanBoard({
   stages: StageConfig[];
   selectedId: string | null;
   onSelect: (lead: Lead, focus?: "documents") => void;
+  /** Ids that arrived and have not been marked read. */
+  unseen: Set<string>;
   onMove: (id: string, status: LeadStatus) => void;
   onLog: (id: string, kind: "appel" | "email") => void;
 }) {
@@ -108,6 +111,7 @@ export function KanbanBoard({
                     lead={lead}
                     dragging={dragging === lead.id}
                     selected={selectedId === lead.id}
+                    isNew={unseen.has(lead.id)}
                     onSelect={(focus) => onSelect(lead, focus)}
                     onDragStart={() => setDragging(lead.id)}
                     onDragEnd={() => {
@@ -136,6 +140,7 @@ function KanbanCard({
   lead,
   dragging,
   selected,
+  isNew,
   onSelect,
   onDragStart,
   onDragEnd,
@@ -144,6 +149,7 @@ function KanbanCard({
   lead: Lead;
   dragging: boolean;
   selected: boolean;
+  isNew: boolean;
   onSelect: (focus?: "documents") => void;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -165,14 +171,15 @@ function KanbanCard({
       className={cn(
         "relative rounded-lg border p-3 transition-shadow",
         dragging ? "opacity-50" : "hover:shadow-md",
-        /* Untreated leads are tinted in the accent, so what still needs
-           picking up is obvious across the whole board rather than only in
-           the first column. */
-        lead.status === "nouveau" ? "bg-accent/8" : "bg-card",
+        /* Amber only for an arrival nobody has read yet — not for anything
+           merely untreated. A lead sitting at Nouveau for a week is not news,
+           and colouring half the board permanently would make the highlight
+           mean nothing when something genuinely new does land. */
+        isNew ? "border-new/50 bg-new-soft" : "bg-card",
         selected
           ? "border-accent ring-2 ring-accent/30"
-          : lead.status === "nouveau"
-            ? "border-accent/30"
+          : isNew
+            ? "border-new/50"
             : "border-border",
       )}
     >
