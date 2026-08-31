@@ -12,11 +12,17 @@ import { apiBaseUrl } from "@/lib/crm/session";
  * the form can show each one against the field the visitor has to change.
  */
 export async function POST(request: Request): Promise<Response> {
-  let body: unknown;
+  const contentType = request.headers.get("content-type") ?? "";
 
-  try {
-    body = await request.json();
-  } catch {
+  /*
+   * The body carries invoices, so it arrives as multipart and is forwarded as
+   * raw bytes with its own Content-Type — boundary and all. Parsing it into a
+   * FormData and rebuilding it would work, but re-encoding a file for no reason
+   * is a way to corrupt one.
+   */
+  const body = await request.arrayBuffer();
+
+  if (body.byteLength === 0) {
     return Response.json({ message: "Requête invalide." }, { status: 400 });
   }
 
@@ -26,10 +32,12 @@ export async function POST(request: Request): Promise<Response> {
     response = await fetch(`${apiBaseUrl()}/v1/website/leads/contact`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        // Copied rather than set: multipart carries its boundary in here, and
+        // inventing a new one makes every attached file unreadable.
+        ...(contentType ? { "Content-Type": contentType } : {}),
         Accept: "application/json",
       },
-      body: JSON.stringify(body),
+      body,
       cache: "no-store",
     });
   } catch {

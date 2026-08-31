@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\DocumentKind;
+use App\Http\Requests\Api\StoreContactLeadRequest;
 use App\Http\Requests\Api\StoreFinancingLeadRequest;
 use App\Models\Lead;
 use App\Models\LeadDocument;
@@ -334,6 +335,80 @@ class WebsiteLeadTest extends TestCase
             'nomComplet' => 'Julien Marchand',
             'email' => 'j@example.fr',
         ])->assertCreated();
+    }
+
+    #[Test]
+    public function a_contact_message_can_carry_invoices(): void
+    {
+        $this->post('/api/v1/website/leads/contact', [
+            'entreprise' => 'Atelier Marchand SARL',
+            'nomComplet' => 'Julien Marchand',
+            'email' => 'j@example.fr',
+            'factures' => [
+                UploadedFile::fake()->create('facture-01.pdf', 12, 'application/pdf'),
+                UploadedFile::fake()->create('facture-02.pdf', 12, 'application/pdf'),
+            ],
+        ])->assertCreated();
+
+        $lead = Lead::firstOrFail();
+
+        $this->assertSame(
+            2,
+            $lead->documents()->where('kind', DocumentKind::Facture)->count(),
+        );
+
+        foreach ($lead->documents as $document) {
+            Storage::disk('documents-test')->assertExists($document->path);
+        }
+    }
+
+    #[Test]
+    public function invoices_are_optional_on_a_contact_message(): void
+    {
+        $this->postJson('/api/v1/website/leads/contact', [
+            'entreprise' => 'X', 'nomComplet' => 'A B', 'email' => 'a@b.fr',
+        ])->assertCreated();
+
+        $this->assertSame(0, Lead::firstOrFail()->documents()->count());
+    }
+
+    #[Test]
+    public function it_rejects_more_invoices_than_the_ceiling(): void
+    {
+        $tooMany = array_map(
+            fn (int $n) => UploadedFile::fake()->create("facture-{$n}.pdf", 12, 'application/pdf'),
+            range(1, StoreContactLeadRequest::MAX_INVOICES + 1),
+        );
+
+        $this->post('/api/v1/website/leads/contact', [
+            'entreprise' => 'X',
+            'nomComplet' => 'A B',
+            'email' => 'a@b.fr',
+            'factures' => $tooMany,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('factures');
+    }
+
+    #[Test]
+    public function a_rejected_invoice_stops_the_whole_message(): void
+    {
+        $this->post('/api/v1/website/leads/contact', [
+            'entreprise' => 'X',
+            'nomComplet' => 'A B',
+            'email' => 'a@b.fr',
+            'factures' => [
+                UploadedFile::fake()->create('facture.pdf', 12, 'application/pdf'),
+                UploadedFile::fake()->create('virus.exe', 12, 'application/x-msdownload'),
+            ],
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('factures.1');
+
+        // Validation runs before anything is written, so neither the message
+        // nor the acceptable file survives a rejected sibling.
+        $this->assertSame(0, Lead::count());
+        $this->assertEmpty(Storage::disk('documents-test')->allFiles());
     }
 
     #[Test]

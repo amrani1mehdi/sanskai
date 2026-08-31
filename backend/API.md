@@ -150,8 +150,9 @@ Uploads: PDF / JPG / PNG. The size ceiling is the **smaller** of
 
 ### Contact form → `leads`
 
-`POST /v1/website/leads/contact`, JSON. A question, not a dossier: no uploads,
-no eligibility gate.
+`POST /v1/website/leads/contact`. A question, not a dossier: no eligibility
+gate. Send `multipart/form-data` when it carries invoices, `application/json`
+when it does not — the fields are the same either way.
 
 | Website form field | API field | Column | Required |
 |---|---|---|---|
@@ -160,7 +161,14 @@ no eligibility gate.
 | `fullName` | `nomComplet` | `nom` + `prenom` | yes |
 | `email` | `email` | `email` | yes |
 | `message` | `message` | `message` | no |
+| `invoices` | `factures[]` | `lead_documents` | no — kind `facture`, up to 20 |
 | — | `telephone` | `telephone` | no — not on the form, accepted if sent |
+
+Invoices are written in the same transaction as the lead, so a failed insert
+never leaves a file on disk with nothing pointing at it. One rejected file — a
+`.exe`, or something over the size ceiling — rejects the whole submission
+rather than saving a partial set, and the error names the offending index
+(`factures.1`).
 
 The form asks for one **nom complet**; the CRM stores `nom` and `prenom`. The
 API splits it: first token is the given name, everything after it the family
@@ -223,7 +231,7 @@ Identical to the front end's `lib/crm/config.ts`:
 - **status** — `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`
 - **service** — `financement`, `developpement`, `contact`
 - **prestation** — `site_web`, `logo`, `campagne_publicitaire`
-- **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `autre`
+- **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `facture`, `autre`
 - **activity kind** — `creation`, `statut`, `note`, `assignation`, `appel`, `email`, `document`
 
 ---
