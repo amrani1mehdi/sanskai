@@ -1150,8 +1150,15 @@ components:
 
     LeadStatus:
       type: string
-      description: The six pipeline stages, in order.
-      enum: [nouveau, a_examiner, qualifie, en_cours, approuve, refuse]
+      description: >
+        Where a lead stands. The six pipeline stages belong to a service
+        enquiry; a contact message uses only `nouveau` and `repondu`, because
+        "Qualifié" or "Approuvé" mean nothing on a question. `nouveau` is shared
+        and reads differently either side — `statusLabel` says "Nouveau" on a
+        dossier and "Non répondu" on a message. `PATCH /v1/leads/{lead}` refuses
+        a status that does not apply to that lead's service; each lead carries
+        its own `statusOptions`.
+      enum: [nouveau, a_examiner, qualifie, en_cours, approuve, refuse, repondu]
 
     Prestation:
       type: string

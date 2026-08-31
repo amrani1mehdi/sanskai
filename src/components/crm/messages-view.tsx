@@ -12,13 +12,14 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Building2, Mail, MessageSquare, Search } from "lucide-react";
+import { Building2, Check, Mail, MessageSquare, Search } from "lucide-react";
 import { Pagination, paginate } from "@/components/crm/pagination";
 import { StatusBadge } from "@/components/crm/status-badge";
-import { formatRelative, formatShortDate, initialsOf } from "@/lib/crm/format";
+import { formatDateTime, initialsOf } from "@/lib/crm/format";
 import { useCrm } from "@/lib/crm/store";
-import { STAGES } from "@/lib/crm/config";
+import { CONTACT_STAGES } from "@/lib/crm/config";
 import type { LeadStatus } from "@/lib/crm/types";
+import { cn } from "@/lib/utils";
 
 type StatusFilter = LeadStatus | "tous";
 
@@ -28,17 +29,17 @@ const selectClass =
   "rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export function MessagesView() {
-  const { messages, hydrated } = useCrm();
+  const { messages, hydrated, setStatus } = useCrm();
 
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("tous");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("tous");
   const [page, setPage] = useState(1);
 
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
 
     return messages
-      .filter((lead) => (status === "tous" ? true : lead.status === status))
+      .filter((lead) => (statusFilter === "tous" ? true : lead.status === statusFilter))
       .filter((lead) =>
         needle === ""
           ? true
@@ -46,7 +47,7 @@ export function MessagesView() {
               .filter(Boolean)
               .some((field) => field!.toLowerCase().includes(needle)),
       );
-  }, [messages, query, status]);
+  }, [messages, query, statusFilter]);
 
   const pageData = paginate(rows, page, PAGE_SIZE);
 
@@ -82,16 +83,16 @@ export function MessagesView() {
         </div>
 
         <select
-          value={status}
+          value={statusFilter}
           onChange={(event) => {
-            setStatus(event.target.value as StatusFilter);
+            setStatusFilter(event.target.value as StatusFilter);
             setPage(1);
           }}
           aria-label="Filtrer par statut"
           className={selectClass}
         >
           <option value="tous">Tous les statuts</option>
-          {STAGES.map((stage) => (
+          {CONTACT_STAGES.map((stage) => (
             <option key={stage.id} value={stage.id}>
               {stage.label}
             </option>
@@ -135,7 +136,7 @@ export function MessagesView() {
                     <span className="font-mono text-xs font-semibold text-accent">
                       {lead.reference}
                     </span>
-                    <StatusBadge status={lead.status} />
+                    <StatusBadge status={lead.status} service={lead.service} />
                   </div>
 
                   <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -166,11 +167,34 @@ export function MessagesView() {
                   )}
                 </div>
 
-                <p className="shrink-0 text-right text-xs text-muted-foreground">
-                  {formatShortDate(lead.createdAt)}
-                  <br />
-                  {hydrated ? formatRelative(lead.createdAt) : null}
-                </p>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  {/* Absolute, not relative: a message list is read for when
+                      something arrived, and "à l'instant" stops being true the
+                      moment you look away. */}
+                  <p className="text-right text-xs whitespace-nowrap text-muted-foreground">
+                    {formatDateTime(lead.createdAt)}
+                  </p>
+
+                  {/* Answered or not is the entire workflow on this page, so it
+                      is one click here rather than a trip to the detail view. */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setStatus(lead.id, lead.status === "repondu" ? "nouveau" : "repondu")
+                    }
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
+                      lead.status === "repondu"
+                        ? "border-border text-muted-foreground hover:bg-secondary"
+                        : "border-success/40 text-success hover:bg-success/10",
+                    )}
+                  >
+                    <Check size={13} aria-hidden />
+                    {lead.status === "repondu"
+                      ? "Marquer non répondu"
+                      : "Marquer répondu"}
+                  </button>
+                </div>
               </div>
             </li>
           ))}

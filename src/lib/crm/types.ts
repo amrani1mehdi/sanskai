@@ -8,13 +8,22 @@
  */
 
 /** The seven stages a lead moves through. Order is the pipeline order. */
+/**
+ * Where a lead stands.
+ *
+ * A service enquiry moves through the six pipeline stages. A contact message
+ * uses only `nouveau` and `repondu` — "Qualifié" or "Approuvé" mean nothing on
+ * a question someone asked. `STAGES_FOR` in config.ts is the per-service set.
+ */
 export type LeadStatus =
   | "nouveau"
   | "a_examiner"
   | "qualifie"
   | "en_cours"
   | "approuve"
-  | "refuse";
+  | "refuse"
+  /** Contact messages only; `nouveau` is its unanswered counterpart. */
+  | "repondu";
 
 /** The three ways an enquiry reaches the CRM. `prestations` detail the second. */
 export type ServiceId = "financement" | "developpement" | "contact";

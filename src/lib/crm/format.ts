@@ -26,6 +26,11 @@ const SHORT_DATE = new Intl.DateTimeFormat("fr-FR", {
   year: "numeric",
 });
 
+const TIME = new Intl.DateTimeFormat("fr-FR", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 export function formatDate(iso: string) {
   return DATE.format(new Date(iso));
 }
@@ -38,7 +43,19 @@ export function formatShortDate(iso: string) {
   return SHORT_DATE.format(new Date(iso));
 }
 
-/** "il y a 3 jours" — computed client-side, so it never mismatches the server. */
+/** "14:32". The hour on its own, beside a date that is already shown. */
+export function formatTime(iso: string) {
+  return TIME.format(new Date(iso));
+}
+
+/**
+ * "il y a 3 jours" — computed client-side, so it never mismatches the server.
+ *
+ * Used sparingly. A relative label is friendly for something you are watching
+ * happen and misleading for a list you come back to: it is only true at the
+ * moment it renders, and "à l'instant" stays on screen long after it stopped
+ * being the case. Arrival times are shown absolutely.
+ */
 export function formatRelative(iso: string, now: number = Date.now()) {
   const seconds = Math.round((now - new Date(iso).getTime()) / 1000);
 

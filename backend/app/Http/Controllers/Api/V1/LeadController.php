@@ -75,13 +75,13 @@ class LeadController extends Controller
         $next = LeadStatus::from($request->validated('status'));
 
         if ($next !== $lead->status) {
-            $from = $lead->status->label();
+            $from = $lead->status->labelFor($lead->service);
             $lead->status = $next;
             $lead->save();
 
             $lead->recordActivity(
                 ActivityKind::Statut,
-                "Statut passé de {$from} à {$next->label()}",
+                "Statut passé de {$from} à {$next->labelFor($lead->service)}",
                 $request->user(),
             );
         }

@@ -228,7 +228,7 @@ posting:
 
 Identical to the front end's `lib/crm/config.ts`:
 
-- **status** — `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`
+- **status** — service enquiries: `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`. Contact messages: `nouveau` (shown as "Non répondu") and `repondu`. A lead carries its own `statusOptions`, and `PATCH` refuses a status that does not apply to its service.
 - **service** — `financement`, `developpement`, `contact`
 - **prestation** — `site_web`, `logo`, `campagne_publicitaire`
 - **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `facture`, `autre`

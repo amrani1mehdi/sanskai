@@ -68,8 +68,47 @@ export const STAGES: StageConfig[] = [
   },
 ];
 
+/**
+ * A contact message is answered or it is not.
+ *
+ * The pipeline belongs to a service enquiry — "Qualifié", "Approuvé", "Refusé"
+ * are meaningless on a question. `nouveau` is shared and reads differently
+ * either side: a dossier that just arrived is "Nouveau", a message nobody has
+ * replied to is "Non répondu". Mirrors `LeadStatus::forService()` in the API,
+ * which is what actually refuses a status that does not apply.
+ */
+export const CONTACT_STAGES: StageConfig[] = [
+  {
+    id: "nouveau",
+    label: "Non répondu",
+    hint: "En attente d'une réponse",
+    badge: "border-stage-nouveau/30 bg-stage-nouveau/10 text-stage-nouveau",
+    dot: "bg-stage-nouveau",
+  },
+  {
+    id: "repondu",
+    label: "Répondu",
+    hint: "Une réponse a été envoyée",
+    badge: "border-success/30 bg-success/10 text-success",
+    dot: "bg-success",
+  },
+];
+
+/** The statuses a lead of this service may hold. */
+export function stagesFor(service: ServiceId): StageConfig[] {
+  return service === CONTACT.id ? CONTACT_STAGES : STAGES;
+}
+
+/**
+ * Fallback lookup for a status with no service in hand.
+ *
+ * The pipeline comes second on purpose, so the shared `nouveau` resolves to
+ * "Nouveau" rather than "Non répondu" — the wording for a dossier, which is
+ * what most of the CRM is. Anywhere the service *is* known, `stagesFor` gives
+ * the right word for the context; `StatusBadge` takes it for that reason.
+ */
 export const STAGE_BY_ID = Object.fromEntries(
-  STAGES.map((stage) => [stage.id, stage]),
+  [...CONTACT_STAGES, ...STAGES].map((stage) => [stage.id, stage]),
 ) as Record<LeadStatus, StageConfig>;
 
 export type PrestationConfig = {

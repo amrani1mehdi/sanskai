@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\LeadNote;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\LeadNote */
+/** @mixin LeadNote */
 class LeadNoteResource extends JsonResource
 {
     /** @return array<string, mixed> */
