@@ -46,9 +46,6 @@ class AdminUserSeeder extends Seeder
 
         $attributes = [
             'name' => config('leads.admin.name'),
-            // Handed to the admin at installation; they sign in with either this
-            // or the email, and change the password from the API afterwards.
-            'username' => config('leads.admin.username'),
             'is_admin' => true,
             'email_verified_at' => now(),
         ];

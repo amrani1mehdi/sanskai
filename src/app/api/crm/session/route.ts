@@ -8,7 +8,7 @@ import { apiBaseUrl, clearToken, getToken, setToken } from "@/lib/crm/session";
  * held in client JavaScript.
  */
 export async function POST(request: Request): Promise<Response> {
-  let body: { login?: string; password?: string };
+  let body: { email?: string; password?: string };
 
   try {
     body = await request.json();
@@ -16,12 +16,12 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ message: "Requête invalide." }, { status: 400 });
   }
 
-  const login = body.login?.trim() ?? "";
+  const email = body.email?.trim() ?? "";
   const password = body.password ?? "";
 
-  if (login === "" || password === "") {
+  if (email === "" || password === "") {
     return Response.json(
-      { message: "Identifiant et mot de passe requis." },
+      { message: "Adresse email et mot de passe requis." },
       { status: 422 },
     );
   }
@@ -32,7 +32,7 @@ export async function POST(request: Request): Promise<Response> {
     response = await fetch(`${apiBaseUrl()}/v1/auth/token`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ login, password, deviceName: "back-office" }),
+      body: JSON.stringify({ email, password, deviceName: "back-office" }),
       cache: "no-store",
     });
   } catch {
@@ -50,7 +50,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(
       {
         message:
-          payload?.errors?.login?.[0] ??
+          payload?.errors?.email?.[0] ??
           payload?.message ??
           "Identifiants invalides.",
       },

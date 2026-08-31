@@ -33,7 +33,6 @@ return [
      */
     'admin' => [
         'name' => env('ADMIN_NAME', 'Sansekai Admin'),
-        'username' => env('ADMIN_USERNAME', 'admin'),
         'email' => env('ADMIN_EMAIL', 'admin@sansekaisolution.com'),
         'password' => env('ADMIN_PASSWORD'),
     ],

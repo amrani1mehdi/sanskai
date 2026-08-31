@@ -15,6 +15,7 @@ use App\Support\DocumentStore;
 use App\Support\Eligibility;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -91,8 +92,15 @@ class WebsiteLeadController extends Controller
                 ]),
                 function (Lead $lead) use ($request, $store): void {
                     foreach (self::UPLOAD_FIELDS as $field => $kind) {
-                        if ($request->hasFile($field)) {
-                            $store->put($lead, $request->file($field), $kind);
+                        if (! $request->hasFile($field)) {
+                            continue;
+                        }
+
+                        // `documentsComptables` arrives as an array; the other
+                        // three are one file each. Wrapping handles both without
+                        // the caller having to know which is which.
+                        foreach (Arr::wrap($request->file($field)) as $file) {
+                            $store->put($lead, $file, $kind);
                         }
                     }
 

@@ -16,6 +16,14 @@ use Illuminate\Validation\Validator;
  */
 class StoreFinancingLeadRequest extends FormRequest
 {
+    /**
+     * Ceiling on the accounting slot.
+     *
+     * "As many as you have" still needs a number, or one request can park an
+     * unbounded number of 10 MB files on the disk.
+     */
+    public const MAX_ACCOUNTING_FILES = 20;
+
     public function authorize(): bool
     {
         return true;
@@ -54,10 +62,20 @@ class StoreFinancingLeadRequest extends FormRequest
 
             'message' => ['nullable', 'string', 'max:5000'],
 
+            /*
+             * Every slot is optional. A dossier that arrives without its Kbis
+             * is a lead to chase, not a submission to refuse — the back office
+             * can attach what is missing later.
+             *
+             * One file each for identity, Kbis and the bank statement; the
+             * statement covers six months in a single export. Financial and
+             * accounting papers come in as many pieces as the applicant has.
+             */
             'pieceIdentite' => ['nullable', ...$file],
-            'kbis' => ['required', ...$file],
-            'relevesBancaires' => ['required', ...$file],
-            'documentsComptables' => ['required', ...$file],
+            'kbis' => ['nullable', ...$file],
+            'relevesBancaires' => ['nullable', ...$file],
+            'documentsComptables' => ['nullable', 'array', 'max:'.self::MAX_ACCOUNTING_FILES],
+            'documentsComptables.*' => $file,
         ];
     }
 
@@ -100,8 +118,9 @@ class StoreFinancingLeadRequest extends FormRequest
             'siteWebUrl' => 'adresse du site web',
             'reseauxOu' => 'réseaux sociaux',
             'kbis' => 'Kbis',
-            'relevesBancaires' => 'relevés bancaires',
-            'documentsComptables' => 'documents comptables',
+            'relevesBancaires' => 'relevé bancaire',
+            'documentsComptables' => 'informations financières / comptables',
+            'documentsComptables.*' => 'information financière / comptable',
             'pieceIdentite' => "pièce d'identité",
         ];
     }
