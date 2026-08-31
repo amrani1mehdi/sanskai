@@ -280,7 +280,7 @@ export function FinancingForm({
           />
         ) : null}
 
-        {/* Six months of statements usually means six files, not one. */}
+        {/* Six months in one export, so one file — same as the Kbis above. */}
         <FileUpload
           label={form.uploadStatements}
           optionalLabel={form.optional}
@@ -290,11 +290,9 @@ export function FinancingForm({
           wrongTypeMessage={form.fileWrongType}
           files={uploads.statements}
           onChange={setUpload("statements")}
-          multiple
-          addMoreLabel={form.addAnotherFile}
         />
 
-        {/* Accounting papers vary by request, so this one takes several too. */}
+        {/* Balance sheet, P&L, tax return — however many the dossier has. */}
         <FileUpload
           label={form.uploadAccounting}
           optionalLabel={form.optional}

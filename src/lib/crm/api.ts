@@ -255,6 +255,30 @@ export async function logContact(
   });
 }
 
+/**
+ * Changes the administrator's password.
+ *
+ * The current one is required, so a stolen session cannot lock the owner out of
+ * their own account. On success the API revokes every other token but keeps
+ * this one, so the admin stays signed in here and is signed out everywhere else.
+ */
+export async function changePassword(
+  currentPassword: string,
+  password: string,
+  confirmation: string,
+): Promise<void> {
+  await call<void>("auth/password", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      currentPassword,
+      password,
+      // Laravel's `confirmed` rule looks for this exact snake_case name.
+      password_confirmation: confirmation,
+    }),
+  });
+}
+
 /** Ends the session: revokes the token at the API and drops the cookie. */
 export async function signOut(): Promise<void> {
   await fetch("/api/crm/session", { method: "DELETE" });

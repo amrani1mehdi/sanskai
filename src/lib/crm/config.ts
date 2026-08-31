@@ -146,17 +146,19 @@ export const SERVICE_BY_ID = Object.fromEntries(
   SERVICES.map((service) => [service.id, service]),
 ) as Record<ServiceId, ServiceConfig>;
 
-/** One entry per upload slot on the financing form, in the form's own order. */
+/**
+ * One entry per upload slot on the financing form, in the form's own order.
+ *
+ * Every slot is optional, and only the accounting one takes several files —
+ * see `DocumentKind` in the API, which is what enforces both rules.
+ */
 export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
   piece_identite: "Pièce d'identité",
   kbis: "Kbis / justificatif d'immatriculation",
-  releve_bancaire: "Relevés bancaires professionnels",
-  comptable: "Documents comptables",
+  releve_bancaire: "Relevé bancaire des 6 derniers mois",
+  comptable: "Informations financières / comptables",
   autre: "Autre document",
 };
-
-/** Only the identity document is optional on the form. */
-export const OPTIONAL_DOCUMENTS: DocumentKind[] = ["piece_identite", "autre"];
 
 /** The signed-in admin. Stamped on notes and activity entries. */
 export const CURRENT_ADMIN = "Admin Sansekai";

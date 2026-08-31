@@ -100,9 +100,6 @@ paths:
                 - montant
                 - siteWeb
                 - reseaux
-                - kbis
-                - relevesBancaires
-                - documentsComptables
               properties:
                 nom:
                   type: string
@@ -185,20 +182,31 @@ paths:
                   type: string
                   format: binary
                   description: >
-                    Optional. PDF, JPG or PNG. Max size is the smaller of the
-                    app's 10 MB and PHP's upload_max_filesize — see API.md.
+                    Optional, one file. PDF, JPG or PNG. Max size is the smaller
+                    of the app's 10 MB and PHP's upload_max_filesize — see API.md.
                 kbis:
                   type: string
                   format: binary
-                  description: Required. PDF, JPG or PNG. See the size note on pieceIdentite.
+                  description: >
+                    Optional, one file. PDF, JPG or PNG. See the size note on
+                    pieceIdentite.
                 relevesBancaires:
                   type: string
                   format: binary
-                  description: Required. Six most recent business bank statements.
+                  description: >
+                    Optional, one file — the bank statement covering the last six
+                    months, as a single export rather than six files.
                 documentsComptables:
-                  type: string
-                  format: binary
-                  description: Required. Accounting documents.
+                  type: array
+                  maxItems: 20
+                  description: >
+                    Optional, and the only slot that takes several files:
+                    financial and accounting information (balance sheet, P&L,
+                    tax return) in as many pieces as the dossier has, up to 20.
+                    Send it as repeated `documentsComptables[]` parts.
+                  items:
+                    type: string
+                    format: binary
       responses:
         "201":
           description: Lead created
@@ -339,13 +347,14 @@ paths:
       operationId: createToken
       description: |
         The CRM runs on a single administrator account, created at installation
-        with a username and a password.
+        with an email address and a password.
 
-        `login` accepts **either** the username or the email — the account is
-        handed out with a username, and the Filament panel signs in on email.
+        The email is the only identifier — it is what the Filament panel signs in
+        with too, so there is one credential rather than two that drift apart.
+        Matching is case-insensitive.
 
         Only users with `is_admin` receive a token. Throttled to 5 attempts per
-        login and IP; the response is identical whether the account is unknown or
+        email and IP; the response is identical whether the account is unknown or
         the password is wrong. The token is shown once.
       security: []
       requestBody:
@@ -354,13 +363,14 @@ paths:
           application/json:
             schema:
               type: object
-              required: [login, password, deviceName]
+              required: [email, password, deviceName]
               properties:
-                login:
+                email:
                   type: string
+                  format: email
                   maxLength: 190
-                  description: Username or email.
-                  example: admin
+                  description: The administrator's email address.
+                  example: admin@sansekaisolution.com
                 password:
                   type: string
                   format: password
@@ -380,7 +390,6 @@ paths:
                   user:
                     id: 1
                     name: Sansekai Admin
-                    username: admin
                     email: admin@sansekaisolution.com
                     initials: SA
         "422":
@@ -390,7 +399,7 @@ paths:
               example:
                 message: Identifiants invalides.
                 errors:
-                  login: [Identifiants invalides.]
+                  email: [Identifiants invalides.]
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
@@ -653,7 +662,13 @@ paths:
       tags: [Documents]
       summary: Attach a document to a lead
       operationId: uploadLeadDocument
-      description: For an admin adding a piece that arrived later, by email say.
+      description: |
+        For an admin adding a piece that arrived later, by email say.
+
+        One file per call. `piece_identite`, `kbis` and `releve_bancaire` hold a
+        single document each: posting a second one to a slot that is already
+        filled is refused with a 422 on `kind`, and the existing document has to
+        be deleted first. `comptable` and `autre` stack as many as needed.
       requestBody:
         required: true
         content:
@@ -681,7 +696,18 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "422":
-          description: Wrong type, too large, or unknown kind
+          description: >
+            Wrong type, too large, unknown kind, or a single-file slot that is
+            already filled.
+          content:
+            application/json:
+              example:
+                message: Ce dossier a déjà un document « Kbis / justificatif d'immatriculation ».
+                errors:
+                  kind:
+                    - >-
+                      Ce dossier a déjà un document « Kbis / justificatif
+                      d'immatriculation ». Supprimez-le avant d'en ajouter un autre.
 
   /v1/documents:
     get:
@@ -980,7 +1006,10 @@ components:
 
     DocumentKind:
       type: string
-      description: The four upload slots on the financing form, plus a catch-all.
+      description: >
+        The four upload slots on the financing form, plus a catch-all. All are
+        optional. `piece_identite`, `kbis` and `releve_bancaire` hold one
+        document each; `comptable` and `autre` hold several.
       enum: [piece_identite, kbis, releve_bancaire, comptable, autre]
 
     ActivityKind:
@@ -1193,7 +1222,6 @@ components:
       properties:
         id: {type: integer}
         name: {type: string, example: Sansekai Admin}
-        username: {type: [string, "null"], example: admin}
         email: {type: string, format: email}
         initials: {type: string, example: SA}
 

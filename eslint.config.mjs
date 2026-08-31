@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Laravel app. Its JavaScript is Composer's and Filament's, not ours —
+    // linting it buries the site's own findings under 20k vendor complaints.
+    "backend/**",
   ]),
 ]);
 

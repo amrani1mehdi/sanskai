@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  */
 export function LoginForm() {
   const router = useRouter();
-  const [login, setLogin] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export function LoginForm() {
       const response = await fetch("/api/crm/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ login, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -55,17 +55,18 @@ export function LoginForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <div>
-        <label htmlFor="login" className="mb-1.5 block text-xs font-medium text-foreground">
-          Nom d&apos;utilisateur
+        <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-foreground">
+          Adresse email
         </label>
         <input
-          id="login"
-          autoComplete="username"
+          id="email"
+          type="email"
+          autoComplete="email"
           autoFocus
           required
-          value={login}
-          onChange={(event) => setLogin(event.target.value)}
-          placeholder="admin"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="admin@sansekaisolution.com"
           className={field}
         />
       </div>
