@@ -105,7 +105,7 @@ export function NewLeadsBell({
               <button
                 type="button"
                 onClick={onMarkAll}
-                className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-md bg-new-strong px-2.5 py-1 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
               >
                 <CheckCheck size={13} aria-hidden /> Tout marquer comme lu
               </button>
@@ -165,7 +165,7 @@ export function NewLeadsBell({
                     onClick={() => onMarkOne(lead.id)}
                     title="Marquer comme lu"
                     aria-label={`Marquer ${lead.reference} comme lu`}
-                    className="mt-2.5 mr-2 shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-accent"
+                    className="mt-2.5 mr-2 shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-new-strong hover:text-white"
                   >
                     <Check size={14} />
                   </button>
