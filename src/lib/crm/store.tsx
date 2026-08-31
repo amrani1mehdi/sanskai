@@ -54,14 +54,32 @@ function set(next: Snapshot) {
   emit();
 }
 
+/** Latched once a 401 has sent us to the form, so it happens exactly once. */
+let redirecting = false;
+
 /** Sends an expired session back to the form rather than showing an empty board. */
 function handle(error: unknown): string {
   if (error instanceof api.ApiError && error.status === 401) {
-    /* A hard navigation on purpose: the session is gone, and a client-side
-       push would carry the stale store into the login page. This is module
-       scope, so there is no router to reach for anyway. */
-    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-    window.location.assign("/admin/login");
+    /* Stop asking before navigating. The poll fires every fifteen seconds and
+       on every focus, so an expired session produces a 401 on each tick — and
+       each one used to start another navigation, reloading the page for as
+       long as the tab stayed open. */
+    stopPolling();
+
+    /* Already on the form — including the reload this would itself cause — so
+       there is nowhere to send them. Without this the assign() below re-enters
+       the login page over and over. */
+    const atLogin = window.location.pathname.startsWith("/admin/login");
+
+    if (!redirecting && !atLogin) {
+      redirecting = true;
+      /* A hard navigation on purpose: the session is gone, and a client-side
+         push would carry the stale store into the login page. This is module
+         scope, so there is no router to reach for anyway. */
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign("/admin/login");
+    }
+
     return "Session expirée.";
   }
 
@@ -145,6 +163,7 @@ const onWake = () => {
 
 function startPolling(): void {
   if (timer !== null || typeof window === "undefined") return;
+  if (redirecting || window.location.pathname.startsWith("/admin/login")) return;
 
   timer = setInterval(() => void checkForChanges(), POLL_MS);
 
