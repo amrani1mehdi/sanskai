@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Send, TriangleAlert } from "lucide-react";
+import { useId, useMemo, useState } from "react";
+import { Loader2, Send, TriangleAlert } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import type { Locale } from "@/lib/i18n/config";
 import { isCompanyAgeEligible, isRevenueEligible } from "@/lib/eligibility";
@@ -12,6 +12,16 @@ import { cn } from "@/lib/utils";
 /** Shared by every field on the live site's financing form. */
 const inputClass =
   "w-full px-4 py-3.5 rounded-lg bg-background text-foreground placeholder:text-muted-foreground border border-border focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all text-sm";
+
+/**
+ * Joins the ids an `aria-describedby` points at, dropping the ones not in play.
+ * Returns undefined rather than an empty string, so the attribute is omitted.
+ */
+function ids(...candidates: (string | false | undefined)[]): string | undefined {
+  const present = candidates.filter((id): id is string => Boolean(id));
+
+  return present.length > 0 ? present.join(" ") : undefined;
+}
 
 type YesNo = "yes" | "no";
 
@@ -57,6 +67,10 @@ export function FinancingForm({
   const [values, setValues] = useState(EMPTY);
   const [sent, setSent] = useState(false);
   const [uploads, setUploads] = useState<Record<UploadField, File[]>>(NO_UPLOADS);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  /** Per-field messages from the API's 422, keyed by its own field names. */
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const setUpload = (field: UploadField) => (files: File[]) =>
     setUploads((current) => ({ ...current, [field]: files }));
@@ -99,14 +113,114 @@ export function FinancingForm({
 
   const ineligible = ageIneligible || revenueIneligible;
 
-  // The live site posts to a Supabase edge function. There is no backend in
-  // this rebuild yet, so the form mirrors the same success UX locally.
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  /**
+   * The API's message for an upload slot.
+   *
+   * A rejected file inside the accounting array is reported against an indexed
+   * key — `documentsComptables.0` — so the slot's own name is not enough to
+   * find it, and without this the applicant sees a banner naming a field that
+   * appears nowhere on the form.
+   */
+  const uploadError = (field: string): string | undefined =>
+    fieldErrors[field] ??
+    Object.entries(fieldErrors).find(([key]) => key.startsWith(`${field}.`))?.[1];
+
+  /**
+   * Posts the dossier to the CRM.
+   *
+   * The submission goes to a route handler on this origin rather than straight
+   * to the API: the shared key that authorises it stays on the server. Files are
+   * sent as multipart, with the accounting slot repeated as `documentsComptables[]`
+   * — the one slot the API takes several of.
+   */
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (ineligible) return;
+    if (ineligible || sending) return;
+
+    setSending(true);
+    setError(null);
+    setFieldErrors({});
+
+    const body = new FormData();
+
+    body.set("nom", values.nom);
+    body.set("prenom", values.prenom);
+    body.set("telephone", values.telephone);
+    body.set("email", values.email);
+
+    body.set("entreprise", values.entreprise);
+    body.set("dateCreation", values.dateCreation);
+    body.set("codePostal", values.codePostal);
+    body.set("ville", values.ville);
+
+    body.set("chiffreAffaire", values.chiffreAffaire);
+    body.set("montant", values.montant);
+
+    // The API reads these as booleans; multipart carries everything as text.
+    body.set("siteWeb", values.siteWeb === "yes" ? "1" : "0");
+    body.set("reseaux", values.reseaux === "yes" ? "1" : "0");
+
+    // Optional text fields are omitted rather than sent empty, so a blank one
+    // does not trip a `max` rule or land in the CRM as an empty string.
+    for (const key of ["adresse", "codeCommercial", "message"] as const) {
+      if (values[key].trim() !== "") body.set(key, values[key]);
+    }
+    if (values.siteWeb === "yes") body.set("siteWebUrl", values.siteWebUrl);
+    if (values.reseaux === "yes") body.set("reseauxOu", values.reseauxOu);
+
+    // Three single-file slots, then the one that takes as many as the dossier has.
+    const single = [
+      ["pieceIdentite", uploads.idDocument],
+      ["kbis", uploads.kbis],
+      ["relevesBancaires", uploads.statements],
+    ] as const;
+
+    for (const [field, files] of single) {
+      if (files[0]) body.set(field, files[0]);
+    }
+    for (const file of uploads.accounting) {
+      body.append("documentsComptables[]", file);
+    }
+
+    let response: Response;
+
+    try {
+      response = await fetch("/api/leads/financement", { method: "POST", body });
+    } catch {
+      setError(form.errorUnavailable);
+      setSending(false);
+      return;
+    }
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+
+      if (response.status === 422 && payload?.errors) {
+        // The API reports against its own field names, which is what the
+        // notices below are keyed on, so each lands beside the field at fault.
+        setFieldErrors(
+          Object.fromEntries(
+            Object.entries(payload.errors as Record<string, string[]>).map(
+              ([field, messages]) => [field, messages[0]],
+            ),
+          ),
+        );
+      }
+
+      setError(
+        response.status === 429
+          ? form.errorRateLimit
+          : response.status === 503
+            ? form.errorUnavailable
+            : (payload?.message ?? form.errorGeneric),
+      );
+      setSending(false);
+      return;
+    }
 
     setValues(EMPTY);
     setUploads(NO_UPLOADS);
+    setSending(false);
     setSent(true);
     setTimeout(() => setSent(false), 4000);
   };
@@ -120,10 +234,17 @@ export function FinancingForm({
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field label={form.lastName} value={values.nom} onChange={set("nom")} required />
+          <Field
+            label={form.lastName}
+            value={values.nom}
+            onChange={set("nom")}
+            required
+            error={fieldErrors.nom}
+          />
           <Field
             label={form.firstName}
             value={values.prenom}
+            error={fieldErrors.prenom}
             onChange={set("prenom")}
             required
           />
@@ -139,6 +260,7 @@ export function FinancingForm({
           wrongTypeMessage={form.fileWrongType}
           files={uploads.idDocument}
           onChange={setUpload("idDocument")}
+          serverError={uploadError("pieceIdentite")}
         />
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -146,6 +268,7 @@ export function FinancingForm({
             label={form.phone}
             type="tel"
             value={values.telephone}
+            error={fieldErrors.telephone}
             onChange={set("telephone")}
             required
           />
@@ -153,6 +276,7 @@ export function FinancingForm({
             label={form.email}
             type="email"
             value={values.email}
+            error={fieldErrors.email}
             onChange={set("email")}
             required
           />
@@ -161,6 +285,7 @@ export function FinancingForm({
         <Field
           label={form.company}
           value={values.entreprise}
+          error={fieldErrors.entreprise}
           onChange={set("entreprise")}
           required
         />
@@ -174,6 +299,7 @@ export function FinancingForm({
           wrongTypeMessage={form.fileWrongType}
           files={uploads.kbis}
           onChange={setUpload("kbis")}
+          serverError={uploadError("kbis")}
         />
 
         <div>
@@ -191,8 +317,11 @@ export function FinancingForm({
             locale={locale}
             placeholder={form.companyCreatedAtPlaceholder}
             required
-            invalid={ageIneligible}
-            describedBy={ageIneligible ? "company-age-notice" : undefined}
+            invalid={ageIneligible || fieldErrors.dateCreation !== undefined}
+            describedBy={ids(
+              ageIneligible && "company-age-notice",
+              fieldErrors.dateCreation && "company-created-at-error",
+            )}
           />
 
           {ageIneligible ? (
@@ -202,18 +331,31 @@ export function FinancingForm({
               body={form.ineligibleBody}
             />
           ) : null}
+
+          {/* The API's own verdict — it re-runs the eligibility gate server-side. */}
+          {fieldErrors.dateCreation ? (
+            <p id="company-created-at-error" className="mt-1.5 text-xs text-danger">
+              {fieldErrors.dateCreation}
+            </p>
+          ) : null}
         </div>
 
-        <Field label={form.address} value={values.adresse} onChange={set("adresse")} />
+        <Field
+          label={form.address}
+          value={values.adresse}
+          error={fieldErrors.adresse}
+          onChange={set("adresse")}
+        />
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field
             label={form.postalCode}
             value={values.codePostal}
+            error={fieldErrors.codePostal}
             onChange={set("codePostal")}
             required
           />
-          <Field label={form.city} value={values.ville} onChange={set("ville")} required />
+          <Field label={form.city} value={values.ville} error={fieldErrors.ville} onChange={set("ville")} required />
         </div>
 
         <YesNoQuestion
@@ -231,6 +373,7 @@ export function FinancingForm({
             inputMode="url"
             placeholder="https://"
             value={values.siteWebUrl}
+            error={fieldErrors.siteWebUrl}
             onChange={set("siteWebUrl")}
             required
           />
@@ -248,6 +391,7 @@ export function FinancingForm({
           <Field
             label={form.socialWhere}
             value={values.reseauxOu}
+            error={fieldErrors.reseauxOu}
             onChange={set("reseauxOu")}
             required
           />
@@ -257,6 +401,7 @@ export function FinancingForm({
           <Field
             label={form.revenue}
             value={values.chiffreAffaire}
+            error={fieldErrors.chiffreAffaire}
             onChange={set("chiffreAffaire")}
             inputMode="decimal"
             invalid={revenueIneligible}
@@ -266,6 +411,7 @@ export function FinancingForm({
           <Field
             label={form.amount}
             value={values.montant}
+            error={fieldErrors.montant}
             onChange={set("montant")}
             inputMode="decimal"
             required
@@ -290,6 +436,7 @@ export function FinancingForm({
           wrongTypeMessage={form.fileWrongType}
           files={uploads.statements}
           onChange={setUpload("statements")}
+          serverError={uploadError("relevesBancaires")}
         />
 
         {/* Balance sheet, P&L, tax return — however many the dossier has. */}
@@ -302,6 +449,7 @@ export function FinancingForm({
           wrongTypeMessage={form.fileWrongType}
           files={uploads.accounting}
           onChange={setUpload("accounting")}
+          serverError={uploadError("documentsComptables")}
           multiple
           addMoreLabel={form.addAnotherFile}
         />
@@ -309,6 +457,7 @@ export function FinancingForm({
         <Field
           label={form.commercialCode}
           value={values.codeCommercial}
+          error={fieldErrors.codeCommercial}
           onChange={set("codeCommercial")}
         />
 
@@ -326,17 +475,35 @@ export function FinancingForm({
 
         <button
           type="submit"
-          disabled={ineligible}
+          disabled={ineligible || sending}
           className="w-full gold-gradient text-accent-foreground font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm mt-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {sent ? (
             form.sent
+          ) : sending ? (
+            <>
+              <Loader2 size={16} className="animate-spin" /> {form.sending}
+            </>
           ) : (
             <>
               {form.submit} <Send size={16} />
             </>
           )}
         </button>
+
+        {/*
+          The submission failed as a whole. Announced politely so a screen
+          reader reaches it after the button it followed, not mid-press.
+        */}
+        {error ? (
+          <p
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-xs text-destructive"
+          >
+            <TriangleAlert size={14} className="mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </p>
+        ) : null}
       </form>
     </div>
   );
@@ -445,6 +612,7 @@ function Field({
   placeholder,
   invalid,
   describedBy,
+  error,
 }: {
   label: string;
   value: string;
@@ -455,7 +623,11 @@ function Field({
   placeholder?: string;
   invalid?: boolean;
   describedBy?: string;
+  /** A message the API returned against this field. */
+  error?: string;
 }) {
+  const errorId = useId();
+
   return (
     <div>
       <label className="text-xs font-medium text-foreground mb-1.5 block">{label}</label>
@@ -464,12 +636,21 @@ function Field({
         type={type}
         inputMode={inputMode}
         placeholder={placeholder}
-        aria-invalid={invalid || undefined}
-        aria-describedby={describedBy}
-        className={cn(inputClass, invalid && "border-danger focus:border-danger")}
+        aria-invalid={invalid || error !== undefined || undefined}
+        aria-describedby={ids(describedBy, error && errorId)}
+        className={cn(
+          inputClass,
+          (invalid || error) && "border-danger focus:border-danger",
+        )}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
+
+      {error ? (
+        <p id={errorId} className="mt-1.5 text-xs text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

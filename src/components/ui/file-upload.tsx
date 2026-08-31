@@ -27,6 +27,8 @@ type FileUploadProps = {
   multiple?: boolean;
   addMoreLabel?: string;
   maxFiles?: number;
+  /** A message the API returned against this slot, e.g. a rejected file type. */
+  serverError?: string;
 };
 
 function formatSize(bytes: number): string {
@@ -56,6 +58,7 @@ export function FileUpload({
   multiple = false,
   addMoreLabel,
   maxFiles = 12,
+  serverError,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +89,8 @@ export function FileUpload({
     if (inputRef.current) inputRef.current.value = "";
   };
 
+  const shown = error ?? serverError;
+
   const open = () => inputRef.current?.click();
   const full = multiple ? files.length >= maxFiles : files.length > 0;
 
@@ -97,7 +102,7 @@ export function FileUpload({
         multiple={multiple}
         accept={ACCEPTED_UPLOAD_TYPES.join(",")}
         className="sr-only"
-        aria-describedby={error ? errorId : undefined}
+        aria-describedby={shown ? errorId : undefined}
         aria-label={label}
         onChange={(event) => {
           const chosen = Array.from(event.target.files ?? []);
@@ -178,14 +183,14 @@ export function FileUpload({
         </button>
       ) : null}
 
-      {error ? (
+      {shown ? (
         <p
           id={errorId}
           role="alert"
           className="mt-2 flex items-center gap-2 text-xs text-danger"
         >
           <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
-          {error}
+          {shown}
         </p>
       ) : null}
     </div>
