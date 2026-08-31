@@ -24,6 +24,7 @@ export function KanbanBoard({
   leads,
   stages,
   selectedId,
+  highlightId,
   onSelect,
   onMove,
   onLog,
@@ -32,6 +33,8 @@ export function KanbanBoard({
   stages: StageConfig[];
   selectedId: string | null;
   onSelect: (lead: Lead, focus?: "documents") => void;
+  /** The one just-arrived lead worth pointing at, if any. */
+  highlightId: string | null;
   onMove: (id: string, status: LeadStatus) => void;
   onLog: (id: string, kind: "appel" | "email") => void;
 }) {
@@ -108,6 +111,7 @@ export function KanbanBoard({
                     lead={lead}
                     dragging={dragging === lead.id}
                     selected={selectedId === lead.id}
+                    isNew={highlightId === lead.id}
                     onSelect={(focus) => onSelect(lead, focus)}
                     onDragStart={() => setDragging(lead.id)}
                     onDragEnd={() => {
@@ -136,6 +140,7 @@ function KanbanCard({
   lead,
   dragging,
   selected,
+  isNew,
   onSelect,
   onDragStart,
   onDragEnd,
@@ -144,6 +149,7 @@ function KanbanCard({
   lead: Lead;
   dragging: boolean;
   selected: boolean;
+  isNew: boolean;
   onSelect: (focus?: "documents") => void;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -163,9 +169,18 @@ function KanbanCard({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={cn(
-        "relative rounded-lg border bg-card p-3 transition-shadow",
+        "relative rounded-lg border p-3 transition-shadow",
         dragging ? "opacity-50" : "hover:shadow-md",
-        selected ? "border-accent ring-2 ring-accent/30" : "border-border",
+        /* Amber only for an arrival nobody has read yet — not for anything
+           merely untreated. A lead sitting at Nouveau for a week is not news,
+           and colouring half the board permanently would leave nothing to
+           notice when something genuinely new lands. */
+        isNew ? "bg-new-soft" : "bg-card",
+        selected
+          ? "border-accent ring-2 ring-accent/30"
+          : isNew
+            ? "border-new/40"
+            : "border-border",
       )}
     >
       <button

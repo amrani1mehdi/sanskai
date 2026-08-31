@@ -44,6 +44,18 @@
   --success: 142 60% 38%;
   --danger: 0 72% 51%;
 
+  /* A lead that has just arrived. Amber rather than the gold accent: the two
+     are the same family, so it belongs, but it is brighter and yellower and
+     therefore still reads as a highlight rather than more chrome. Reserved for
+     newness alone — nothing else on the board is allowed to use it, or it
+     stops meaning anything. */
+  --new: 41 92% 42%;
+  --new-soft: 45 94% 90%;
+  /* Deep enough to carry white text at 5.09:1 — a solid amber fill needs to
+     go this dark before white is legible on it. Anything lighter and the
+     label disappears into the button. */
+  --new-strong: 36 92% 32%;
+
   /* Categorical series for the CRM statistics — slots 1-3 of the validated
      data-viz palette, stepped for the light surface. Assigned in fixed order,
      never cycled. */
@@ -167,6 +179,11 @@
   --success: 152 36% 30%;
   --danger: 5 52% 43%;
 
+  /* Lifted on the dark canvas, where the light amber would disappear. */
+  --new: 43 88% 62%;
+  --new-soft: 41 34% 21%;
+  --new-strong: 38 78% 38%;
+
   /* Status palette — one muted hue per stage, so a badge is legible at a
      glance. All >= 5.68:1 on a panel. Reserved: never reused as series colours. */
   --stage-nouveau: 214 44% 40%;
@@ -213,6 +230,9 @@
   --color-brand-dark: hsl(var(--brand-dark));
   --color-success: hsl(var(--success));
   --color-danger: hsl(var(--danger));
+  --color-new: hsl(var(--new));
+  --color-new-soft: hsl(var(--new-soft));
+  --color-new-strong: hsl(var(--new-strong));
 
   --color-series-1: hsl(var(--series-1));
   --color-series-2: hsl(var(--series-2));

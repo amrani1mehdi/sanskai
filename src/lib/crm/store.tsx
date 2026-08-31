@@ -33,6 +33,8 @@ type Snapshot = {
   error: string | null;
   /** When the list last came back from the API. Drives the live indicator. */
   syncedAt: string | null;
+  /** Ids that arrived since this session started and have not been looked at. */
+  unseen: string[];
 };
 
 const EMPTY: Snapshot = {
@@ -40,6 +42,7 @@ const EMPTY: Snapshot = {
   hydrated: false,
   error: null,
   syncedAt: null,
+  unseen: [],
 };
 
 let snapshot: Snapshot = EMPTY;
@@ -110,6 +113,76 @@ function handle(error: unknown): string {
     : "Impossible de joindre le CRM.";
 }
 
+/* -------------------------------------------------------------------------- */
+/* New arrivals                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Ids already acknowledged, kept in the browser.
+ *
+ * Held only in memory this resets on every refresh: a lead that arrived while
+ * you were away counts as new once, then is silently forgotten the moment the
+ * page reloads. Persisted, "new" survives until somebody marks it read, which
+ * is the only version of this worth trusting.
+ *
+ * Per browser, not per account — a reading marker, not data. The CRM has one
+ * administrator, so there is nobody for it to disagree with.
+ */
+const SEEN_KEY = "sansekai.crm.seen";
+
+function readSeen(): Set<string> | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(SEEN_KEY);
+    return raw === null ? null : new Set(JSON.parse(raw) as string[]);
+  } catch {
+    /* Private windows and blocked site data both throw. Failing to remember is
+       survivable; taking the board down over it is not. */
+    return null;
+  }
+}
+
+function writeSeen(ids: Iterable<string>): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(SEEN_KEY, JSON.stringify([...ids]));
+  } catch {
+    /* Same again — the badge is then simply per-session. */
+  }
+}
+
+function unseenAfter(leads: Lead[]): string[] {
+  const ids = leads.map((lead) => lead.id);
+  const seen = readSeen();
+
+  if (seen === null) {
+    /* First run in this browser: everything already here is the baseline.
+       Announcing thirty existing leads as new is noise, not news. */
+    writeSeen(ids);
+    return [];
+  }
+
+  // Pruned to what still exists, so the marker cannot grow forever on the back
+  // of leads deleted long ago.
+  writeSeen(ids.filter((id) => seen.has(id)));
+
+  return ids.filter((id) => !seen.has(id));
+}
+
+/** Acknowledges arrivals — all of them, or one. */
+function acknowledge(ids: string[]): void {
+  const seen = readSeen() ?? new Set<string>();
+  for (const id of ids) seen.add(id);
+  writeSeen(seen);
+
+  set({
+    ...snapshot,
+    unseen: snapshot.unseen.filter((id) => !ids.includes(id)),
+  });
+}
+
 export async function loadLeads(): Promise<void> {
   loading = true;
 
@@ -125,11 +198,14 @@ export async function loadLeads(): Promise<void> {
      */
     signature = await api.fetchChangeSignature().catch(() => null);
 
+    const leads = await api.fetchLeads();
+
     set({
-      leads: await api.fetchLeads(),
+      leads,
       hydrated: true,
       error: null,
       syncedAt: new Date().toISOString(),
+      unseen: unseenAfter(leads),
     });
 
     /*
@@ -260,6 +336,10 @@ async function moveLead(id: string, status: LeadStatus): Promise<void> {
     leads: before.map((lead) => (lead.id === id ? { ...lead, status } : lead)),
   });
 
+  /* Acting on a lead is reading it: once you have moved it, it is no longer
+     something that just turned up unnoticed. */
+  acknowledge([id]);
+
   try {
     await api.updateStatus(id, status);
   } catch (error) {
@@ -307,6 +387,14 @@ export function useCrm() {
       hydrated: current.hydrated,
       error: current.error,
       syncedAt: current.syncedAt,
+
+      /** Leads that arrived while this session has been open, still unread. */
+      unseen: current.leads.filter((lead) => current.unseen.includes(lead.id)),
+      /** Marks every arrival read. */
+      markAllSeen: () => acknowledge(snapshot.unseen),
+      /** Marks one read, for dismissing a single notification. */
+      markSeen: (id: string) => acknowledge([id]),
+
       refresh: loadLeads,
       getLead,
 

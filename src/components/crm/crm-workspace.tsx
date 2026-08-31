@@ -17,6 +17,8 @@
 import { useMemo, useState } from "react";
 import { Search, SlidersHorizontal, TriangleAlert, X } from "lucide-react";
 import { KanbanBoard } from "@/components/crm/kanban-board";
+import { NewLeadsBell } from "@/components/crm/new-leads-bell";
+import { Select } from "@/components/crm/select";
 import { LeadPanel } from "@/components/crm/lead-panel";
 import {
   CONTACT,
@@ -24,6 +26,7 @@ import {
   PRESTATIONS,
   SERVICES,
   STAGES,
+  isMessage,
 } from "@/lib/crm/config";
 import { useCrm } from "@/lib/crm/store";
 import type { PrestationId, ServiceId } from "@/lib/crm/types";
@@ -43,12 +46,19 @@ const PERIODS: { id: PeriodFilter; label: string }[] = [
   { id: "90", label: "90 derniers jours" },
 ];
 
-const selectClass =
-  "rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/30";
-
 export function CrmWorkspace() {
-  const { dossiers, messages, hydrated, syncedAt, error, setStatus, logContact } =
-    useCrm();
+  const {
+    dossiers,
+    messages,
+    hydrated,
+    syncedAt,
+    error,
+    unseen,
+    markSeen,
+    markAllSeen,
+    setStatus,
+    logContact,
+  } = useCrm();
 
   const [board, setBoard] = useState<Board>("dossiers");
   const [query, setQuery] = useState("");
@@ -103,6 +113,24 @@ export function CrmWorkspace() {
         .some((field) => field!.toLowerCase().includes(needle));
     });
   }, [source, board, service, prestation, period, query, showPrestations, syncedAt]);
+
+  /* Unread arrivals, newest first — across both boards, because a contact
+     message landing is as much news as a dossier. */
+  const arrivals = useMemo(
+    () =>
+      [...unseen].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
+    [unseen],
+  );
+
+  /* Only the newest unread arrival is highlighted on the board.
+
+     Tinting every unread one turns a busy morning into a wall of amber, and
+     the point of the colour is "look at this one". A newer arrival takes the
+     highlight from the one before it, which also answers what should happen to
+     a card nobody got to — it goes back to normal and stays in the bell. */
+  const highlightId = arrivals[0]?.id ?? null;
 
   /* Read from the live list, not held in state: a card that moves stage or is
      deleted must not leave the panel showing a stale copy of it. */
@@ -187,58 +215,48 @@ export function CrmWorkspace() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <SlidersHorizontal size={15} className="hidden text-muted-foreground sm:block" aria-hidden />
+            <SlidersHorizontal
+              size={15}
+              className="hidden text-muted-foreground sm:block"
+              aria-hidden
+            />
 
             {board === "dossiers" ? (
-              <select
-                aria-label="Filtrer par service"
+              <Select
+                label="Filtrer par service"
                 value={service}
-                onChange={(event) => {
-                  const next = event.target.value as ServiceFilter;
-                  setService(next);
+                onChange={(next) => {
+                  setService(next as ServiceFilter);
                   if (next !== "developpement") setPrestation("tous");
                 }}
-                className={selectClass}
-              >
-                <option value="tous">Tous les services</option>
-                {SERVICES.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "tous", label: "Tous les services" },
+                  ...SERVICES.map((item) => ({ value: item.id, label: item.label })),
+                ]}
+              />
             ) : null}
 
             {showPrestations ? (
-              <select
-                aria-label="Filtrer par sous-service"
+              <Select
+                label="Filtrer par sous-service"
                 value={prestation}
-                onChange={(event) =>
-                  setPrestation(event.target.value as PrestationFilter)
-                }
-                className={selectClass}
-              >
-                <option value="tous">Tous les sous-services</option>
-                {PRESTATIONS.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => setPrestation(next as PrestationFilter)}
+                options={[
+                  { value: "tous", label: "Tous les sous-services" },
+                  ...PRESTATIONS.map((item) => ({
+                    value: item.id,
+                    label: item.label,
+                  })),
+                ]}
+              />
             ) : null}
 
-            <select
-              aria-label="Filtrer par période"
+            <Select
+              label="Filtrer par période"
               value={period}
-              onChange={(event) => setPeriod(event.target.value as PeriodFilter)}
-              className={selectClass}
-            >
-              {PERIODS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => setPeriod(next as PeriodFilter)}
+              options={PERIODS.map((item) => ({ value: item.id, label: item.label }))}
+            />
 
             {filtersActive ? (
               <button
@@ -249,6 +267,22 @@ export function CrmWorkspace() {
                 <X size={14} /> Réinitialiser
               </button>
             ) : null}
+
+            {/* Beside the filters, not in the sidebar: this is about the board
+                you are looking at, and the rail is navigation only. */}
+            <NewLeadsBell
+              leads={arrivals}
+              onMarkAll={markAllSeen}
+              onMarkOne={markSeen}
+              onSelect={(lead) => {
+                /* A new lead can be a message while the dossiers board is up —
+                   land on the right one rather than selecting something the
+                   current board cannot show. */
+                setBoard(isMessage(lead) ? "messages" : "dossiers");
+                setFocus(undefined);
+                setSelectedId(lead.id);
+              }}
+            />
           </div>
         </header>
 
@@ -285,6 +319,7 @@ export function CrmWorkspace() {
               leads={leads}
               stages={stages}
               selectedId={selectedId}
+              highlightId={highlightId}
               onSelect={(lead, next) => {
                 setFocus(next);
                 setSelectedId((current) =>
