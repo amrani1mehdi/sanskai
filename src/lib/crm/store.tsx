@@ -208,9 +208,18 @@ let signature: string | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
 
 async function checkForChanges(): Promise<void> {
-  // Nothing to do for a tab nobody is looking at; `visibilitychange` catches up
-  // the moment it comes back.
-  if (typeof document !== "undefined" && document.hidden) return;
+  /*
+   * Hidden tabs keep polling.
+   *
+   * Skipping them saved a request every fifteen seconds and broke the feature
+   * it was supposed to support: the count in the tab title exists precisely for
+   * the case where you are looking at something else, and a tab that stops
+   * asking cannot tell you anything until you click back into it — at which
+   * point you are already there and it has told you nothing.
+   *
+   * The cost is one cheap aggregate query; browsers throttle background timers
+   * on their own, which is the right place for that decision to be made.
+   */
   if (loading) return;
 
   try {
@@ -233,6 +242,13 @@ async function checkForChanges(): Promise<void> {
   }
 }
 
+/**
+ * Coming back to the tab checks straight away.
+ *
+ * The interval already runs while hidden, but a browser is free to throttle a
+ * background timer to a crawl — so returning to the tab should not inherit
+ * whatever delay it decided on.
+ */
 const onWake = () => {
   if (typeof document === "undefined" || !document.hidden) void checkForChanges();
 };
