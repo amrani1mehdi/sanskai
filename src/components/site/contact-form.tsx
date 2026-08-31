@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CircleCheck, Send, TriangleAlert, Upload } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
+import { translateApiError } from "@/lib/leads/errors";
 
 const inputClass =
   "w-full px-4 py-3.5 rounded-lg bg-background text-foreground placeholder:text-muted-foreground border border-border focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all text-sm";
@@ -16,7 +17,7 @@ const EMPTY = {
 };
 
 export function ContactForm({ content }: { content: SiteContent }) {
-  const { contact } = content;
+  const { contact, form } = content;
 
   const [values, setValues] = useState(EMPTY);
   const [sent, setSent] = useState(false);
@@ -53,12 +54,18 @@ export function ContactForm({ content }: { content: SiteContent }) {
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        // Laravel reports per field; the first message is the actionable one.
+        // Laravel reports per field; the first message is the actionable one,
+        // translated because the API answers in English whatever the visitor
+        // reads. This form shows one line, so the rest are not needed.
         const first = payload?.errors
           ? Object.values(payload.errors as Record<string, string[]>)[0]?.[0]
           : undefined;
 
-        setError(first ?? payload?.message ?? contact.error);
+        setError(
+          first
+            ? translateApiError(first, form)
+            : (payload?.message ?? contact.error),
+        );
         setPending(false);
         return;
       }

@@ -5,9 +5,12 @@ import { apiBaseUrl } from "@/lib/crm/session";
 /**
  * Forwards a website submission to the CRM.
  *
- * The `/v1/website/*` endpoints are guarded by a shared key rather than a
- * signed-in user, so the key is held on this side: one shipped to the browser is
- * one anybody can lift out of the network tab and use to write leads directly.
+ * The browser posts to a route handler on this origin, and that handler calls
+ * the API. It keeps the API's address off the client — `CRM_API_URL` is read
+ * server-side only — and leaves one place to attach a credential if these
+ * endpoints ever take one again. They are open by design today: they only ever
+ * write, so an abusive caller can create junk but cannot read anyone's file,
+ * and the API's own rate limit is the guard.
  *
  * The body is forwarded untouched. Multipart carries its own boundary, so the
  * content type is copied rather than set, and uploads stream through without
@@ -16,15 +19,9 @@ import { apiBaseUrl } from "@/lib/crm/session";
  */
 export async function forwardToCrm(
   request: Request,
-  endpoint: "financement" | "developpement",
+  endpoint: "financement" | "developpement" | "contact",
 ): Promise<Response> {
   const headers: HeadersInit = { Accept: "application/json" };
-
-  const key = process.env.CRM_API_KEY;
-
-  // Left unset in local development, where the API accepts unsigned calls; in
-  // production its absence is what the API's own 401 will report.
-  if (key) headers["X-Api-Key"] = key;
 
   const contentType = request.headers.get("content-type");
   if (contentType) headers["Content-Type"] = contentType;
@@ -40,7 +37,7 @@ export async function forwardToCrm(
     });
   } catch {
     // The API being unreachable is an operational problem, not something the
-    // enquirer did wrong. 503 tells the form to say so and keep their answers.
+    // visitor did wrong. 503 tells the form to say so and keep their answers.
     return new Response(null, { status: 503 });
   }
 
