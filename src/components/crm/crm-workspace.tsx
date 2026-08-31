@@ -56,6 +56,9 @@ export function CrmWorkspace() {
   const [prestation, setPrestation] = useState<PrestationFilter>("tous");
   const [period, setPeriod] = useState<PeriodFilter>("tous");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  /* Set when a card is opened from its paperclip, so the panel scrolls to the
+     pieces rather than making you hunt for them. */
+  const [focus, setFocus] = useState<"documents" | undefined>(undefined);
 
   const source = board === "messages" ? messages : dossiers;
   const stages = board === "messages" ? CONTACT_STAGES : STAGES;
@@ -280,9 +283,12 @@ export function CrmWorkspace() {
               leads={leads}
               stages={stages}
               selectedId={selectedId}
-              onSelect={(lead) =>
-                setSelectedId((current) => (current === lead.id ? null : lead.id))
-              }
+              onSelect={(lead, next) => {
+                setFocus(next);
+                setSelectedId((current) =>
+                  current === lead.id && !next ? null : lead.id,
+                );
+              }}
               onMove={setStatus}
               onLog={logContact}
             />
@@ -294,7 +300,11 @@ export function CrmWorkspace() {
           third of the board would make the board worse at its one job. */}
       {selected ? (
         <div className="hidden w-96 shrink-0 xl:block">
-          <LeadPanel lead={selected} onClose={() => setSelectedId(null)} />
+          <LeadPanel
+            lead={selected}
+            focus={focus}
+            onClose={() => setSelectedId(null)}
+          />
         </div>
       ) : null}
 
@@ -309,7 +319,11 @@ export function CrmWorkspace() {
             className="flex-1 bg-foreground/40"
           />
           <div className="w-[min(24rem,calc(100vw-3rem))]">
-            <LeadPanel lead={selected} onClose={() => setSelectedId(null)} />
+            <LeadPanel
+            lead={selected}
+            focus={focus}
+            onClose={() => setSelectedId(null)}
+          />
           </div>
         </div>
       ) : null}
