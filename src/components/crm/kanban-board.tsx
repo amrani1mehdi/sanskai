@@ -174,12 +174,16 @@ function KanbanCard({
         /* Amber only for an arrival nobody has read yet — not for anything
            merely untreated. A lead sitting at Nouveau for a week is not news,
            and colouring half the board permanently would make the highlight
-           mean nothing when something genuinely new does land. */
-        isNew ? "border-new/50 bg-new-soft" : "bg-card",
+           mean nothing when something genuinely new does land.
+           The left rail carries the saturated tone; the fill stays a wash, so
+           the card shouts without the text on it having to fight the ground. */
+        isNew
+          ? "bg-new-soft shadow-sm before:absolute before:inset-y-0 before:left-0 before:w-1 before:rounded-l-lg before:bg-new before:content-['']"
+          : "bg-card",
         selected
           ? "border-accent ring-2 ring-accent/30"
           : isNew
-            ? "border-new/50"
+            ? "border-new/60"
             : "border-border",
       )}
     >
@@ -193,8 +197,17 @@ function KanbanCard({
 
       <div className="pointer-events-none relative">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="font-mono text-[11px] font-semibold text-accent">
-            {lead.reference}
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="font-mono text-[11px] font-semibold text-accent">
+              {lead.reference}
+            </span>
+            {/* Says why the card is amber, for anyone who cannot tell colours
+                apart or is reading it in a screenshot. */}
+            {isNew ? (
+              <span className="rounded-full bg-new px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase">
+                Nouveau
+              </span>
+            ) : null}
           </span>
           <span className="text-[11px] whitespace-nowrap text-muted-foreground">
             {formatShortDate(lead.createdAt)} · {formatTime(lead.createdAt)}
