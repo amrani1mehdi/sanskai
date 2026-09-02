@@ -1,0 +1,12 @@
+# The Laravel API is not deployed here.
+#
+# It lives on the Hostinger VPS and is reached over HTTPS via CRM_API_URL, so
+# Vercel only ever needs the Next.js app. Uploading it anyway pushed the deploy
+# over Vercel's 15,000-file limit on its own — `backend/vendor` alone is more
+# than 16,000 files of Composer packages — and every one of them was upload
+# time spent on code this platform does not run.
+backend
+
+# Local-only: the artisan dev database, and the link to the old Vercel team.
+*.sqlite
+.vercel-old-hajz-team
