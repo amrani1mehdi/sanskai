@@ -24,7 +24,7 @@ import {
 } from "react";
 import * as api from "./api";
 import { isMessage } from "./config";
-import type { Lead, LeadStatus } from "./types";
+import type { DocumentKind, Lead, LeadStatus } from "./types";
 
 type Snapshot = {
   leads: Lead[];
@@ -160,7 +160,7 @@ function acknowledge(ids: string[]): void {
     });
 }
 
-export async function loadLeads(): Promise<void> {
+export async function loadLeads(knownSignature?: string): Promise<void> {
   loading = true;
 
   try {
@@ -172,8 +172,13 @@ export async function loadLeads(): Promise<void> {
      * up to date until something else changed: the lead would simply never
      * appear. Taken first, the same race only costs one redundant refetch on
      * the next tick.
+     *
+     * The live stream supplies one it read before sending the event, which is
+     * earlier still and so keeps the same guarantee — one round trip cheaper,
+     * on the path where latency is the entire point.
      */
-    signature = await api.fetchChangeSignature().catch(() => null);
+    signature =
+      knownSignature ?? (await api.fetchChangeSignature().catch(() => null));
 
     const leads = await api.fetchLeads();
 
@@ -211,31 +216,41 @@ export async function loadLeads(): Promise<void> {
 /* -------------------------------------------------------------------------- */
 /* Live updates                                                                */
 /*                                                                             */
-/* Polling, not websockets: a lead arriving within a few seconds is what the    */
-/* back office needs, and that does not justify running a second daemon on a    */
-/* box already hosting nine other applications. The signature endpoint makes    */
-/* the poll cheap enough that the interval can be short.                        */
+/* The server tells us, over an event stream held open by `/api/crm/live`.      */
+/*                                                                             */
+/* This was a fifteen-second poll, and polling is the wrong shape for a         */
+/* notification. Every submission passes through this site's server on its way  */
+/* to the API, so that server knows a lead exists the instant it is created —   */
+/* waiting to be asked threw that away and made the arrival up to fifteen       */
+/* seconds late. Worse in the case that matters most: a browser clamps          */
+/* `setInterval` in a hidden tab to about once a minute, and the count in the   */
+/* tab title is there precisely for the window nobody is looking at, so the     */
+/* notification was slowest exactly when it was the only thing doing any work.  */
+/*                                                                             */
+/* Still no websockets and still no second daemon: the stream is one HTTP       */
+/* response held open by the Next server that is already running.               */
 /* -------------------------------------------------------------------------- */
 
+/** Fallback cadence when the stream is not up — a browser that refused it, or
+    a connection still reconnecting. */
 const POLL_MS = 15_000;
+
+/** Fallback cadence while the stream is up. Long, because it is now only there
+    to catch a wire that died without ever reporting an error. */
+const BACKUP_POLL_MS = 60_000;
 
 /** Last known server state. `null` means "not established yet". */
 let signature: string | null = null;
 let timer: ReturnType<typeof setInterval> | null = null;
+let stream: EventSource | null = null;
+/** Whether the event stream is currently carrying arrivals. */
+let streaming = false;
 
 async function checkForChanges(): Promise<void> {
   /*
-   * Deliberately keeps going while the tab is hidden.
-   *
-   * The unread count is written into the tab title precisely so a lead reaches
-   * someone whose CRM is behind three other windows — which is the only state
-   * this poll used to skip. Stopping there meant the count could not move until
-   * you looked, and looking is what it was supposed to save you.
-   *
-   * Browsers clamp timers in a background tab to about once a minute and may
-   * freeze one that has been hidden for several, so the title can lag by that
-   * much. `onWake` still fires the moment the tab is focused, so the worst case
-   * is the count arriving when you return rather than a minute earlier.
+   * Runs whether or not the tab is in front — an arrival pushed down the stream
+   * has to move the title of a window sitting behind three others, which is the
+   * whole reason the count is in the title.
    */
   if (loading) return;
 
@@ -264,11 +279,83 @@ const onWake = () => {
   if (typeof document === "undefined" || !document.hidden) void checkForChanges();
 };
 
+/** (Re)arms the fallback timer at whatever cadence the stream's state calls for. */
+function armFallbackPoll(): void {
+  if (typeof window === "undefined") return;
+
+  if (timer !== null) clearInterval(timer);
+
+  timer = setInterval(
+    () => void checkForChanges(),
+    streaming ? BACKUP_POLL_MS : POLL_MS,
+  );
+}
+
+/** The fingerprint the server attached, or `null` if it could not read one. */
+function signatureFrom(event: Event): string | null {
+  try {
+    const { signature: value } = JSON.parse((event as MessageEvent<string>).data);
+
+    return typeof value === "string" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Opens the event stream.
+ *
+ * `EventSource` reconnects by itself — it honours the `retry:` the server sends
+ * and keeps trying across a dropped wifi or a restarted server — so there is no
+ * reconnection logic here. All this has to do is notice which state it is in,
+ * so the fallback poll can speed up while the wire is down and get out of the
+ * way once it is back.
+ */
+function startStream(): void {
+  if (stream !== null || typeof window === "undefined") return;
+  if (typeof EventSource === "undefined") return;
+
+  stream = new EventSource("/api/crm/live");
+
+  stream.addEventListener("ready", () => {
+    streaming = true;
+    armFallbackPoll();
+    /* The wire may have come up after a gap — a laptop lid, a redeploy. Ask
+       once now rather than trusting that nothing happened while it was down. */
+    void checkForChanges();
+  });
+
+  /* Something moved: a lead was just submitted through the site, or the server's
+     own sweep saw the CRM change under it. */
+  stream.addEventListener("leads", (event) => {
+    const next = signatureFrom(event);
+
+    /* Already holding this exact state — the sweep reporting a change this
+       panel caused itself, for instance. Nothing to fetch. */
+    if (next !== null && next === signature) return;
+
+    /* Straight to the list. The server sent the fingerprint precisely so this
+       does not have to go and ask for one first. */
+    void loadLeads(next ?? undefined);
+  });
+
+  stream.onerror = () => {
+    /* Fires on every disconnect, including the ones it is about to recover from
+       on its own. Nothing to tear down — just go back to asking more often
+       until `ready` says the wire is carrying again. */
+    if (!streaming) return;
+
+    streaming = false;
+    armFallbackPoll();
+  };
+}
+
 function startPolling(): void {
   if (timer !== null || typeof window === "undefined") return;
   if (redirecting || window.location.pathname.startsWith("/admin/login")) return;
 
-  timer = setInterval(() => void checkForChanges(), POLL_MS);
+  armFallbackPoll();
+  startStream();
 
   // A tab returning to the foreground should be current immediately, not after
   // up to another full interval.
@@ -281,6 +368,11 @@ function stopPolling(): void {
 
   clearInterval(timer);
   timer = null;
+
+  stream?.close();
+  stream = null;
+  streaming = false;
+
   document.removeEventListener("visibilitychange", onWake);
   window.removeEventListener("focus", onWake);
 }
@@ -388,6 +480,39 @@ export function useCrm() {
 
       setStatus: (id: string, status: LeadStatus) => void moveLead(id, status),
 
+      /*
+       * Marks a lead contacted, or puts it back in the queue.
+       *
+       * Optimistic for the same reason a drag is: this is what takes the amber
+       * off a card, and a highlight that lingers for a round trip after you
+       * said you had called reads as the click not registering. `loadLeads`
+       * follows and replaces the guessed timestamp with the server's.
+       */
+      /*
+       * Corrects the lead's own fields.
+       *
+       * Not optimistic, unlike the drag and the contacted flag: those are one
+       * value each and obviously reversible, whereas this is a form of them at
+       * once and the API may reject any one. Waiting means the panel never
+       * shows a corrected address the server refused to store.
+       */
+      editLead: (id: string, edits: api.LeadEdits) =>
+        void mutate(() => api.updateLead(id, edits)),
+
+      setContacted: (id: string, contacted: boolean) => {
+        const stamp = contacted ? new Date().toISOString() : null;
+
+        set({
+          ...snapshot,
+          error: null,
+          leads: snapshot.leads.map((lead) =>
+            lead.id === id ? { ...lead, contactedAt: stamp } : lead,
+          ),
+        });
+
+        void mutate(() => api.setContacted(id, contacted));
+      },
+
       addNote: (id: string, body: string) => {
         const trimmed = body.trim();
         if (trimmed) void mutate(() => api.createNote(id, trimmed));
@@ -395,6 +520,10 @@ export function useCrm() {
 
       removeNote: (_leadId: string, noteId: string) =>
         void mutate(() => api.deleteNote(noteId)),
+
+      /** Adds a piece to a lead that already exists — a Kbis sent in later. */
+      addDocument: (id: string, kind: DocumentKind, file: File) =>
+        void mutate(() => api.uploadDocument(id, kind, file)),
 
       removeDocument: (_leadId: string, documentId: string) =>
         void mutate(() => api.deleteDocument(documentId)),

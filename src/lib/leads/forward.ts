@@ -1,5 +1,6 @@
 import "server-only";
 
+import { publishLeadArrival } from "@/lib/crm/live-hub";
 import { apiBaseUrl } from "@/lib/crm/session";
 
 /**
@@ -40,6 +41,23 @@ export async function forwardToCrm(
     // visitor did wrong. 503 tells the form to say so and keep their answers.
     return new Response(null, { status: 503 });
   }
+
+  /*
+   * Tell the open back-office panels before answering the visitor.
+   *
+   * This is the moment the site knows a lead exists, and it is the only place
+   * that knows it early — announcing here is what puts the arrival in the panel,
+   * and the count in the browser tab, while the visitor is still reading their
+   * own confirmation rather than up to a poll later.
+   *
+   * `publishLeadArrival` only walks a set of callbacks held by this process, so
+   * it costs nothing and cannot fail the submission.
+   *
+   * Only on success: a 422 means the form came back with errors and no lead was
+   * written, and announcing that would send every panel off to reload a list
+   * that has not changed.
+   */
+  if (response.ok) publishLeadArrival();
 
   return new Response(await response.text(), {
     status: response.status,
