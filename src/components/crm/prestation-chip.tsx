@@ -23,7 +23,7 @@ export function PrestationChip({
     <span
       title={config.label}
       className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+        "inline-flex items-center border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
         config.chip,
         className,
       )}

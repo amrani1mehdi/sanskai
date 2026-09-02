@@ -26,12 +26,12 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap",
+        "inline-flex items-center gap-1.5 border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
         stage.badge,
         className,
       )}
     >
-      <span className={cn("h-1.5 w-1.5 rounded-full", stage.dot)} />
+      <span className={cn("h-1.5 w-1.5", stage.dot)} />
       {stage.label}
     </span>
   );

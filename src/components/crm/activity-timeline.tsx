@@ -7,6 +7,7 @@ import {
   Phone,
   Sparkles,
   StickyNote,
+  PencilLine,
   Waypoints,
 } from "lucide-react";
 import { formatDateTime } from "@/lib/crm/format";
@@ -19,6 +20,7 @@ const ICONS: Record<ActivityKind, typeof History> = {
   appel: Phone,
   email: Mail,
   document: FileText,
+  modification: PencilLine,
 };
 
 export function ActivityTimeline({ lead }: { lead: Lead }) {
@@ -39,7 +41,7 @@ export function ActivityTimeline({ lead }: { lead: Lead }) {
 
           return (
             <li key={entry.id} className="relative">
-              <span className="absolute top-0.5 -left-[1.9rem] flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-accent">
+              <span className="absolute top-0.5 -left-[1.9rem] flex h-6 w-6 items-center justify-center border border-border bg-card text-accent">
                 <Icon size={12} />
               </span>
               <p className="text-sm text-foreground">{entry.label}</p>

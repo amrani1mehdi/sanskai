@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeOff, LogIn, TriangleAlert } from "lucide-react";
+import { Eye, EyeOff, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -49,13 +49,20 @@ export function LoginForm() {
     }
   };
 
+  /*
+   * Focus is carried by the border going to full ink plus a ring of the same
+   * colour — a square 2px edge, since there is no radius for a glow to follow.
+   * A tinted halo would be the only soft shape on the screen.
+   */
   const field =
-    "w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30";
+    "w-full border border-input bg-card px-3.5 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground";
+
+  const label = "mb-2 block text-xs font-medium text-foreground";
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-5">
       <div>
-        <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-foreground">
+        <label htmlFor="email" className={label}>
           Adresse email
         </label>
         <input
@@ -72,10 +79,7 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label
-          htmlFor="password"
-          className="mb-1.5 block text-xs font-medium text-foreground"
-        >
+        <label htmlFor="password" className={label}>
           Mot de passe
         </label>
         <div className="relative">
@@ -86,7 +90,7 @@ export function LoginForm() {
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className={cn(field, "pr-11")}
+            className={cn(field, "pr-12")}
           />
           <button
             type="button"
@@ -96,7 +100,7 @@ export function LoginForm() {
               visible ? "Masquer le mot de passe" : "Afficher le mot de passe"
             }
             aria-pressed={visible}
-            className="absolute top-1/2 right-1 -translate-y-1/2 rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+            className="absolute top-px right-px bottom-px px-3 text-muted-foreground transition-colors hover:text-foreground focus-visible:bg-secondary focus-visible:text-foreground focus-visible:outline-none"
           >
             {visible ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
@@ -106,9 +110,9 @@ export function LoginForm() {
       {error ? (
         <p
           role="alert"
-          className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger"
+          className="flex items-start gap-2.5 border border-danger/25 border-l-2 border-l-danger bg-danger/[0.06] px-3.5 py-3 text-[13px] text-danger"
         >
-          <TriangleAlert size={16} className="mt-0.5 shrink-0" />
+          <TriangleAlert size={15} className="mt-px shrink-0" />
           {error}
         </p>
       ) : null}
@@ -117,11 +121,11 @@ export function LoginForm() {
         type="submit"
         disabled={pending}
         className={cn(
-          "flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-opacity",
-          pending ? "cursor-not-allowed opacity-60" : "hover:opacity-90",
+          "w-full bg-accent px-4 py-3.5 text-sm font-semibold text-accent-foreground transition-opacity",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground",
+          pending ? "cursor-not-allowed opacity-55" : "hover:opacity-90",
         )}
       >
-        <LogIn size={16} />
         {pending ? "Connexion…" : "Se connecter"}
       </button>
     </form>

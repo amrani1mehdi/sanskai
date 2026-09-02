@@ -205,6 +205,175 @@
   --sidebar-accent: 38 52% 68%;
 }
 
+/* The back office, redesigned.
+ *
+ * One neutral ramp with #18181b and #fafafa as its ends, and square corners
+ * everywhere — `--radius: 0` so the `rounded-*` utilities that resolve from it
+ * flatten too, rather than relying on every class being stripped by hand.
+ *
+ * The only hue in the whole set is the error red. On a screen whose job is to
+ * take a password, failure is the one thing that has to break out of the greys,
+ * and nothing else competes with it for attention.
+ *
+ * Scoped to its own class while the dashboard still runs on `.crm-theme`: both
+ * define the same variable names, so a half-migrated back office would other-
+ * wise mean editing shared tokens and restyling screens nobody has designed
+ * yet. When the dashboard follows, this replaces `.crm-theme` and that block
+ * goes.
+ */
+.admin-theme {
+  --background: 0 0% 98%; /* #fafafa */
+  --foreground: 240 6% 10%; /* #18181b */
+
+  /* Input surfaces. White is the one step above the canvas, which is what marks
+     a field as somewhere to type without adding a shadow or a radius. */
+  --card: 0 0% 100%;
+  --card-foreground: 240 6% 10%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 6% 10%;
+
+  --primary: 240 6% 10%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 240 5% 96%;
+  --secondary-foreground: 240 6% 10%;
+
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 46%; /* #71717a — 4.6:1 on the canvas */
+
+  /*
+   * The ink doubles as the accent: one solid button, no second colour.
+   *
+   * The site's gold was tried here and put back. It is legible enough —
+   * deepened to 33% lightness it carries white at 6.63:1 — but the board
+   * already spends colour on six column blocks, amber for uncontacted and cyan
+   * for the open lead, and a seventh hue read as another stage rather than as
+   * "this is the button". Ink is the one thing on this screen no stage owns.
+   */
+  --accent: 240 6% 10%;
+  --accent-foreground: 0 0% 98%;
+
+  --border: 240 6% 90%; /* #e4e4e7 */
+  --input: 240 6% 90%;
+  --ring: 240 6% 10%;
+
+  /*
+   * The only two hues in the back office.
+   *
+   * Grey is work, colour is an outcome, ink is "new". Four working stages read
+   * as neutral and are told apart by their place in the row; a dossier that has
+   * landed — approved or refused — is the one thing worth a colour, because it
+   * is the one thing that has stopped moving. The old palette gave all six
+   * stages a hue each, which spent the board's whole colour budget on telling
+   * apart four steps that position already tells apart.
+   */
+  --success: 143 64% 24%; /* #166534 — 6.8:1 on the canvas */
+  --danger: 0 74% 42%; /* #b91c1c — 5.9:1 on the canvas */
+
+  /*
+   * Unread. The third and last thing allowed a colour.
+   *
+   * Amber rather than more ink: a lead nobody has opened yet is the one thing
+   * on this screen that is asking for something, and it has to be findable
+   * across a board of six columns without reading any of them. It clears the
+   * moment the lead is opened or moved, so the board drains as it is worked —
+   * which is what keeps a busy morning from arriving as a wall of yellow.
+   *
+   * `new-soft` is the card fill: pale enough that #18181b sits on it at 15:1,
+   * so nothing on a highlighted card is harder to read than on a plain one.
+   */
+  --new: 32 95% 44%; /* #d97706 — the marker and border */
+  --new-soft: 48 96% 89%; /* #fef3c7 — the card fill */
+
+  /*
+   * The lead currently open in the panel.
+   *
+   * Cyan because it has to be tellable from the amber across a board at a
+   * glance, and because it carries no other meaning here — it is not a state
+   * the lead is in, it is where you are. It outranks amber on a card that is
+   * both: while the panel is open, which lead it is showing is the more urgent
+   * question, and the amber is still one click away in the panel itself.
+   */
+  --open: 192 91% 36%; /* #0891b2 */
+  --open-soft: 185 96% 90%; /* #cffafe */
+
+  /*
+   * One per stage, for the column rule and the cards' left edge — nowhere else.
+   *
+   * Restated for this palette rather than inherited: the originals were mixed
+   * for a warm canvas, and the second of them was a brown that would now read
+   * as a dirty version of the amber that means "not contacted". These are four
+   * clearly separable hues at roughly one lightness, so no stage looks more
+   * important than another — the row is a sequence, not a ranking.
+   */
+  --stage-nouveau: 215 28% 42%; /* slate */
+  --stage-examiner: 182 45% 30%; /* teal */
+  --stage-qualifie: 265 34% 48%; /* violet */
+  --stage-encours: 212 62% 44%; /* blue */
+
+  /* Square, and square all the way down. `rounded-full` compiles to a literal
+     rather than a variable, so those are stripped in the markup instead. */
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+}
+
+/*
+ * The lead panel, inverted.
+ *
+ * Ink ground, near-white ink on it. Done by restating the same variable names
+ * rather than rewriting the panel's classes: every `bg-card`, `text-foreground`
+ * and `border-border` inside it resolves against these instead, so the panel
+ * has one description of its colours and not a second set threaded through the
+ * markup that has to be kept in step with the first.
+ *
+ * The three signal colours are re-picked, not reused. `--success` at 24%
+ * lightness is legible on paper and invisible on ink; these are the same hues
+ * stepped for a dark ground, which is a different job from lightening them.
+ */
+.admin-panel {
+  --background: 240 6% 10%; /* #18181b */
+  --foreground: 0 0% 98%; /* #fafafa */
+
+  /* One step up from the ground, so a field reads as somewhere to type. */
+  --card: 240 4% 16%; /* #27272a */
+  --card-foreground: 0 0% 98%;
+
+  --popover: 240 4% 16%;
+  --popover-foreground: 0 0% 98%;
+
+  --primary: 0 0% 98%;
+  --primary-foreground: 240 6% 10%;
+
+  --secondary: 240 4% 16%;
+  --secondary-foreground: 0 0% 98%;
+
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 5% 65%; /* #a1a1aa — 7.0:1 on the ground */
+
+  /* The accent inverts with everything else: a solid button here is white with
+     ink on it, which is the same gesture as ink-on-white outside. */
+  --accent: 0 0% 98%;
+  --accent-foreground: 240 6% 10%;
+
+  --border: 240 5% 26%; /* #3f3f46 */
+  --input: 240 5% 26%;
+  --ring: 0 0% 98%;
+
+  --success: 142 69% 58%; /* #4ade80 */
+  --danger: 0 91% 71%; /* #f87171 */
+
+  --new: 43 96% 56%; /* #fbbf24 */
+  --new-soft: 43 60% 20%;
+  --open: 188 86% 53%; /* #22d3ee */
+  --open-soft: 188 60% 18%;
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -235,6 +404,8 @@
   --color-danger: hsl(var(--danger));
   --color-new: hsl(var(--new));
   --color-new-soft: hsl(var(--new-soft));
+  --color-open: hsl(var(--open));
+  --color-open-soft: hsl(var(--open-soft));
   --color-new-strong: hsl(var(--new-strong));
 
   --color-series-1: hsl(var(--series-1));
@@ -398,4 +569,50 @@
 
 @utility animate-accordion-up {
   animation: accordion-up 0.2s ease-out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Board drag and drop                                                        */
+/*                                                                            */
+/* Moving a card is the one action on this screen that changes a lead's state, */
+/* and until you let go it is entirely reversible — so the board says, at      */
+/* every moment, what it is about to do: the card lifts, the column it would   */
+/* land in fills, and a slot opens at the top of that column where it will go. */
+/*                                                                            */
+/* Every one of these is a colour or a transform, so `prefers-reduced-motion`  */
+/* can drop the movement and keep the meaning.                                 */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Where the card just landed.
+ *
+ * A drop that succeeds looks identical to a drop that silently failed, since
+ * both end with a card sitting in a column. The flash is what separates them —
+ * it fires on the server's confirmation, so seeing it means the move was saved.
+ */
+@keyframes crm-landed {
+  0% {
+    background-color: hsl(var(--foreground) / 0.16);
+    transform: scale(1.015);
+  }
+  60% {
+    background-color: hsl(var(--foreground) / 0.06);
+    transform: scale(1);
+  }
+  100% {
+    background-color: hsl(var(--card));
+    transform: scale(1);
+  }
+}
+
+@utility crm-landed {
+  animation: crm-landed 900ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the slot and the flash — they carry meaning — but arrive at the end
+     state immediately rather than travelling to it. */
+  .crm-landed {
+    animation-duration: 1ms;
+  }
 }

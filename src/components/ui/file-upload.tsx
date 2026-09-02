@@ -127,7 +127,11 @@ export function FileUpload({
   };
 
   return (
+    /* `relative` contains the `sr-only` input below, which is absolutely
+       positioned: without a positioned ancestor it is laid out against the page
+       and can escape a scrolling container, stretching the document behind it. */
     <div
+      className="relative"
       onDragOver={(event) => {
         event.preventDefault();
         setDragging(true);

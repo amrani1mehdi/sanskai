@@ -95,7 +95,7 @@ export function LeadDetail({ id }: { id: string }) {
       {/* En-tête */}
       <header className="mt-4 flex flex-col gap-4 border-b border-border pb-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-lg font-bold text-foreground">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center bg-secondary font-display text-lg font-bold text-foreground">
             {initialsOf(lead.prenom, lead.nom)}
           </span>
           <div>
@@ -273,7 +273,7 @@ function ActionBar({
       <a href="#documents" className={action}>
         <Paperclip size={15} className="text-accent" /> Consulter les documents
         {lead.documents.length > 0 ? (
-          <span className="rounded-full bg-secondary px-1.5 text-xs font-semibold">
+          <span className="bg-secondary px-1.5 text-xs font-semibold">
             {lead.documents.length}
           </span>
         ) : null}
@@ -468,8 +468,8 @@ function Criterion({
       <span
         className={
           ok
-            ? "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success"
-            : "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger/15 text-danger"
+            ? "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-success/15 text-success"
+            : "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-danger/15 text-danger"
         }
       >
         {ok ? <Check size={12} /> : <X size={12} />}

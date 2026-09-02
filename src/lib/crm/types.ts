@@ -72,7 +72,9 @@ export type ActivityKind =
   | "note"
   | "appel"
   | "email"
-  | "document";
+  | "document"
+  /* A field on the fiche was corrected; the label carries before and after. */
+  | "modification";
 
 export type Activity = {
   id: string;
@@ -107,6 +109,8 @@ export type Lead = {
    * administrator looks, it stops being new for the other, which is the point.
    */
   seenAt: string | null;
+  /** When someone actually rang them back. Null means still to do. */
+  contactedAt: string | null;
 
   // Identity — both forms collect all four.
   nom: string;

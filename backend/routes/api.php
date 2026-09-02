@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ActivityController;
+use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadDocumentController;
@@ -53,6 +54,19 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // effect on the next call, not whenever the holder next signs in.
     Route::middleware(['auth:sanctum', 'admin'])->group(function () {
         Route::get('auth/me', [AuthController::class, 'show'])->name('auth.me');
+
+        /*
+         * Who can get into the back office.
+         *
+         * Behind the same `admin` gate as everything else: an administrator is
+         * the only thing that can make another one, and there is no lesser role
+         * to escalate from.
+         */
+        Route::get('admins', [AdminController::class, 'index'])->name('admins.index');
+        Route::post('admins', [AdminController::class, 'store'])->name('admins.store');
+        Route::delete('admins/{user}', [AdminController::class, 'destroy'])
+            ->name('admins.destroy');
+
         Route::patch('auth/password', [AuthController::class, 'updatePassword'])
             ->name('auth.password');
         Route::delete('auth/token', [AuthController::class, 'destroy'])->name('auth.destroy');

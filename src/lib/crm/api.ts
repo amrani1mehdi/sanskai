@@ -1,6 +1,7 @@
 import type {
   Activity,
   ActivityKind,
+  DocumentKind,
   Lead,
   LeadDocument,
   LeadNote,
@@ -104,6 +105,7 @@ type ApiLead = {
   activities?: ApiActivity[];
   createdAt: string;
   seenAt: string | null;
+  contactedAt: string | null;
   updatedAt: string;
 };
 
@@ -147,6 +149,7 @@ export function toLead(lead: ApiLead): Lead {
     status: lead.status,
     createdAt: lead.createdAt,
     seenAt: lead.seenAt ?? null,
+    contactedAt: lead.contactedAt ?? null,
     updatedAt: lead.updatedAt,
 
     nom: lead.nom,
@@ -342,6 +345,54 @@ export async function updateStatus(id: string, status: LeadStatus): Promise<Lead
   return toLead(payload.data);
 }
 
+/** The fields the back office may correct on an existing lead. */
+export type LeadEdits = Partial<{
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string | null;
+  entreprise: string;
+  siren: string | null;
+  adresse: string | null;
+  codePostal: string | null;
+  ville: string | null;
+  message: string | null;
+}>;
+
+/**
+ * Corrects a lead's own details.
+ *
+ * Only the changed fields are sent. The API records every one in the lead's
+ * history with its previous value, so a correction is visible rather than
+ * silent — send the whole form every time and the trail fills with noise.
+ */
+export async function updateLead(id: string, edits: LeadEdits): Promise<Lead> {
+  const payload = await call<{ data: ApiLead }>(`leads/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(edits),
+  });
+
+  return toLead(payload.data);
+}
+
+/**
+ * Marks a lead contacted, or puts it back in the queue.
+ *
+ * The board keeps a lead highlighted until this is true, so it is the flag that
+ * takes a card out of the "still to call" pile. The API stores the moment, not
+ * the boolean, and keeps the first one.
+ */
+export async function setContacted(id: string, contacted: boolean): Promise<Lead> {
+  const payload = await call<{ data: ApiLead }>(`leads/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contacted }),
+  });
+
+  return toLead(payload.data);
+}
+
 export async function deleteLead(id: string): Promise<void> {
   await call<void>(`leads/${id}`, { method: "DELETE" });
 }
@@ -358,8 +409,83 @@ export async function deleteNote(noteId: string): Promise<void> {
   await call<void>(`notes/${noteId}`, { method: "DELETE" });
 }
 
+/**
+ * Adds a piece to an existing lead.
+ *
+ * The endpoint has been there since the beginning and nothing ever called it:
+ * documents could only arrive with the original submission, so a Kbis sent by
+ * email afterwards had nowhere to go. Multipart, and deliberately no
+ * `Content-Type` header — fetch sets the boundary, and naming it by hand makes
+ * the file unreadable at the other end.
+ */
+export async function uploadDocument(
+  leadId: string,
+  kind: DocumentKind,
+  file: File,
+): Promise<void> {
+  const body = new FormData();
+  body.set("kind", kind);
+  body.set("file", file);
+
+  await call<void>(`leads/${leadId}/documents`, { method: "POST", body });
+}
+
 export async function deleteDocument(documentId: string): Promise<void> {
   await call<void>(`documents/${documentId}`, { method: "DELETE" });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Administrators                                                              */
+/* -------------------------------------------------------------------------- */
+
+export type Admin = {
+  id: string;
+  name: string;
+  email: string;
+  initials: string;
+};
+
+type ApiAdmin = { id: number; name: string; email: string; initials: string };
+
+const toAdmin = (admin: ApiAdmin): Admin => ({ ...admin, id: String(admin.id) });
+
+/** Everyone who can sign in to the back office. */
+export async function fetchAdmins(): Promise<Admin[]> {
+  const payload = await call<{ data: ApiAdmin[] }>("admins");
+
+  return payload.data.map(toAdmin);
+}
+
+/**
+ * Adds someone to the back office.
+ *
+ * The password is set here and has to reach them some other way — there is no
+ * invitation email in this application to send it through. They can change it
+ * from their own account menu afterwards.
+ */
+export async function createAdmin(
+  name: string,
+  email: string,
+  password: string,
+  confirmation: string,
+): Promise<Admin> {
+  const payload = await call<{ data: ApiAdmin }>("admins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      email,
+      password,
+      // Laravel's `confirmed` rule looks for this exact snake_case name.
+      password_confirmation: confirmation,
+    }),
+  });
+
+  return toAdmin(payload.data);
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+  await call<void>(`admins/${id}`, { method: "DELETE" });
 }
 
 /**

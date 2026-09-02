@@ -19,7 +19,7 @@ use Illuminate\Validation\ValidationException;
  * The Filament panel keeps its session login; this is for the Next.js admin,
  * which is a separate origin and cannot share that cookie.
  *
- * The CRM runs on a single administrator, identified by email address. The
+ * Administrators are identified by email address. The
  * account is created at installation with an initial password, changed from
  * here afterwards.
  */

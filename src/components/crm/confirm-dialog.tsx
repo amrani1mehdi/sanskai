@@ -59,7 +59,7 @@ export function ConfirmDialog({
     >
       <div className="p-6">
         <div className="flex gap-4">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-danger/10 text-danger">
             <TriangleAlert size={19} />
           </span>
           <div className="min-w-0">

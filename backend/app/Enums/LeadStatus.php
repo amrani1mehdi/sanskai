@@ -5,11 +5,12 @@ namespace App\Enums;
 /**
  * Where a lead stands.
  *
- * A service enquiry moves through the six-stage pipeline; a contact message
- * does not. "Qualifié", "Approuvé" and "Refusé" mean nothing on a question
- * someone asked — the only thing worth recording there is whether it has been
- * answered. Both live in one column because both are a lead's status, and
- * `forService()` is what keeps each side offering only its own values.
+ * One pipeline, whatever the lead came in on. Contact messages used to run a
+ * two-state track of their own — answered or not — on the reasoning that
+ * "Qualifié" and "Approuvé" mean nothing on a question someone asked. They do:
+ * a message gets read, the person gets called, and it either turns into work or
+ * it does not, which is the same six steps everything else takes. Keeping it
+ * separate only meant looking in two places for one job.
  */
 enum LeadStatus: string
 {
@@ -20,14 +21,18 @@ enum LeadStatus: string
     case Approuve = 'approuve';
     case Refuse = 'refuse';
 
-    /** Contact messages only. `Nouveau` is its unanswered counterpart. */
+    /**
+     * Legacy. Contact messages held this before they joined the pipeline; the
+     * rows were migrated to `AExaminer`. Kept so an old value still resolves to
+     * a label rather than blowing up, and never offered.
+     */
     case Repondu = 'repondu';
 
     public function label(): string
     {
         return match ($this) {
             self::Nouveau => 'Nouveau',
-            self::AExaminer => 'À examiner',
+            self::AExaminer => 'Contacté',
             self::Qualifie => 'Qualifié',
             self::EnCours => 'En cours',
             self::Approuve => 'Approuvé',
@@ -39,40 +44,39 @@ enum LeadStatus: string
     /**
      * The label in the context of a service.
      *
-     * `nouveau` is shared, and reads differently either side: a dossier that
-     * just arrived is "Nouveau", a message nobody has answered yet is
-     * "Non répondu". Same stored value, two honest words for it.
+     * There is one wording now that every service runs the same pipeline — a
+     * contact message that just arrived is "Nouveau", like everything else.
+     * The signature stays because the trail and the API both read a status in
+     * the context of its lead, and a service-specific wording may return.
      */
     public function labelFor(LeadService $service): string
     {
-        if ($service === LeadService::Contact && $this === self::Nouveau) {
-            return 'Non répondu';
-        }
-
         return $this->label();
     }
 
     /**
      * The statuses a lead of this service may hold.
      *
-     * Used to build the back office's status picker and to validate an update,
-     * so a financing dossier can never be marked "Répondu" and a message can
-     * never be "Approuvé".
+     * The same six for everything, now that contact messages run the pipeline
+     * too. `$service` is kept rather than dropped: it is what every caller
+     * already passes, and the day one service needs its own stage back this is
+     * the one place that has to change.
+     *
+     * `Repondu` is deliberately absent — it is a value that may still be read
+     * from an old row, never one that may be set.
      *
      * @return list<self>
      */
     public static function forService(LeadService $service): array
     {
-        return $service === LeadService::Contact
-            ? [self::Nouveau, self::Repondu]
-            : [
-                self::Nouveau,
-                self::AExaminer,
-                self::Qualifie,
-                self::EnCours,
-                self::Approuve,
-                self::Refuse,
-            ];
+        return [
+            self::Nouveau,
+            self::AExaminer,
+            self::Qualifie,
+            self::EnCours,
+            self::Approuve,
+            self::Refuse,
+        ];
     }
 
     /** True when this status is meaningful for that service. */

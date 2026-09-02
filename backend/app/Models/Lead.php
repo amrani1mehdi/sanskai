@@ -34,6 +34,7 @@ class Lead extends Model
             'status' => LeadStatus::class,
             'date_creation' => 'date',
             'seen_at' => 'datetime',
+            'contacted_at' => 'datetime',
             'chiffre_affaire_cents' => 'integer',
             'montant_cents' => 'integer',
             'site_web' => 'boolean',

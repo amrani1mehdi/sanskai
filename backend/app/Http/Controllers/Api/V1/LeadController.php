@@ -67,23 +67,107 @@ class LeadController extends Controller
     /**
      * PATCH /api/v1/leads/{lead}
      *
-     * The status, and only the status. Recorded in the trail with the before and
-     * after, so the history reads as a sentence rather than a diff.
+     * The status, the fiche's own fields, or both. Everything that changes is
+     * recorded in the trail with its before and after, so the history reads as
+     * a sentence rather than a diff — and so a correction never loses what the
+     * applicant originally sent.
      */
     public function update(UpdateLeadRequest $request, Lead $lead): LeadResource
     {
-        $next = LeadStatus::from($request->validated('status'));
+        if ($request->has('status')) {
+            $next = LeadStatus::from($request->validated('status'));
 
-        if ($next !== $lead->status) {
-            $from = $lead->status->labelFor($lead->service);
-            $lead->status = $next;
+            if ($next !== $lead->status) {
+                $from = $lead->status->labelFor($lead->service);
+                $lead->status = $next;
+                $lead->save();
+
+                $lead->recordActivity(
+                    ActivityKind::Statut,
+                    "Statut passé de {$from} à {$next->labelFor($lead->service)}",
+                    $request->user(),
+                );
+            }
+        }
+
+        /*
+         * Corrections, and the record of them.
+         *
+         * Every changed field is named in the activity entry with both values,
+         * so what the applicant originally submitted stays recoverable from the
+         * trail. That is the whole reason these fields were closed before, and
+         * writing the old value down is what makes opening them safe.
+         *
+         * Only fields actually present are touched, and only ones whose value
+         * really differs — a form that posts every field on every save must not
+         * fill the history with "changed X from Y to Y".
+         */
+        $changes = [];
+
+        foreach (UpdateLeadRequest::EDITABLE as $field => $column) {
+            if (! $request->has($field)) {
+                continue;
+            }
+
+            $value = $request->validated($field);
+            $before = $lead->{$column};
+
+            if ($before === $value) {
+                continue;
+            }
+
+            $lead->{$column} = $value;
+            $changes[] = sprintf(
+                '%s : « %s » → « %s »',
+                $field,
+                $before === null || $before === '' ? '—' : $before,
+                $value === null || $value === '' ? '—' : $value,
+            );
+        }
+
+        if ($changes !== []) {
             $lead->save();
 
             $lead->recordActivity(
-                ActivityKind::Statut,
-                "Statut passé de {$from} à {$next->labelFor($lead->service)}",
+                ActivityKind::Modification,
+                'Fiche modifiée — '.implode(' ; ', $changes),
                 $request->user(),
             );
+        }
+
+        /*
+         * Contacted, and when.
+         *
+         * The board keeps a lead highlighted until this is set, so it is the
+         * one flag that changes what everyone sees — worth a line in the trail
+         * both ways. Marking an already-contacted lead contacted again keeps
+         * the first timestamp: when someone was first called back is a fact
+         * about the lead, and a second click should not rewrite it.
+         */
+        if ($request->has('contacted')) {
+            $contacted = $request->boolean('contacted');
+
+            if ($contacted && $lead->contacted_at === null) {
+                $lead->contacted_at = now();
+                $lead->save();
+
+                $lead->recordActivity(
+                    ActivityKind::Appel,
+                    'Marqué comme contacté',
+                    $request->user(),
+                );
+            }
+
+            if (! $contacted && $lead->contacted_at !== null) {
+                $lead->contacted_at = null;
+                $lead->save();
+
+                $lead->recordActivity(
+                    ActivityKind::Modification,
+                    'Remis en « à contacter »',
+                    $request->user(),
+                );
+            }
         }
 
         $lead->load(['documents', 'notes', 'activities']);

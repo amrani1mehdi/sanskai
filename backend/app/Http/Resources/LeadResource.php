@@ -45,6 +45,9 @@ class LeadResource extends JsonResource
                whole team, not per viewer: once one of them opens it, it stops
                being new for everybody. */
             'seenAt' => $this->seen_at?->toIso8601String(),
+            // Null until someone actually calls them back. The board colours
+            // every lead that is still waiting on this.
+            'contactedAt' => $this->contacted_at?->toIso8601String(),
             /* What this lead may be set to, so the back office builds its
                picker from the API rather than from a list of its own that
                could drift out of step with what the API will accept. */

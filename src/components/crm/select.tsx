@@ -137,7 +137,7 @@ export function Select({
         onClick={() => (open ? setOpen(false) : openList())}
         onKeyDown={onKeyDown}
         className={cn(
-          "flex w-full items-center gap-2 rounded-lg border py-2 pr-2.5 pl-3 text-sm whitespace-nowrap transition-colors",
+          "flex w-full items-center gap-2 border py-2 pr-2.5 pl-3 text-sm whitespace-nowrap transition-colors",
           "focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:outline-none",
           active
             ? "border-accent/40 bg-accent/10 font-medium text-foreground"
@@ -164,7 +164,7 @@ export function Select({
           role="listbox"
           aria-label={label}
           aria-activedescendant={`${listId}-${highlighted}`}
-          className="absolute z-50 mt-1.5 max-h-72 w-full min-w-max overflow-y-auto rounded-lg border border-border bg-card p-1 shadow-lg scrollbar-brand"
+          className="absolute z-50 mt-1 max-h-72 w-full min-w-max overflow-y-auto border border-border bg-card p-1 shadow-[0_8px_24px_-12px_rgba(24,24,27,0.35)] scrollbar-brand"
         >
           {options.map((option, index) => {
             const isSelected = option.value === value;
@@ -178,7 +178,7 @@ export function Select({
                 onMouseEnter={() => setHighlighted(index)}
                 onClick={() => commit(index)}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors",
+                  "flex cursor-pointer items-center gap-2 px-2.5 py-2 text-sm transition-colors",
                   index === highlighted
                     ? "bg-accent/12 text-foreground"
                     : "text-muted-foreground",

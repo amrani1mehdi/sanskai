@@ -8,96 +8,88 @@
  * never leaves the board: the whole point of the layout is that a lead can be
  * read, moved and noted without a round trip to another page.
  *
- * Two boards, one component. Service dossiers run the six-stage pipeline;
- * contact messages have two states, answered or not, because "Qualifié" and
- * "Approuvé" mean nothing on a question somebody asked. Switching between them
- * swaps the columns rather than pretending one set fits both.
+ * One board for every lead. Contact messages used to sit behind a second tab
+ * running two stages of their own; they take the same six steps as anything
+ * else — read, called, and then it becomes work or it does not — so they are
+ * here too, and the service filter is what narrows the board to them.
  */
 
 import { useMemo, useState } from "react";
 import { Search, SlidersHorizontal, TriangleAlert, X } from "lucide-react";
 import { KanbanBoard } from "@/components/crm/kanban-board";
-import { NewLeadsBell } from "@/components/crm/new-leads-bell";
 import { Select } from "@/components/crm/select";
+import { LeadForm } from "@/components/crm/lead-form";
+import {
+  ANY_DATE,
+  DateRangeFilter,
+  type DateRange,
+} from "@/components/crm/date-range-filter";
 import { LeadPanel } from "@/components/crm/lead-panel";
 import {
+  type StageConfig,
   CONTACT,
-  CONTACT_STAGES,
   PRESTATIONS,
   SERVICES,
   STAGES,
-  isMessage,
 } from "@/lib/crm/config";
 import { useCrm } from "@/lib/crm/store";
-import type { PrestationId, ServiceId } from "@/lib/crm/types";
-import { cn } from "@/lib/utils";
+import type { Lead, PrestationId, ServiceId } from "@/lib/crm/types";
 
-/** Which board is on screen. Messages are separate because their stages are. */
-type Board = "dossiers" | "messages";
 type ServiceFilter = ServiceId | "tous";
 type PrestationFilter = PrestationId | "tous";
-/** Received within the last N days. */
-type PeriodFilter = "tous" | "7" | "30" | "90";
-
-const PERIODS: { id: PeriodFilter; label: string }[] = [
-  { id: "tous", label: "Toutes les dates" },
-  { id: "7", label: "7 derniers jours" },
-  { id: "30", label: "30 derniers jours" },
-  { id: "90", label: "90 derniers jours" },
-];
 
 export function CrmWorkspace() {
   const {
-    dossiers,
-    messages,
+    leads: all,
     hydrated,
-    syncedAt,
     error,
-    unseen,
     markSeen,
-    markAllSeen,
     setStatus,
-    logContact,
   } = useCrm();
 
-  const [board, setBoard] = useState<Board>("dossiers");
   const [query, setQuery] = useState("");
   const [service, setService] = useState<ServiceFilter>("tous");
   const [prestation, setPrestation] = useState<PrestationFilter>("tous");
-  const [period, setPeriod] = useState<PeriodFilter>("tous");
+  const [period, setPeriod] = useState<DateRange>(ANY_DATE);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   /* Set when a card is opened from its paperclip, so the panel scrolls to the
      pieces rather than making you hunt for them. */
   const [focus, setFocus] = useState<"documents" | undefined>(undefined);
+  /* The column whose "Ajouter" button was pressed — null while the form is
+     closed, and what tells the new lead where to land. */
+  const [adding, setAdding] = useState<StageConfig | null>(null);
 
-  const source = board === "messages" ? messages : dossiers;
-  const stages = board === "messages" ? CONTACT_STAGES : STAGES;
   /** The sub-service filter only means anything inside Développement. */
-  const showPrestations = board === "dossiers" && service === "developpement";
+  const showPrestations = service === "developpement";
 
   const leads = useMemo(() => {
     const needle = query.trim().toLowerCase();
 
-    /* The window is measured from the last sync rather than `Date.now()`.
-       Reading the clock inside a memo is impure — the same inputs would give
-       different answers — and the sync time is the honest reference anyway:
-       the list is only ever as current as the last fetch. It moves every
-       poll, so the window slides on its own. */
-    const cutoff =
-      period === "tous" || !syncedAt
-        ? null
-        : new Date(syncedAt).getTime() - Number(period) * 24 * 60 * 60 * 1000;
+    /* Two real dates, so this memo reads no clock at all.
+       The window used to be "the last N days", measured from the sync time
+       because reading `Date.now()` here would make the same inputs give
+       different answers. The picker resolves its presets to actual dates when
+       they are clicked, which removes the problem rather than working around
+       it — and stops the window sliding under you while you read the board.
 
-    return source.filter((lead) => {
-      if (board === "dossiers" && service !== "tous" && lead.service !== service) {
+       Both ends inclusive: `to` is compared against the end of that day, or
+       a lead that arrived at 14:00 on the last day would fall outside a range
+       that names it. */
+    const after = period.from ? new Date(`${period.from}T00:00:00`).getTime() : null;
+    const before = period.to ? new Date(`${period.to}T23:59:59.999`).getTime() : null;
+
+    return all.filter((lead) => {
+      if (service !== "tous" && lead.service !== service) return false;
+      if (
+        showPrestations &&
+        prestation !== "tous" &&
+        lead.prestation !== prestation
+      ) {
         return false;
       }
-      if (showPrestations && prestation !== "tous" && lead.prestation !== prestation) {
-        return false;
-      }
-      if (cutoff !== null && new Date(lead.createdAt).getTime() < cutoff) {
-        return false;
-      }
+      const at = new Date(lead.createdAt).getTime();
+      if (after !== null && at < after) return false;
+      if (before !== null && at > before) return false;
       if (!needle) return true;
 
       return [
@@ -112,91 +104,58 @@ export function CrmWorkspace() {
         .filter(Boolean)
         .some((field) => field!.toLowerCase().includes(needle));
     });
-  }, [source, board, service, prestation, period, query, showPrestations, syncedAt]);
+  }, [all, service, prestation, period, query, showPrestations]);
 
-  /* Unread arrivals, newest first — across both boards, because a contact
-     message landing is as much news as a dossier. */
-  const arrivals = useMemo(
-    () =>
-      [...unseen].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      ),
-    [unseen],
-  );
-
-  /* Only the newest unread arrival is highlighted on the board.
-
-     Tinting every unread one turns a busy morning into a wall of amber, and
-     the point of the colour is "look at this one". A newer arrival takes the
-     highlight from the one before it, which also answers what should happen to
-     a card nobody got to — it goes back to normal and stays in the bell. */
-  const highlightId = arrivals[0]?.id ?? null;
+  /*
+   * Opening a lead, or moving it, marks it seen.
+   *
+   * All that now drives is the count in the browser tab — the one place an
+   * arrival can reach someone who is not looking at the CRM. Deliberately not
+   * the card's colour, which follows `contactedAt`: "somebody opened this" and
+   * "somebody rang them" are different facts, and only the second means the
+   * lead has been dealt with.
+   *
+   * Guarded on `seenAt`, so re-opening a lead you have already read is not
+   * another write.
+   */
+  const acknowledge = (lead: Lead) => {
+    if (lead.seenAt === null) markSeen(lead.id);
+  };
 
   /* Read from the live list, not held in state: a card that moves stage or is
      deleted must not leave the panel showing a stale copy of it. */
   const selected = selectedId
-    ? (source.find((lead) => lead.id === selectedId) ?? null)
+    ? (all.find((lead) => lead.id === selectedId) ?? null)
     : null;
 
   const filtersActive =
     query.trim() !== "" ||
     service !== "tous" ||
     prestation !== "tous" ||
-    period !== "tous";
+    period.from !== null ||
+    period.to !== null;
 
   const reset = () => {
     setQuery("");
     setService("tous");
     setPrestation("tous");
-    setPeriod("tous");
-  };
-
-  const changeBoard = (next: Board) => {
-    setBoard(next);
-    // The filters below are per board; carrying them across makes the other
-    // board look empty for reasons that are no longer on screen.
-    setService("tous");
-    setPrestation("tous");
-    setSelectedId(null);
+    setPeriod(ANY_DATE);
   };
 
   return (
-    <div className="flex h-[calc(100vh-1px)] min-w-0">
+    <div className="flex h-full min-w-0">
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 lg:px-6">
-          <h1 className="font-display text-lg font-bold text-foreground">Leads</h1>
-
-          {/* Dossiers and messages are different objects with different
-              stages, so this switches the board rather than filtering it. */}
-          <div
-            role="tablist"
-            aria-label="Type de lead"
-            className="flex rounded-lg border border-border bg-card p-0.5"
-          >
-            {(
-              [
-                ["dossiers", "Dossiers", dossiers.length],
-                ["messages", CONTACT.shortLabel, messages.length],
-              ] as const
-            ).map(([id, label, count]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={board === id}
-                onClick={() => changeBoard(id)}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  board === id
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {label}
-                <span className="ml-1.5 text-xs opacity-70">{count}</span>
-              </button>
-            ))}
-          </div>
+          {/* One board. Contact messages used to sit behind a second tab with
+              two stages of their own; they run the same pipeline now, so the
+              count is the whole list and the service filter below is what
+              narrows it to messages. */}
+          <h1 className="font-display text-lg font-bold text-foreground">
+            Leads
+            <span className="ml-2 font-sans text-sm font-medium text-muted-foreground tabular-nums">
+              {leads.length}
+            </span>
+          </h1>
 
           <div className="relative min-w-48 flex-1">
             <Search
@@ -210,7 +169,7 @@ export function CrmWorkspace() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Rechercher un nom, une entreprise, une référence…"
               aria-label="Rechercher un lead"
-              className="w-full rounded-lg border border-border bg-card py-2 pr-3 pl-9 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-accent/30"
+              className="w-full border border-input bg-card py-2 pr-3 pl-9 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground focus:ring-1 focus:ring-foreground"
             />
           </div>
 
@@ -221,20 +180,26 @@ export function CrmWorkspace() {
               aria-hidden
             />
 
-            {board === "dossiers" ? (
-              <Select
-                label="Filtrer par service"
-                value={service}
-                onChange={(next) => {
-                  setService(next as ServiceFilter);
-                  if (next !== "developpement") setPrestation("tous");
-                }}
-                options={[
-                  { value: "tous", label: "Tous les services" },
-                  ...SERVICES.map((item) => ({ value: item.id, label: item.label })),
-                ]}
-              />
-            ) : null}
+            <Select
+              label="Filtrer par service"
+              value={service}
+              onChange={(next) => {
+                setService(next as ServiceFilter);
+                if (next !== "developpement") setPrestation("tous");
+              }}
+              /* Contact is in the list now. It is not a service the company
+                   sells, which is why it is kept out of `SERVICES`, but on one
+                   board it is the only way left to ask for just the messages —
+                   the job the second tab used to do. */
+              options={[
+                { value: "tous", label: "Tous les services" },
+                ...SERVICES.map((item) => ({
+                  value: item.id,
+                  label: item.label,
+                })),
+                { value: CONTACT.id, label: CONTACT.label },
+              ]}
+            />
 
             {showPrestations ? (
               <Select
@@ -251,38 +216,17 @@ export function CrmWorkspace() {
               />
             ) : null}
 
-            <Select
-              label="Filtrer par période"
-              value={period}
-              onChange={(next) => setPeriod(next as PeriodFilter)}
-              options={PERIODS.map((item) => ({ value: item.id, label: item.label }))}
-            />
+            <DateRangeFilter value={period} onChange={setPeriod} />
 
             {filtersActive ? (
               <button
                 type="button"
                 onClick={reset}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                className="inline-flex items-center gap-1.5 border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
                 <X size={14} /> Réinitialiser
               </button>
             ) : null}
-
-            {/* Beside the filters, not in the sidebar: this is about the board
-                you are looking at, and the rail is navigation only. */}
-            <NewLeadsBell
-              leads={arrivals}
-              onMarkAll={markAllSeen}
-              onMarkOne={markSeen}
-              onSelect={(lead) => {
-                /* A new lead can be a message while the dossiers board is up —
-                   land on the right one rather than selecting something the
-                   current board cannot show. */
-                setBoard(isMessage(lead) ? "messages" : "dossiers");
-                setFocus(undefined);
-                setSelectedId(lead.id);
-              }}
-            />
           </div>
         </header>
 
@@ -292,7 +236,7 @@ export function CrmWorkspace() {
         {error ? (
           <p
             role="alert"
-            className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger lg:mx-6"
+            className="mx-4 mt-3 flex items-start gap-2.5 border border-danger/25 border-l-2 border-l-danger bg-danger/[0.06] px-4 py-2.5 text-sm text-danger lg:mx-6"
           >
             <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
             {error}
@@ -305,29 +249,32 @@ export function CrmWorkspace() {
             content rather than another row of the toolbar. */}
         <div className="min-h-0 flex-1 overflow-hidden px-4 pt-5 pb-4 lg:px-6">
           {!hydrated ? (
-            <p className="rounded-xl border border-dashed border-border px-6 py-16 text-center text-sm text-muted-foreground">
+            <p className="border border-dashed border-border px-6 py-16 text-center text-sm text-muted-foreground">
               Chargement des leads…
             </p>
-          ) : source.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border px-6 py-16 text-center text-sm text-muted-foreground">
-              {board === "messages"
-                ? "Aucun message n'a encore été reçu via le formulaire de contact."
-                : "Aucune demande n'a encore été envoyée depuis le site."}
+          ) : all.length === 0 ? (
+            <p className="border border-dashed border-border px-6 py-16 text-center text-sm text-muted-foreground">
+              Aucune demande n&apos;a encore été envoyée depuis le site.
             </p>
           ) : (
             <KanbanBoard
               leads={leads}
-              stages={stages}
+              stages={STAGES}
               selectedId={selectedId}
-              highlightId={highlightId}
               onSelect={(lead, next) => {
+                acknowledge(lead);
                 setFocus(next);
                 setSelectedId((current) =>
                   current === lead.id && !next ? null : lead.id,
                 );
               }}
-              onMove={setStatus}
-              onLog={logContact}
+              onMove={(id, status) => {
+                setStatus(id, status);
+
+                const moved = all.find((lead) => lead.id === id);
+                if (moved) acknowledge(moved);
+              }}
+              onAdd={(stage) => setAdding(stage)}
             />
           )}
         </div>
@@ -336,7 +283,7 @@ export function CrmWorkspace() {
       {/* Only while something is selected — an empty rail permanently eating a
           third of the board would make the board worse at its one job. */}
       {selected ? (
-        <div className="hidden w-96 shrink-0 xl:block">
+        <div className="hidden w-[30rem] shrink-0 xl:block">
           <LeadPanel
             lead={selected}
             focus={focus}
@@ -355,15 +302,25 @@ export function CrmWorkspace() {
             onClick={() => setSelectedId(null)}
             className="flex-1 bg-foreground/40"
           />
-          <div className="w-[min(24rem,calc(100vw-3rem))]">
+          <div className="w-[min(30rem,calc(100vw-2rem))]">
             <LeadPanel
-            lead={selected}
-            focus={focus}
-            onClose={() => setSelectedId(null)}
-          />
+              lead={selected}
+              focus={focus}
+              onClose={() => setSelectedId(null)}
+            />
           </div>
         </div>
       ) : null}
+
+      {/* Kept mounted so the dialog can animate closed, and keyed on the column
+          so switching which "Ajouter" you pressed resets the sheet. */}
+      <LeadForm
+        key={adding?.id ?? "closed"}
+        open={adding !== null}
+        status={adding?.id ?? "nouveau"}
+        statusLabel={adding?.label ?? ""}
+        onClose={() => setAdding(null)}
+      />
     </div>
   );
 }

@@ -36,7 +36,7 @@ export function NotesPanel({
         <h2 className="font-display text-base font-bold text-foreground">
           Notes internes
         </h2>
-        <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+        <span className="bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
           {lead.notes.length}
         </span>
       </div>

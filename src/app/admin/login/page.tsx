@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/crm/login-form";
+import { SansekaiMark } from "@/components/crm/sansekai-mark";
 import { isSignedIn } from "@/lib/crm/session";
 
 export const metadata: Metadata = {
@@ -14,33 +14,53 @@ export default async function LoginPage() {
   if (await isSignedIn()) redirect("/admin");
 
   return (
-    <div className="crm-theme flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center text-center">
-          <Image
-            src="/images/sansekai-logo.jpeg"
-            alt="Sansekai Solution"
-            width={56}
-            height={56}
-            priority
-            className="h-14 w-14 rounded-lg object-cover"
-          />
-          <h1 className="mt-4 font-display text-xl font-bold text-foreground">
-            Back office
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Connectez-vous pour accéder aux leads.
+    <div className="admin-theme flex min-h-screen justify-center bg-background px-6 py-16 sm:items-center sm:py-12">
+      {/*
+       * Flush left on a narrow column rather than centred.
+       *
+       * This is a form in a working tool, not a splash: left alignment gives
+       * the labels, fields and button one edge to sit on, and the eye tracks
+       * straight down it. Centring would put every line on a different start.
+       */}
+      <main className="w-full max-w-[360px]">
+        <div aria-label="Sansekai Solution">
+          {/* Big enough that the bars read as the mark. Small, they are three
+              even-looking lines — a menu icon. The uneven widths are what tell
+              them apart, and they need the size to be seen. */}
+          <SansekaiMark className="w-[68px] text-foreground" />
+
+          {/* The lockup's own proportions: the name set wide, the qualifier
+              smaller and wider still beneath it. */}
+          <p className="mt-6 font-display text-[19px] leading-none font-bold tracking-[0.2em] text-foreground">
+            SANSEKAI
+          </p>
+          <p className="mt-2 font-display text-[10px] leading-none font-semibold tracking-[0.42em] text-muted-foreground">
+            SOLUTION
           </p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <hr className="mt-8 border-t border-border" />
+
+        <h1 className="mt-8 font-mono text-[11px] tracking-[0.18em] text-foreground uppercase">
+          Espace admin
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Connectez-vous pour accéder aux leads.
+        </p>
+
+        <div className="mt-7">
           <LoginForm />
         </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
+        <hr className="mt-10 border-t border-border" />
+
+        {/* Not mono: it is a sentence, and monospacing a line of French with
+            accents in it reads as code rather than as a note. The eyebrow is
+            the one place the mono face earns its keep. */}
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
           Accès réservé à l&apos;administrateur du CRM.
         </p>
-      </div>
+      </main>
     </div>
   );
 }

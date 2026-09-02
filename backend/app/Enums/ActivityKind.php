@@ -11,4 +11,6 @@ enum ActivityKind: string
     case Appel = 'appel';
     case Email = 'email';
     case Document = 'document';
+    /** A field on the fiche was corrected. Carries the before and after. */
+    case Modification = 'modification';
 }

@@ -32,7 +32,7 @@ export function DocumentsPanel({
       <div className="mb-5 flex items-center gap-2">
         <Paperclip size={16} className="text-accent" />
         <h2 className="font-display text-base font-bold text-foreground">Documents</h2>
-        <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+        <span className="bg-secondary px-2 py-0.5 text-xs font-semibold text-muted-foreground">
           {lead.documents.length}
         </span>
       </div>
