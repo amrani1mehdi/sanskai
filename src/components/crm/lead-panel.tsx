@@ -3,10 +3,11 @@
 /**
  * The selected lead, beside the board.
  *
- * Quick context and the actions worth taking without leaving the workspace.
- * Deliberately not the whole dossier: documents, the full activity trail and
- * every submitted field live on the detail page, one click away. Anything
- * shown twice is a thing that can disagree with itself.
+ * The whole dossier, and the actions worth taking without leaving the
+ * workspace. It carries every field the public forms collect, because the
+ * detail page it once deferred to is no longer where anyone is sent — a value
+ * that arrives in a submission and appears nowhere is the same as one that was
+ * never asked for.
  *
  * The list endpoint carries counts rather than collections, so the notes and
  * the recent trail are fetched for the selected lead only — the board stays one
@@ -108,7 +109,10 @@ export function LeadPanel({
   useEffect(() => {
     if (focus !== "documents" || !documentsLoaded) return;
 
-    documentsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    documentsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }, [focus, documentsLoaded, summary.id]);
 
   return (
@@ -265,7 +269,10 @@ export function LeadPanel({
                     : "Non renseigné"
                 }
               />
-              <Row label="Ancienneté" value={formatCompanyAge(lead.dateCreation)} />
+              <Row
+                label="Ancienneté"
+                value={formatCompanyAge(lead.dateCreation)}
+              />
             </dl>
           </div>
         </section>
@@ -302,50 +309,58 @@ export function LeadPanel({
          * list stops at the contact and address fields, so offering a box here
          * would be offering an edit the server refuses.
          */}
-        <section>
-          <Label>Demande</Label>
-          <dl className="mt-1 space-y-1.5 text-sm">
-            {lead.service === "financement" ? (
-              <>
-                <Row
-                  label="Montant demandé"
-                  value={formatAmount(lead.montant)}
-                />
-                <Row
-                  label="Chiffre d'affaires mensuel"
-                  value={lead.chiffreAffaire ?? "Non renseigné"}
-                />
-                <Row
-                  label="Code commercial"
-                  value={lead.codeCommercial ?? "Non renseigné"}
-                />
-                <Row label="Site web" value={formatYesNo(lead.siteWeb)} />
-                {lead.siteWebUrl ? (
-                  <Row label="Adresse du site" value={lead.siteWebUrl} />
-                ) : null}
-                <Row label="Réseaux sociaux" value={formatYesNo(lead.reseaux)} />
-                {lead.reseauxOu ? (
-                  <Row label="Lesquels" value={lead.reseauxOu} />
-                ) : null}
-              </>
-            ) : (
-              <div className="flex items-baseline justify-between gap-3">
-                <dt className="text-xs text-muted-foreground">
-                  Sous-service demandé
-                </dt>
-                <dd className="text-right">
-                  {lead.prestation ? (
-                    <PrestationChip prestation={lead.prestation} short />
-                  ) : (
-                    <span className="text-sm text-muted-foreground">
-                      Non renseigné
-                    </span>
-                  )}
-                </dd>
-              </div>
-            )}
-          </dl>
-        </section>
+        {/* A contact message asks for nothing in particular — it has no
+            sub-service and none of the funding questions, so the section
+            would be a heading over one "Non renseigné". */}
+        {lead.service !== "contact" ? (
+          <section>
+            <Label>Demande</Label>
+            <dl className="mt-1 space-y-1.5 text-sm">
+              {lead.service === "financement" ? (
+                <>
+                  <Row
+                    label="Montant demandé"
+                    value={formatAmount(lead.montant)}
+                  />
+                  <Row
+                    label="Chiffre d'affaires mensuel"
+                    value={lead.chiffreAffaire ?? "Non renseigné"}
+                  />
+                  <Row
+                    label="Code commercial"
+                    value={lead.codeCommercial ?? "Non renseigné"}
+                  />
+                  <Row label="Site web" value={formatYesNo(lead.siteWeb)} />
+                  {lead.siteWebUrl ? (
+                    <Row label="Adresse du site" value={lead.siteWebUrl} />
+                  ) : null}
+                  <Row
+                    label="Réseaux sociaux"
+                    value={formatYesNo(lead.reseaux)}
+                  />
+                  {lead.reseauxOu ? (
+                    <Row label="Lesquels" value={lead.reseauxOu} />
+                  ) : null}
+                </>
+              ) : (
+                <div className="flex items-baseline justify-between gap-3">
+                  <dt className="text-xs text-muted-foreground">
+                    Sous-service demandé
+                  </dt>
+                  <dd className="text-right">
+                    {lead.prestation ? (
+                      <PrestationChip prestation={lead.prestation} short />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">
+                        Non renseigné
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </section>
+        ) : null}
 
         <section>
           <Label>Message</Label>
@@ -367,11 +382,15 @@ export function LeadPanel({
           </Label>
 
           {lead.documentCount === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune pièce transmise.</p>
+            <p className="text-sm text-muted-foreground">
+              Aucune pièce transmise.
+            </p>
           ) : lead.documents.length === 0 ? (
             /* The board's copy carries a count, not the files; the detail fetch
                is what fills this in a moment. */
-            <p className="text-sm text-muted-foreground">Chargement des pièces…</p>
+            <p className="text-sm text-muted-foreground">
+              Chargement des pièces…
+            </p>
           ) : (
             <ul className="space-y-1.5">
               {lead.documents.map((document) => (
@@ -394,7 +413,11 @@ export function LeadPanel({
                         {document.name} · {formatFileSize(document.size)}
                       </span>
                     </span>
-                    <Eye size={14} className="shrink-0 text-muted-foreground" aria-hidden />
+                    <Eye
+                      size={14}
+                      className="shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
                   </button>
                 </li>
               ))}
@@ -440,7 +463,8 @@ export function LeadPanel({
           {lead.notes.length > 0 ? (
             <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
               <StickyNote size={12} aria-hidden />
-              {lead.notes.length} note{lead.notes.length > 1 ? "s" : ""} sur la fiche
+              {lead.notes.length} note{lead.notes.length > 1 ? "s" : ""} sur la
+              fiche
             </p>
           ) : null}
         </section>
@@ -475,7 +499,9 @@ export function LeadPanel({
           </div>
 
           {lead.activity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Rien pour l&apos;instant.</p>
+            <p className="text-sm text-muted-foreground">
+              Rien pour l&apos;instant.
+            </p>
           ) : visible.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Aucun évènement de ce type sur ce dossier.
@@ -502,7 +528,6 @@ export function LeadPanel({
               ))}
             </ul>
           )}
-
         </section>
 
         <section className="border-t border-border pt-4">
@@ -533,8 +558,7 @@ export function LeadPanel({
           onClose();
         }}
       />
-
-          </aside>
+    </aside>
   );
 }
 
@@ -554,7 +578,6 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
 
 /*
  * Every control in the panel looks like a control.
