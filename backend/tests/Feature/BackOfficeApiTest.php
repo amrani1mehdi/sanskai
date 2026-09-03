@@ -232,6 +232,60 @@ class BackOfficeApiTest extends TestCase
     }
 
     #[Test]
+    public function the_trail_quotes_the_note_it_records(): void
+    {
+        Sanctum::actingAs($this->admin());
+        $lead = $this->lead();
+
+        $this->postJson("/api/v1/leads/{$lead->id}/notes", [
+            'body' => "  Appel passé.\n\n  Manque le Kbis   et le RIB.\n",
+        ])->assertCreated();
+
+        // Squished onto one line: a label is rendered as a single timeline row,
+        // so the textarea's newlines would otherwise show up as ragged gaps.
+        $this->assertDatabaseHas('lead_activities', [
+            'lead_id' => $lead->id,
+            'kind' => 'note',
+            'label' => 'Note interne ajoutée — « Appel passé. Manque le Kbis et le RIB. »',
+        ]);
+    }
+
+    #[Test]
+    public function a_note_too_long_for_the_label_column_is_excerpted(): void
+    {
+        Sanctum::actingAs($this->admin());
+        $lead = $this->lead();
+
+        // The validation ceiling for a note, against a VARCHAR(255) label.
+        $this->postJson("/api/v1/leads/{$lead->id}/notes", [
+            'body' => str_repeat('a', 5000),
+        ])->assertCreated();
+
+        $label = $lead->activities()->where('kind', 'note')->value('label');
+
+        $this->assertLessThanOrEqual(255, mb_strlen($label));
+        $this->assertStringStartsWith('Note interne ajoutée — « ', $label);
+        $this->assertStringEndsWith('… »', $label);
+    }
+
+    #[Test]
+    public function the_trail_keeps_the_text_of_a_deleted_note(): void
+    {
+        Sanctum::actingAs($this->admin());
+        $lead = $this->lead();
+        $note = $lead->notes()->create(['author_name' => 'A', 'body' => 'Kbis reçu.']);
+
+        $this->deleteJson("/api/v1/notes/{$note->id}")->assertNoContent();
+
+        // The row is gone, so this line is the only remaining record of it.
+        $this->assertDatabaseHas('lead_activities', [
+            'lead_id' => $lead->id,
+            'kind' => 'note',
+            'label' => 'Note interne supprimée — « Kbis reçu. »',
+        ]);
+    }
+
+    #[Test]
     public function deleting_a_lead_empties_everything_attached_to_it(): void
     {
         Sanctum::actingAs($this->admin());
