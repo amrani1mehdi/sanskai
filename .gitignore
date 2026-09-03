@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+
+# claude code
+# Machine-local, and it names the production VPS — not the team's to share.
+.claude/settings.local.json
