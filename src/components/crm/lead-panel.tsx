@@ -66,7 +66,7 @@ export function LeadPanel({
   focus?: "documents";
   onClose: () => void;
 }) {
-  const { setStatus, setContacted, editLead, addNote, removeLead } = useCrm();
+  const { setStatus, editLead, addNote, removeLead } = useCrm();
   /* The board's copy has counts only; this one has the notes and the trail. */
   const { lead: full } = useLead(summary.id);
 
@@ -150,46 +150,24 @@ export function LeadPanel({
          * is where the two drift apart. Fields save when they lose focus, and
          * only if they actually changed.
          */}
-        <section className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Statut</Label>
-            <select
-              value={lead.status}
-              onChange={(event) =>
-                setStatus(lead.id, event.target.value as LeadStatus)
-              }
-              aria-label="Changer le statut"
-              className={selectClass}
-            >
-              {/* Only what this lead's service allows — the API refuses the
-                  rest, so offering them would be a trap. */}
-              {stagesFor(lead.service).map((stage) => (
-                <option key={stage.id} value={stage.id}>
-                  {stage.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <Label>Contacté</Label>
-            <select
-              value={lead.contactedAt === null ? "non" : "oui"}
-              onChange={(event) =>
-                setContacted(lead.id, event.target.value === "oui")
-              }
-              aria-label="Marquer comme contacté"
-              className={selectClass}
-            >
-              <option value="non">Non</option>
-              <option value="oui">Oui</option>
-            </select>
-            {lead.contactedAt ? (
-              <p className="mt-1 font-mono text-[10px] text-muted-foreground">
-                {formatDateTime(lead.contactedAt)}
-              </p>
-            ) : null}
-          </div>
+        <section>
+          <Label>Statut</Label>
+          <select
+            value={lead.status}
+            onChange={(event) =>
+              setStatus(lead.id, event.target.value as LeadStatus)
+            }
+            aria-label="Changer le statut"
+            className={selectClass}
+          >
+            {/* Only what this lead's service allows — the API refuses the
+                rest, so offering them would be a trap. */}
+            {stagesFor(lead.service).map((stage) => (
+              <option key={stage.id} value={stage.id}>
+                {stage.label}
+              </option>
+            ))}
+          </select>
         </section>
 
         <section>
