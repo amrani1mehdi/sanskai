@@ -28,10 +28,14 @@ import { ConfirmDialog } from "@/components/crm/confirm-dialog";
 import { DocumentViewer } from "@/components/crm/document-viewer";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { DOCUMENT_LABELS, SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
+import { PrestationChip } from "@/components/crm/prestation-chip";
 import {
   formatAmount,
+  formatCompanyAge,
+  formatDate,
   formatDateTime,
   formatFileSize,
+  formatYesNo,
   initialsOf,
 } from "@/lib/crm/format";
 import { useCrm, useLead } from "@/lib/crm/store";
@@ -249,6 +253,20 @@ export function LeadPanel({
                 onSave={(next) => editLead(lead.id, { ville: next })}
               />
             </div>
+
+            {/* Read-only, like everything else the applicant submitted: the
+                API's editable list stops at the contact and address fields. */}
+            <dl className="space-y-1.5 pt-1 text-sm">
+              <Row
+                label="Date de création"
+                value={
+                  lead.dateCreation
+                    ? formatDate(lead.dateCreation)
+                    : "Non renseigné"
+                }
+              />
+              <Row label="Ancienneté" value={formatCompanyAge(lead.dateCreation)} />
+            </dl>
           </div>
         </section>
 
@@ -266,10 +284,66 @@ export function LeadPanel({
           <dl className="mt-3 space-y-1.5 text-sm">
             <Row label="Reçu le" value={formatDateTime(lead.createdAt)} />
             <Row label="Mise à jour" value={formatDateTime(lead.updatedAt)} />
-            {lead.service === "financement" ? (
-              <Row label="Montant demandé" value={formatAmount(lead.montant)} />
-            ) : null}
             {lead.siren ? <Row label="SIREN" value={lead.siren} /> : null}
+          </dl>
+        </section>
+
+        {/*
+         * What the applicant actually asked for.
+         *
+         * These are answers the public form collects and the panel had no
+         * place for. The panel replaced the detail page, and the questions
+         * only one service asks — the amount, the turnover, whether they have
+         * a site and which networks they are on — did not come across with it,
+         * so a lead could arrive carrying an Instagram handle that nothing in
+         * the back office would ever show.
+         *
+         * Read-only, like the rest of what was submitted: the API's editable
+         * list stops at the contact and address fields, so offering a box here
+         * would be offering an edit the server refuses.
+         */}
+        <section>
+          <Label>Demande</Label>
+          <dl className="mt-1 space-y-1.5 text-sm">
+            {lead.service === "financement" ? (
+              <>
+                <Row
+                  label="Montant demandé"
+                  value={formatAmount(lead.montant)}
+                />
+                <Row
+                  label="Chiffre d'affaires mensuel"
+                  value={lead.chiffreAffaire ?? "Non renseigné"}
+                />
+                <Row
+                  label="Code commercial"
+                  value={lead.codeCommercial ?? "Non renseigné"}
+                />
+                <Row label="Site web" value={formatYesNo(lead.siteWeb)} />
+                {lead.siteWebUrl ? (
+                  <Row label="Adresse du site" value={lead.siteWebUrl} />
+                ) : null}
+                <Row label="Réseaux sociaux" value={formatYesNo(lead.reseaux)} />
+                {lead.reseauxOu ? (
+                  <Row label="Lesquels" value={lead.reseauxOu} />
+                ) : null}
+              </>
+            ) : (
+              <div className="flex items-baseline justify-between gap-3">
+                <dt className="text-xs text-muted-foreground">
+                  Sous-service demandé
+                </dt>
+                <dd className="text-right">
+                  {lead.prestation ? (
+                    <PrestationChip prestation={lead.prestation} short />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Non renseigné
+                    </span>
+                  )}
+                </dd>
+              </div>
+            )}
           </dl>
         </section>
 
