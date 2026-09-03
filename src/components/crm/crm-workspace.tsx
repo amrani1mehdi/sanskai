@@ -38,6 +38,21 @@ import type { Lead, PrestationId, ServiceId } from "@/lib/crm/types";
 type ServiceFilter = ServiceId | "tous";
 type PrestationFilter = PrestationId | "tous";
 
+/**
+ * Lowercased, with accents folded away.
+ *
+ * A board typed into in French cannot ask whoever is searching to reproduce
+ * the diacritics — `Société` has to be reachable by "societe", and `Jérôme` by
+ * "jerome". NFD splits an accented letter into the letter and its combining
+ * mark; dropping the marks leaves the letter.
+ */
+function fold(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
 export function CrmWorkspace() {
   const {
     leads: all,
@@ -63,7 +78,16 @@ export function CrmWorkspace() {
   const showPrestations = service === "developpement";
 
   const leads = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    /*
+     * The query is a set of words, not one string to find verbatim.
+     *
+     * A name is stored in two columns, so "jean dupont" matched on neither:
+     * `prenom` holds "Jean" and `nom` holds "Dupont", and neither contains the
+     * whole phrase. Searching the way the board is read — type what you
+     * remember, in whatever order — means every word has to appear somewhere
+     * across the lead, and none of them has to appear in the same field.
+     */
+    const terms = fold(query).split(/\s+/).filter(Boolean);
 
     /* Two real dates, so this memo reads no clock at all.
        The window used to be "the last N days", measured from the sync time
@@ -90,19 +114,26 @@ export function CrmWorkspace() {
       const at = new Date(lead.createdAt).getTime();
       if (after !== null && at < after) return false;
       if (before !== null && at > before) return false;
-      if (!needle) return true;
+      if (terms.length === 0) return true;
 
-      return [
-        lead.reference,
-        lead.nom,
-        lead.prenom,
-        lead.entreprise,
-        lead.email,
-        lead.telephone,
-        lead.ville,
-      ]
-        .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(needle));
+      const haystack = fold(
+        [
+          lead.reference,
+          lead.nom,
+          lead.prenom,
+          lead.entreprise,
+          lead.email,
+          lead.telephone,
+          lead.ville,
+          /* The number stripped to digits as well as written, so one saved as
+             "06 12 34 56 78" is still found by typing it straight through. */
+          lead.telephone?.replace(/\D/g, ""),
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
+
+      return terms.every((term) => haystack.includes(term));
     });
   }, [all, service, prestation, period, query, showPrestations]);
 
