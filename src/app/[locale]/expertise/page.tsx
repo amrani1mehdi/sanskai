@@ -6,6 +6,8 @@ import { CookieBanner } from "@/components/site/cookie-banner";
 import { MotionReveal } from "@/components/ui/motion-reveal";
 import { getSiteContent } from "@/lib/content";
 import { getLocale } from "@/lib/i18n/server";
+import { localeAlternates } from "@/lib/seo/alternates";
+import { localeHref } from "@/lib/i18n/config";
 
 const ITEM_ICONS = {
   chart: ChartColumn,
@@ -15,16 +17,17 @@ const ITEM_ICONS = {
 } as const;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { expertise } = getSiteContent(await getLocale());
+  const locale = await getLocale();
+  const { expertise } = getSiteContent(locale);
 
   return {
     title: expertise.meta.title,
     description: expertise.meta.description,
-    alternates: { canonical: "/expertise" },
+    alternates: localeAlternates(locale, "/expertise"),
     openGraph: {
       title: expertise.meta.title,
       description: expertise.meta.description,
-      url: "/expertise",
+      url: localeHref(locale, "/expertise"),
       type: "website",
     },
   };
@@ -91,7 +94,7 @@ export default async function ExpertisePage() {
         </section>
       </main>
 
-      <Footer content={content} />
+      <Footer content={content} locale={locale} />
       <CookieBanner content={content} />
     </>
   );

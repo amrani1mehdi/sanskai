@@ -7,18 +7,21 @@ import { BusinessServices } from "@/components/site/business-services";
 import { MotionReveal } from "@/components/ui/motion-reveal";
 import { getSiteContent } from "@/lib/content";
 import { getLocale } from "@/lib/i18n/server";
+import { localeAlternates } from "@/lib/seo/alternates";
+import { localeHref } from "@/lib/i18n/config";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { businessDevelopment } = getSiteContent(await getLocale());
+  const locale = await getLocale();
+  const { businessDevelopment } = getSiteContent(locale);
 
   return {
     title: businessDevelopment.meta.title,
     description: businessDevelopment.meta.description,
-    alternates: { canonical: "/developpement-entreprise" },
+    alternates: localeAlternates(locale, "/developpement-entreprise"),
     openGraph: {
       title: businessDevelopment.meta.title,
       description: businessDevelopment.meta.description,
-      url: "/developpement-entreprise",
+      url: localeHref(locale, "/developpement-entreprise"),
       type: "website",
     },
   };
@@ -57,7 +60,7 @@ export default async function DeveloppementEntreprisePage() {
         <BusinessServices content={content} />
       </main>
 
-      <Footer content={content} />
+      <Footer content={content} locale={locale} />
       <CookieBanner content={content} />
     </>
   );

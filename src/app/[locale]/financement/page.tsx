@@ -13,18 +13,21 @@ import {
 import { MotionReveal } from "@/components/ui/motion-reveal";
 import { getSiteContent } from "@/lib/content";
 import { getLocale } from "@/lib/i18n/server";
+import { localeAlternates } from "@/lib/seo/alternates";
+import { localeHref } from "@/lib/i18n/config";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { financing } = getSiteContent(await getLocale());
+  const locale = await getLocale();
+  const { financing } = getSiteContent(locale);
 
   return {
     title: financing.meta.title,
     description: financing.meta.description,
-    alternates: { canonical: "/financement" },
+    alternates: localeAlternates(locale, "/financement"),
     openGraph: {
       title: financing.meta.title,
       description: financing.meta.description,
-      url: "/financement",
+      url: localeHref(locale, "/financement"),
       type: "website",
     },
   };
@@ -132,7 +135,7 @@ export default async function FinancementPage() {
         </section>
       </main>
 
-      <Footer content={content} />
+      <Footer content={content} locale={locale} />
       <CookieBanner content={content} />
     </>
   );

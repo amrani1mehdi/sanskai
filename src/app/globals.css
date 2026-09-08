@@ -616,3 +616,177 @@
     animation-duration: 1ms;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Article prose                                                               */
+/*                                                                             */
+/* Rendered markdown, in the back office preview and on the public article.     */
+/* One class for both: everything here is expressed in theme tokens, so it      */
+/* takes the admin palette inside `.admin-theme` and the site's outside it,     */
+/* rather than being written twice and drifting apart.                          */
+/*                                                                             */
+/* Element selectors rather than utility classes because the HTML comes from    */
+/* the markdown renderer — there is nowhere to put a className.                 */
+/* -------------------------------------------------------------------------- */
+
+.prose-article {
+  color: hsl(var(--foreground));
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.prose-article > * + * {
+  margin-top: 1em;
+}
+
+.prose-article h2,
+.prose-article h3,
+.prose-article h4 {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 700;
+  line-height: 1.3;
+  /* More space above a heading than below it, so it binds to the text it
+     introduces rather than floating between two blocks. */
+  margin-top: 1.8em;
+  margin-bottom: 0.5em;
+}
+
+.prose-article h2 {
+  font-size: 1.35em;
+}
+.prose-article h3 {
+  font-size: 1.15em;
+}
+.prose-article h4 {
+  font-size: 1em;
+}
+
+.prose-article a {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose-article a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.prose-article strong {
+  font-weight: 700;
+}
+
+.prose-article ul,
+.prose-article ol {
+  padding-left: 1.25em;
+}
+
+.prose-article ul {
+  list-style: disc;
+}
+.prose-article ol {
+  list-style: decimal;
+}
+
+.prose-article li + li {
+  margin-top: 0.35em;
+}
+
+.prose-article blockquote {
+  border-left: 2px solid hsl(var(--foreground));
+  padding-left: 1em;
+  color: hsl(var(--muted-foreground));
+}
+
+.prose-article code {
+  background-color: hsl(var(--secondary));
+  padding: 0.1em 0.35em;
+  font-family: var(--font-mono, ui-monospace), monospace;
+  font-size: 0.875em;
+}
+
+.prose-article pre {
+  background-color: hsl(var(--secondary));
+  padding: 1em;
+  overflow-x: auto;
+}
+
+/* The <pre> already carries the block's background and padding; the <code>
+   inside it must not paint a second one on top. */
+.prose-article pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.prose-article img {
+  max-width: 100%;
+  height: auto;
+}
+
+.prose-article hr {
+  border: 0;
+  border-top: 1px solid hsl(var(--border));
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+/* Wide tables scroll inside their own box rather than pushing the article
+   sideways and giving the whole page a horizontal scrollbar. */
+.prose-article table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.prose-article th,
+.prose-article td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.prose-article th {
+  background-color: hsl(var(--secondary));
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Rich-text editor                                                            */
+/*                                                                             */
+/* The editing surface carries `.prose-article`, so text looks while it is     */
+/* being written the way it will look once published. These few rules are the  */
+/* difference between a document and a field.                                  */
+/* -------------------------------------------------------------------------- */
+
+.ProseMirror {
+  outline: none;
+}
+
+/*
+ * The placeholder.
+ *
+ * Drawn by Tiptap's Placeholder extension, which puts both the class and the
+ * text on the empty node — so `attr()` here has something to read, and the
+ * hint appears only while the document is genuinely empty rather than on every
+ * blank line an author leaves between two paragraphs.
+ */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* The first block sits against the top of the field rather than carrying the
+   margin `.prose-article` gives it between paragraphs. */
+.ProseMirror > *:first-child {
+  margin-top: 0;
+}
+
+/* A selection inside the editor has to stay visible when focus moves to a
+   toolbar button, or the author cannot see what the button will act on. */
+.ProseMirror-focused ::selection {
+  background-color: hsl(var(--foreground) / 0.18);
+}

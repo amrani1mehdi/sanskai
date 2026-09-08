@@ -5,16 +5,20 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
-import type { Locale } from "@/lib/i18n/config";
+import { localeHref, type Locale } from "@/lib/i18n/config";
 import { LanguageSwitcher } from "@/components/site/language-switcher";
 import { cn } from "@/lib/utils";
 
 export function Navbar({
   content,
   locale,
+  alternates,
 }: {
   content: SiteContent;
   locale: Locale;
+  /** Per-language URLs for this page, when they are not simply this path
+      re-prefixed — an article's slug differs per language. */
+  alternates?: Partial<Record<Locale, string>>;
 }) {
   const { brand, nav } = content;
 
@@ -39,7 +43,7 @@ export function Navbar({
     >
       <div className="container mx-auto px-4">
         <div className="flex h-24 items-center justify-between">
-          <Link href="/" className="flex items-center gap-4">
+          <Link href={localeHref(locale, "/")} className="flex items-center gap-4">
             <Image
               src={brand.logo}
               alt={`${brand.name} ${brand.nameAccent}`}
@@ -65,7 +69,7 @@ export function Navbar({
                 {link.label}
               </Link>
             ))}
-            <LanguageSwitcher locale={locale} />
+            <LanguageSwitcher locale={locale} alternates={alternates} />
 
             <Link
               href={nav.cta.href}
@@ -103,7 +107,7 @@ export function Navbar({
               </Link>
             ))}
             <div className="px-2 py-3">
-              <LanguageSwitcher locale={locale} />
+              <LanguageSwitcher locale={locale} alternates={alternates} />
             </div>
             <Link
               href={nav.cta.href}

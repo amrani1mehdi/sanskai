@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
+import { localeHref, type Locale } from "@/lib/i18n/config";
 
 /** lucide-react no longer ships brand marks, so this one is inline. */
 function InstagramIcon({ className }: { className?: string }) {
@@ -23,7 +24,13 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-export function Footer({ content }: { content: SiteContent }) {
+export function Footer({
+  content,
+  locale,
+}: {
+  content: SiteContent;
+  locale: Locale;
+}) {
   const { brand, footer } = content;
 
   return (
@@ -32,7 +39,7 @@ export function Footer({ content }: { content: SiteContent }) {
         <div className="grid gap-10 py-16 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand + disclaimer */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-3">
+            <Link href={localeHref(locale, "/")} className="flex items-center gap-3">
               <Image
                 src={brand.logo}
                 alt={`${brand.name} ${brand.nameAccent}`}

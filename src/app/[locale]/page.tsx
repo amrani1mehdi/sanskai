@@ -29,7 +29,7 @@ export default async function Home() {
         <FinalCta content={content} />
       </main>
 
-      <Footer content={content} />
+      <Footer content={content} locale={locale} />
       <CookieBanner content={content} />
     </>
   );

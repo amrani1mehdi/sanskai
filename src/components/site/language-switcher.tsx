@@ -1,34 +1,55 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { Globe } from "lucide-react";
-import { LOCALE_OPTIONS, type Locale } from "@/lib/i18n/config";
-import { setLocale } from "@/lib/i18n/actions";
+import {
+  LOCALE_OPTIONS,
+  localeHref,
+  splitLocale,
+  type Locale,
+} from "@/lib/i18n/config";
 
 /**
- * Language menu, matching the live site's: globe, flag and code, with a
- * dropdown of the three locales.
+ * Language menu: globe, flag and code, with a dropdown of the three locales.
  *
- * The choice is written to a cookie and the route re-rendered on the server,
- * so the new language arrives fully rendered instead of swapping in after
- * hydration. The URL is unchanged, as on the live site.
+ * Each entry is a real link to the same page in another language, because the
+ * language is now part of the URL. It used to write a cookie and refresh in
+ * place, which kept one address for all three translations — comfortable for a
+ * visitor and invisible to everyone else, since a crawler arriving without
+ * cookies only ever saw one of them.
+ *
+ * Links rather than buttons on purpose: a crawler follows them, which is how
+ * the other two translations get discovered in the first place, and a reader
+ * can open German in a new tab.
  */
-export function LanguageSwitcher({ locale }: { locale: Locale }) {
+export function LanguageSwitcher({
+  locale,
+  /**
+   * Where each language lives, when it is not simply this path re-prefixed.
+   *
+   * An article has a different slug per language — `/blog/financer-votre-
+   * croissance` and `/en/blog/funding-your-growth` are the same piece — so the
+   * article page passes the mapping in. Everything else is the same path with a
+   * different prefix and needs nothing.
+   */
+  alternates,
+}: {
+  locale: Locale;
+  alternates?: Partial<Record<Locale, string>>;
+}) {
   const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
-  const router = useRouter();
+  const pathname = usePathname();
 
   const active =
-    LOCALE_OPTIONS.find((option) => option.code === locale) ?? LOCALE_OPTIONS[1];
+    LOCALE_OPTIONS.find((option) => option.code === locale) ?? LOCALE_OPTIONS[0];
 
-  const select = (next: Locale) => {
-    setOpen(false);
-    startTransition(async () => {
-      await setLocale(next);
-      router.refresh();
-    });
-  };
+  /* The current page with its language prefix removed, so it can be put back
+     in another language. */
+  const { path } = splitLocale(pathname);
+
+  const hrefFor = (code: Locale) => alternates?.[code] ?? localeHref(code, path);
 
   return (
     <div className="relative">
@@ -39,7 +60,6 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
         aria-label="Change language"
         aria-expanded={open}
         aria-haspopup="menu"
-        data-pending={pending ? "" : undefined}
       >
         <Globe size={13} className="shrink-0" aria-hidden />
         <span className="text-xs font-medium">
@@ -60,11 +80,12 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
             role="menu"
           >
             {LOCALE_OPTIONS.map((option) => (
-              <button
+              <Link
                 key={option.code}
-                type="button"
+                href={hrefFor(option.code)}
                 role="menuitem"
-                onClick={() => select(option.code)}
+                hrefLang={option.code}
+                onClick={() => setOpen(false)}
                 className={`flex w-full items-center gap-2 px-4 py-2.5 text-sm transition-colors ${
                   option.code === locale
                     ? "bg-accent/10 font-medium text-accent"
@@ -73,7 +94,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
               >
                 <span aria-hidden>{option.flag}</span>
                 <span>{option.label}</span>
-              </button>
+              </Link>
             ))}
           </div>
         </>

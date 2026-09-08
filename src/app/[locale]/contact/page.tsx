@@ -7,18 +7,21 @@ import { ContactForm } from "@/components/site/contact-form";
 import { MotionReveal } from "@/components/ui/motion-reveal";
 import { getSiteContent } from "@/lib/content";
 import { getLocale } from "@/lib/i18n/server";
+import { localeAlternates } from "@/lib/seo/alternates";
+import { localeHref } from "@/lib/i18n/config";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { contact } = getSiteContent(await getLocale());
+  const locale = await getLocale();
+  const { contact } = getSiteContent(locale);
 
   return {
     title: contact.meta.title,
     description: contact.meta.description,
-    alternates: { canonical: "/contact" },
+    alternates: localeAlternates(locale, "/contact"),
     openGraph: {
       title: contact.meta.title,
       description: contact.meta.description,
-      url: "/contact",
+      url: localeHref(locale, "/contact"),
       type: "website",
     },
   };
@@ -86,7 +89,7 @@ export default async function ContactPage() {
         </section>
       </main>
 
-      <Footer content={content} />
+      <Footer content={content} locale={locale} />
       <CookieBanner content={content} />
     </>
   );

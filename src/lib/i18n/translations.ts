@@ -69,8 +69,8 @@ export const translations = {
         "desc": "Strategic guidance for smarter and more profitable investments."
       },
       "business": {
-        "title": "Business Development",
-        "desc": "Website creation, logo design and social media advertising campaigns to put your business in front of the right people.",
+        "title": "Digital Development",
+        "desc": "A website in your image, built to showcase what you do and give you a professional digital presence. Make your shop or business visible on the web. Grow your visibility on the web and attract more customers through targeted advertising campaigns.",
         "cta": "Learn more"
       }
     },
@@ -374,8 +374,8 @@ export const translations = {
         "desc": "Orientations stratégiques pour des investissements plus intelligents et rentables."
       },
       "business": {
-        "title": "Développement d'entreprise",
-        "desc": "Création de site web, création de logo et campagnes publicitaires sur les réseaux pour mettre votre entreprise devant les bonnes personnes.",
+        "title": "Développement Digital",
+        "desc": "Un site web à votre image, conçu pour valoriser votre activité et offrir une présence digitale professionnelle. Rendre votre commerce ou activité visible sur le web. Développez votre visibilité sur le web et attirez davantage de clients grâce à des campagnes publicitaires ciblées.",
         "cta": "En savoir plus"
       }
     },
@@ -679,8 +679,8 @@ export const translations = {
         "desc": "Strategische Orientierung für intelligentere und profitablere Investitionen."
       },
       "business": {
-        "title": "Unternehmensentwicklung",
-        "desc": "Website-Erstellung, Logo-Design und Social-Media-Werbekampagnen, damit Ihr Unternehmen die Richtigen erreicht.",
+        "title": "Digitale Entwicklung",
+        "desc": "Eine Website, die zu Ihnen passt — sie zeigt, was Sie tun, und gibt Ihnen einen professionellen digitalen Auftritt. Machen Sie Ihr Geschäft oder Ihre Tätigkeit im Web sichtbar. Erhöhen Sie Ihre Sichtbarkeit im Web und gewinnen Sie mehr Kunden durch gezielte Werbekampagnen.",
         "cta": "Mehr erfahren"
       }
     },

@@ -30,7 +30,9 @@ export class ApiError extends Error {
   }
 }
 
-async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
+/* Exported so the blog client can reach the same proxy with the same error
+   handling, rather than keeping a second copy of both. */
+export async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`/api/crm/${path}`, { cache: "no-store", ...init });
 
   if (response.status === 204) return undefined as T;

@@ -3,9 +3,11 @@
 use App\Http\Controllers\Api\V1\ActivityController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BlogPostController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadDocumentController;
 use App\Http\Controllers\Api\V1\LeadNoteController;
+use App\Http\Controllers\Api\V1\WebsiteBlogController;
 use App\Http\Controllers\Api\V1\WebsiteLeadController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +47,30 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 ->name('developpement');
             Route::post('contact', [WebsiteLeadController::class, 'contact'])
                 ->name('contact');
+        });
+
+    /*
+     * The blog, as the public site reads it.
+     *
+     * Open like the form endpoints above, and read-only. Its throttle is far
+     * looser than theirs: these are page loads rather than submissions, and a
+     * visitor clicking through five articles must not trip a limit sized for
+     * somebody filling in a financing form.
+     */
+    Route::middleware(['throttle:60,1'])
+        ->prefix('website/blog')
+        ->name('website.blog.')
+        ->group(function () {
+            Route::get('/', [WebsiteBlogController::class, 'index'])->name('index');
+
+            /*
+             * `{slug}/cover` is declared before `{slug}` for the same reason
+             * `leads/seen` precedes `leads/{lead}/seen`: the literal segment has
+             * to win, or "cover" is swallowed as part of a slug.
+             */
+            Route::get('{slug}/cover', [WebsiteBlogController::class, 'cover'])
+                ->name('cover');
+            Route::get('{slug}', [WebsiteBlogController::class, 'show'])->name('show');
         });
 
     // Signing in is public by necessity; the endpoint throttles itself.
@@ -114,6 +140,42 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             ->name('leads.seen.all');
         Route::post('leads/{lead}/seen', [LeadController::class, 'markSeen'])
             ->name('leads.seen');
+
+        /*
+         * The blog, from the back office.
+         *
+         * Behind the same `admin` gate as the leads: whoever can read the CRM
+         * can write the blog. There is no editor role to separate the two, and
+         * inventing one for a site with two administrators would be a
+         * permission system nobody asked for.
+         */
+        Route::get('blog', [BlogPostController::class, 'index'])->name('blog.index');
+        Route::post('blog', [BlogPostController::class, 'store'])->name('blog.store');
+        Route::get('blog/{post}', [BlogPostController::class, 'show'])->name('blog.show');
+
+        /*
+         * The back office's own view of a cover.
+         *
+         * The website's `{slug}/cover` serves published articles only, which
+         * is right for the public and wrong for the editor — an author
+         * attaching an image to a draft could not see the image they had just
+         * attached. This one is inside the admin gate.
+         */
+        Route::get('blog/{post}/cover', [BlogPostController::class, 'cover'])
+            ->name('blog.cover');
+
+        /*
+         * POST rather than PATCH for the update.
+         *
+         * An edit can carry a new cover image, and PHP only populates $_FILES
+         * for a POST — a multipart PATCH reaches the controller with no file at
+         * all. Rather than have the front end spoof `_method` on half its saves
+         * and not the other half, the write is a POST every time.
+         */
+        Route::post('blog/{post}', [BlogPostController::class, 'update'])
+            ->name('blog.update');
+        Route::delete('blog/{post}', [BlogPostController::class, 'destroy'])
+            ->name('blog.destroy');
 
         // Polled by the back office every few seconds; deliberately cheap.
         Route::get('changes', [LeadController::class, 'changes'])->name('changes');

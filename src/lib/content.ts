@@ -11,7 +11,8 @@
  */
 
 import { translations } from "@/lib/i18n/translations";
-import type { Locale } from "@/lib/i18n/config";
+import { getBlogCopy } from "@/lib/blog/copy";
+import { localeHref, type Locale } from "@/lib/i18n/config";
 
 export type NavLink = { label: string; href: string };
 
@@ -124,9 +125,14 @@ export function getSiteContent(locale: Locale) {
 
     nav: {
       links: [
-        { label: t.nav.business, href: "/developpement-entreprise" },
+        { label: t.nav.business, href: localeHref(locale, "/developpement-entreprise") },
+        /* The blog. Its label comes from `@/lib/blog/copy` rather than from
+           `t`, because the articles section postdates the i18next bundle this
+           file reshapes and adding to that bundle would break the one thing it
+           is good for — being diffable against the live site's. */
+        { label: getBlogCopy(locale).navLabel, href: localeHref(locale, "/blog") },
       ] as NavLink[],
-      cta: { label: t.nav.requestFinancing, href: "/financement" },
+      cta: { label: t.nav.requestFinancing, href: localeHref(locale, "/financement") },
     },
 
     hero: {
@@ -135,10 +141,10 @@ export function getSiteContent(locale: Locale) {
       titleAccent: t.hero.titleHighlight,
       titleTrail: ` ${t.hero.title2}`,
       bullets: toBullets(t.hero.subtitle),
-      primaryCta: { label: t.hero.ctaFinancing, href: "/financement" },
+      primaryCta: { label: t.hero.ctaFinancing, href: localeHref(locale, "/financement") },
       secondaryCta: {
         label: t.nav.business,
-        href: "/developpement-entreprise",
+        href: localeHref(locale, "/developpement-entreprise"),
       },
       backgroundImage: "/images/hero-bg.jpg",
     },
@@ -150,7 +156,7 @@ export function getSiteContent(locale: Locale) {
         title: t.services.cashflow.title,
         description: t.services.cashflow.desc,
         cta: t.services.cashflow.cta,
-        href: "/financement",
+        href: localeHref(locale, "/financement"),
       },
       {
         id: "business",
@@ -158,7 +164,7 @@ export function getSiteContent(locale: Locale) {
         title: t.services.business.title,
         description: t.services.business.desc,
         cta: t.services.business.cta,
-        href: "/developpement-entreprise",
+        href: localeHref(locale, "/developpement-entreprise"),
       },
     ] satisfies Solution[],
 
@@ -230,10 +236,10 @@ export function getSiteContent(locale: Locale) {
       titleLead: `${t.cta.title} `,
       titleAccent: t.cta.titleHighlight,
       subtitle: t.cta.desc,
-      primaryCta: { label: t.cta.primary, href: "/financement" },
+      primaryCta: { label: t.cta.primary, href: localeHref(locale, "/financement") },
       secondaryCta: {
         label: t.nav.contact,
-        href: "/contact",
+        href: localeHref(locale, "/contact"),
       },
     },
 
@@ -244,8 +250,9 @@ export function getSiteContent(locale: Locale) {
         {
           title: t.footer.services,
           links: [
-            { label: t.nav.cashflow, href: "/financement" },
-            { label: t.nav.business, href: "/developpement-entreprise" },
+            { label: t.nav.cashflow, href: localeHref(locale, "/financement") },
+            { label: t.nav.business, href: localeHref(locale, "/developpement-entreprise") },
+            { label: getBlogCopy(locale).navLabel, href: localeHref(locale, "/blog") },
           ] as NavLink[],
         },
       ],
