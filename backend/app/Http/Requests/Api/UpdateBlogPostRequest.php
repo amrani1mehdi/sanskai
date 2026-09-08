@@ -61,6 +61,14 @@ class UpdateBlogPostRequest extends FormRequest
     }
 
     /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'cover.uploaded' => UploadLimits::tooLargeMessage("l'image de couverture"),
+        ];
+    }
+
+    /** @return array<string, string> */
     public function attributes(): array
     {
         $names = ['cover' => 'image de couverture'];
