@@ -87,7 +87,7 @@ export default async function ContactPage() {
                 <FinancingForm
                   content={content}
                   locale={locale}
-                  endpoint="/api/leads/contact"
+                  service="contact"
                 />
               </MotionReveal>
             </div>

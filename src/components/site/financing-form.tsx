@@ -8,6 +8,7 @@ import { isCompanyAgeEligible, isRevenueEligible } from "@/lib/eligibility";
 import { DatePicker } from "@/components/ui/date-picker";
 import { FileUpload } from "@/components/ui/file-upload";
 import { translateApiErrors } from "@/lib/leads/errors";
+import { announceArrival, submissionUrl } from "@/lib/leads/submit";
 import { cn } from "@/lib/utils";
 
 /** Shared by every field on the live site's financing form. */
@@ -59,17 +60,16 @@ const EMPTY = {
 export function FinancingForm({
   content,
   locale,
-  endpoint = "/api/leads/financement",
+  service = "financement",
 }: {
   content: SiteContent;
   locale: Locale;
   /**
-   * Where the dossier is posted. /contact renders this same form and sends it
-   * to its own route, which files the lead under Contact instead — the form,
-   * its fields and its rules are identical either way, and only the service it
-   * lands under differs.
+   * Which service the dossier files under. /contact renders this same form
+   * and posts it as a contact lead instead — the fields and the rules are
+   * identical either way, and only the service it lands under differs.
    */
-  endpoint?: "/api/leads/financement" | "/api/leads/contact";
+  service?: "financement" | "contact";
 }) {
   const { form } = content;
 
@@ -137,10 +137,11 @@ export function FinancingForm({
   /**
    * Posts the dossier to the CRM.
    *
-   * The submission goes to a route handler on this origin rather than straight
-   * to the API: the shared key that authorises it stays on the server. Files are
-   * sent as multipart, with the accounting slot repeated as `documentsComptables[]`
-   * — the one slot the API takes several of.
+   * Straight to the API when its address is public, and through a route handler
+   * on this origin otherwise — see `submissionUrl`. A dossier of four documents
+   * outgrows what a request body may be on this hosting plan, and the hop is what
+   * imposes that. Files are sent as multipart, with the accounting slot repeated
+   * as `documentsComptables[]`, the one slot the API takes several of.
    */
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -194,7 +195,13 @@ export function FinancingForm({
     let response: Response;
 
     try {
-      response = await fetch(endpoint, { method: "POST", body });
+      response = await fetch(submissionUrl(service), {
+        method: "POST",
+        body,
+        // Laravel answers a browser with HTML unless asked otherwise, and
+        // the field errors below are read off the JSON.
+        headers: { Accept: "application/json" },
+      });
     } catch {
       setError(form.errorUnavailable);
       setSending(false);
@@ -222,6 +229,9 @@ export function FinancingForm({
       setSending(false);
       return;
     }
+
+    // Posted straight to the API, so this server never saw it land.
+    announceArrival();
 
     setValues(EMPTY);
     setUploads(NO_UPLOADS);
