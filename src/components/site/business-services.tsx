@@ -20,6 +20,7 @@ import {
   collect,
 } from "@/lib/leads/validate";
 import { translateApiErrors } from "@/lib/leads/errors";
+import { announceArrival, submissionUrl } from "@/lib/leads/submit";
 import { cn } from "@/lib/utils";
 
 const SERVICE_ICONS = {
@@ -134,9 +135,13 @@ export function BusinessServices({ content }: { content: SiteContent }) {
     let response: Response;
 
     try {
-      response = await fetch("/api/leads/developpement", {
+      response = await fetch(submissionUrl("developpement"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // Laravel answers a browser with HTML unless asked otherwise.
+          Accept: "application/json",
+        },
         body: JSON.stringify({
           service: values.service,
           nom: values.nom,
@@ -173,6 +178,9 @@ export function BusinessServices({ content }: { content: SiteContent }) {
       setSending(false);
       return;
     }
+
+    // Posted straight to the API, so this server never saw it land.
+    announceArrival();
 
     setValues(EMPTY);
     setSending(false);

@@ -23,6 +23,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, TriangleAlert, X } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import { PRESTATIONS, SERVICES, CONTACT } from "@/lib/crm/config";
+import { announceArrival, submissionUrl } from "@/lib/leads/submit";
 import { isCompanyAgeEligible, isRevenueEligible } from "@/lib/eligibility";
 import { useCrm } from "@/lib/crm/store";
 import type { LeadStatus } from "@/lib/crm/types";
@@ -248,9 +249,10 @@ export function LeadForm({
     }
 
     try {
-      const response = await fetch(`/api/leads/${shape}`, {
+      const response = await fetch(submissionUrl(shape), {
         method: "POST",
         body,
+        headers: { Accept: "application/json" },
       });
       const payload = await response.json().catch(() => null);
 
@@ -291,6 +293,10 @@ export function LeadForm({
        * correctly; there is no reason to make the request and let it. A failure
        * is not worth blocking on either — the lead exists and can be dragged.
        */
+      // Posted straight to the API, so this server never saw it land, and
+      // any other panel open on the board would not hear about it.
+      announceArrival();
+
       const id = payload?.data?.id;
       const reachable =
         shape === "contact"
