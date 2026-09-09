@@ -9,6 +9,17 @@ const cardIcons = {
   rocket: Rocket,
 } as const;
 
+/**
+ * The two hero buttons, which are now one style rather than a pair of them.
+ *
+ * They sit side by side and read as one control if they match and as a mistake
+ * if they nearly match, so the fill is shared too: both carry the gold, and the
+ * only difference between them is what they say. The ink is the gradient's own
+ * foreground — white would not survive on a fill this light.
+ */
+const heroCta =
+  "gold-gradient inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent px-8 py-3.5 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-gold)] transition hover:opacity-90 sm:w-[282px]";
+
 export function Hero({ content }: { content: SiteContent }) {
   const { hero, solutions } = content;
 
@@ -55,18 +66,13 @@ export function Hero({ content }: { content: SiteContent }) {
 
           <Reveal delay={240}>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href={hero.primaryCta.href}
-                className="gold-gradient inline-flex w-full items-center justify-center gap-2 rounded-md px-8 py-3.5 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-gold)] transition-opacity hover:opacity-90 sm:w-[282px]"
-              >
+              <Link href={hero.primaryCta.href} className={heroCta}>
                 {hero.primaryCta.label}
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
-              <Link
-                href={hero.secondaryCta.href}
-                className="inline-flex w-full items-center justify-center rounded-md border border-white/30 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/15 sm:w-[282px]"
-              >
+              <Link href={hero.secondaryCta.href} className={heroCta}>
                 {hero.secondaryCta.label}
+                <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>
           </Reveal>

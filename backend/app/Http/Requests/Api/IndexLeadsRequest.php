@@ -21,6 +21,20 @@ class IndexLeadsRequest extends FormRequest
         return true;
     }
 
+    /**
+     * A sub-service filter under an old name is read as the current one, so a
+     * bookmarked or shared board URL keeps working. See
+     * `Prestation::LEGACY_VALUES`.
+     */
+    protected function prepareForValidation(): void
+    {
+        $prestation = $this->input('prestation');
+
+        if (is_string($prestation)) {
+            $this->merge(['prestation' => Prestation::normalise($prestation)]);
+        }
+    }
+
     /** @return array<string, mixed> */
     public function rules(): array
     {

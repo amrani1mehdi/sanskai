@@ -3,7 +3,7 @@
  *
  * Every lead field below already exists in a form on the site — see
  * `components/site/financing-form.tsx` (demande de financement) and
- * `components/site/contact-form.tsx` (développement d'entreprise). Nothing is
+ * `components/site/business-services.tsx` (Développement Digital). Nothing is
  * invented: the CRM reads back exactly what the site collects.
  */
 
@@ -29,10 +29,10 @@ export type LeadStatus =
 export type ServiceId = "financement" | "developpement" | "contact";
 
 /**
- * Sub-offers bundled under Développement d'entreprise. The enquiry form is a
- * single select, so a lead asks for exactly one of these.
+ * Sub-offers bundled under Développement Digital. The enquiry form is a single
+ * select, so a lead asks for exactly one of these.
  */
-export type PrestationId = "site_web" | "logo" | "campagne_publicitaire";
+export type PrestationId = "site_web" | "logo" | "migration_site";
 
 /**
  * The four upload slots on the financing form, the contact form's invoices,

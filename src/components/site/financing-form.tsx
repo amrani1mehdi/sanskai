@@ -59,9 +59,17 @@ const EMPTY = {
 export function FinancingForm({
   content,
   locale,
+  endpoint = "/api/leads/financement",
 }: {
   content: SiteContent;
   locale: Locale;
+  /**
+   * Where the dossier is posted. /contact renders this same form and sends it
+   * to its own route, which files the lead under Contact instead — the form,
+   * its fields and its rules are identical either way, and only the service it
+   * lands under differs.
+   */
+  endpoint?: "/api/leads/financement" | "/api/leads/contact";
 }) {
   const { form } = content;
 
@@ -186,7 +194,7 @@ export function FinancingForm({
     let response: Response;
 
     try {
-      response = await fetch("/api/leads/financement", { method: "POST", body });
+      response = await fetch(endpoint, { method: "POST", body });
     } catch {
       setError(form.errorUnavailable);
       setSending(false);

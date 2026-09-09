@@ -3,11 +3,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import type { SiteContent } from "@/lib/content";
 import { localeHref, type Locale } from "@/lib/i18n/config";
 import { LanguageSwitcher } from "@/components/site/language-switcher";
 import { cn } from "@/lib/utils";
+
+/**
+ * The two buttons the drawer closes on, which are one style rather than a pair
+ * of them — the same arrangement the hero makes, stacked because the drawer has
+ * no room to set them side by side.
+ */
+const drawerCta =
+  "gold-gradient inline-flex w-full items-center justify-center gap-2 rounded-md px-6 py-3 text-center text-sm font-semibold text-accent-foreground shadow-[var(--shadow-gold)] transition hover:opacity-90";
 
 export function Navbar({
   content,
@@ -96,26 +104,45 @@ export function Navbar({
       {open ? (
         <div className="border-t border-border bg-brand-cream md:hidden">
           <div className="container mx-auto flex flex-col gap-1 px-4 py-4">
-            {nav.links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-3 text-sm text-foreground/80 transition-colors hover:bg-secondary hover:text-accent"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {/* Everything except the destination the drawer ends on: it is a
+                button down there, and a link up here as well would be the same
+                place offered twice. Matched on href, so the two cannot drift. */}
+            {nav.links
+              .filter((link) => link.href !== nav.ctaSecondary.href)
+              .map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-2 py-3 text-sm text-foreground/80 transition-colors hover:bg-secondary hover:text-accent"
+                >
+                  {link.label}
+                </Link>
+              ))}
             <div className="px-2 py-3">
               <LanguageSwitcher locale={locale} alternates={alternates} />
             </div>
-            <Link
-              href={nav.cta.href}
-              onClick={() => setOpen(false)}
-              className="gold-gradient mt-2 rounded-md px-6 py-3 text-center text-sm font-semibold text-accent-foreground"
-            >
-              {nav.cta.label}
-            </Link>
+
+            {/* The hero's pair, stacked: the drawer is too narrow to sit them
+                side by side. */}
+            <div className="mt-2 flex flex-col gap-2">
+              <Link
+                href={nav.cta.href}
+                onClick={() => setOpen(false)}
+                className={drawerCta}
+              >
+                {nav.cta.label}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+              <Link
+                href={nav.ctaSecondary.href}
+                onClick={() => setOpen(false)}
+                className={drawerCta}
+              >
+                {nav.ctaSecondary.label}
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </div>
           </div>
         </div>
       ) : null}

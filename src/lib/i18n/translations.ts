@@ -18,7 +18,7 @@ export const translations = {
       "about": "About",
       "clientArea": "Client Area",
       "requestFinancing": "Request Rapid Financing",
-      "business": "Business Development"
+      "business": "Digital Development"
     },
     "hero": {
       "badge": "Financing Expert · England · France · Germany · Canada · United States",
@@ -70,7 +70,7 @@ export const translations = {
       },
       "business": {
         "title": "Digital Development",
-        "desc": "A website in your image, built to showcase what you do and give you a professional digital presence. Make your shop or business visible on the web. Grow your visibility on the web and attract more customers through targeted advertising campaigns.",
+        "desc": "A website in your image, built to showcase what you do and give you a professional digital presence. Make your shop or business visible on the web. Already have a site? We migrate or rebuild it without losing what you have.",
         "cta": "Learn more"
       }
     },
@@ -271,21 +271,21 @@ export const translations = {
         "description": "Discover Sansekai Solution's expertise in SME financing, treasury management, investor search and independent financial advisory."
       },
       "business": {
-        "title": "Business Development for SMEs | Sansekai Solution",
-        "description": "Website creation, logo design and social media advertising for SMEs and entrepreneurs, alongside Sansekai Solution's financing and investment support."
+        "title": "Digital Development for SMEs | Sansekai Solution",
+        "description": "Website creation, logo design and website migration or rebuild for SMEs and entrepreneurs, alongside Sansekai Solution's financing and investment support."
       }
     },
     "businessPage": {
-      "badge": "Business development",
-      "title": "Business Development",
+      "badge": "Digital Development",
+      "title": "Digital Development",
       "subtitle": "Everything your business needs to be seen",
       "desc": "Beyond financing, SANSEKAI Solution helps you build the presence that wins clients — a site that sells, an identity that sticks, and campaigns that reach the right people.",
       "websiteTitle": "Website creation",
       "websiteDesc": "A site built around what your business actually sells, fast on every device and ready to be found.",
       "logoTitle": "Logo design",
       "logoDesc": "A mark that carries across a shopfront, an invoice and a phone screen, with the files to use it anywhere.",
-      "adsTitle": "Social media advertising",
-      "adsDesc": "Campaigns aimed at the people most likely to buy, measured on what they bring in rather than on impressions.",
+      "migrationTitle": "Website migration or rebuild",
+      "migrationDesc": "You already have a site, and you want to change how it looks or how it is built.",
       "ctaTitle": "Ready to grow your presence?",
       "ctaDesc": "Tell us what you are building and we will come back within 24 hours.",
       "ctaButton": "Talk to us",
@@ -304,11 +304,11 @@ export const translations = {
         "Vector and image files for both print and web",
         "Colour and typography guidance to keep it consistent"
       ],
-      "adsFeatures": [
-        "Campaigns on the platforms your customers actually use",
-        "Audiences built from your customer profile",
-        "Ad copy and visuals designed for each placement",
-        "Reporting on cost per enquiry, not just impressions"
+      "migrationFeatures": [
+        "Your existing pages and content carried across",
+        "A visual redesign without starting from nothing",
+        "A new host or a new technology, at your pace",
+        "Redirects in place, so the ranking you have survives"
       ]
     }
   },
@@ -323,7 +323,7 @@ export const translations = {
       "about": "À propos",
       "clientArea": "Espace Client",
       "requestFinancing": "Demande de financement rapide",
-      "business": "Développement d'entreprise"
+      "business": "Développement Digital"
     },
     "hero": {
       "badge": "Expert en financement · England · France · Germany · Canada · United States",
@@ -375,7 +375,7 @@ export const translations = {
       },
       "business": {
         "title": "Développement Digital",
-        "desc": "Un site web à votre image, conçu pour valoriser votre activité et offrir une présence digitale professionnelle. Rendre votre commerce ou activité visible sur le web. Développez votre visibilité sur le web et attirez davantage de clients grâce à des campagnes publicitaires ciblées.",
+        "desc": "Un site web à votre image, conçu pour valoriser votre activité et offrir une présence digitale professionnelle. Rendre votre commerce ou activité visible sur le web. Déjà un site ? Nous le migrons ou le reconstruisons sans perdre l'existant.",
         "cta": "En savoir plus"
       }
     },
@@ -576,21 +576,21 @@ export const translations = {
         "description": "Découvrez l'expertise Sansekai Solution en financement PME, gestion de trésorerie, recherche d'investisseurs et conseil financier indépendant."
       },
       "business": {
-        "title": "Développement d'entreprise PME | Sansekai Solution",
-        "description": "Création de site web, création de logo et campagnes publicitaires sur les réseaux pour PME et entrepreneurs, en complément du financement et du conseil Sansekai Solution."
+        "title": "Développement Digital PME | Sansekai Solution",
+        "description": "Création de site web, création de logo et migration ou reconstruction de site web pour PME et entrepreneurs, en complément du financement et du conseil Sansekai Solution."
       }
     },
     "businessPage": {
-      "badge": "Développement d'entreprise",
-      "title": "Développement d'entreprise",
+      "badge": "Développement Digital",
+      "title": "Développement Digital",
       "subtitle": "Tout ce qu'il faut à votre entreprise pour se faire voir",
       "desc": "Au-delà du financement, SANSEKAI Solution vous aide à construire la présence qui attire les clients : un site qui vend, une identité qui marque, et des campagnes qui touchent les bonnes personnes.",
       "websiteTitle": "Création de site Web",
       "websiteDesc": "Un site pensé autour de ce que votre entreprise vend réellement, rapide sur tous les écrans et prêt à être trouvé.",
       "logoTitle": "Création de LOGO",
       "logoDesc": "Une marque qui fonctionne sur une devanture, une facture et un écran de téléphone, avec tous les fichiers pour l'utiliser partout.",
-      "adsTitle": "Campagne publicitaire sur les réseaux",
-      "adsDesc": "Des campagnes adressées aux personnes les plus susceptibles d'acheter, mesurées sur ce qu'elles rapportent plutôt que sur les impressions.",
+      "migrationTitle": "Migration ou reconstruction de site web",
+      "migrationDesc": "Vous avez déjà un site existant et vous souhaitez y apporter des modifications visuelles ou structurelles.",
       "ctaTitle": "Prêt à développer votre présence ?",
       "ctaDesc": "Dites-nous ce que vous construisez et nous revenons vers vous sous 24 heures.",
       "ctaButton": "Parlons-en",
@@ -609,11 +609,11 @@ export const translations = {
         "Fichiers vectoriels et images, pour l'impression et le web",
         "Règles de couleurs et de typographie pour rester cohérent"
       ],
-      "adsFeatures": [
-        "Des campagnes sur les plateformes que vos clients utilisent",
-        "Des audiences construites à partir de votre profil client",
-        "Visuels et textes conçus pour chaque emplacement",
-        "Un suivi du coût par contact, pas seulement des impressions"
+      "migrationFeatures": [
+        "Vos pages et vos contenus existants repris",
+        "Une refonte visuelle sans repartir de zéro",
+        "Un nouvel hébergeur ou une nouvelle technologie, à votre rythme",
+        "Des redirections en place, pour garder le référencement acquis"
       ]
     }
   },
@@ -628,7 +628,7 @@ export const translations = {
       "about": "Über uns",
       "clientArea": "Kundenbereich",
       "requestFinancing": "Schnellfinanzierung anfordern",
-      "business": "Unternehmensentwicklung"
+      "business": "Digitale Entwicklung"
     },
     "hero": {
       "badge": "Finanzierungsexperte · England · France · Germany · Canada · United States",
@@ -680,7 +680,7 @@ export const translations = {
       },
       "business": {
         "title": "Digitale Entwicklung",
-        "desc": "Eine Website, die zu Ihnen passt — sie zeigt, was Sie tun, und gibt Ihnen einen professionellen digitalen Auftritt. Machen Sie Ihr Geschäft oder Ihre Tätigkeit im Web sichtbar. Erhöhen Sie Ihre Sichtbarkeit im Web und gewinnen Sie mehr Kunden durch gezielte Werbekampagnen.",
+        "desc": "Eine Website, die zu Ihnen passt — sie zeigt, was Sie tun, und gibt Ihnen einen professionellen digitalen Auftritt. Machen Sie Ihr Geschäft oder Ihre Tätigkeit im Web sichtbar. Sie haben bereits eine Website? Wir migrieren oder erneuern sie, ohne das Bestehende zu verlieren.",
         "cta": "Mehr erfahren"
       }
     },
@@ -881,21 +881,21 @@ export const translations = {
         "description": "Entdecken Sie die Expertise von Sansekai Solution in KMU-Finanzierung, Treasury, Investorensuche und unabhängiger Finanzberatung."
       },
       "business": {
-        "title": "Unternehmensentwicklung für KMU | Sansekai Solution",
-        "description": "Website-Erstellung, Logo-Design und Social-Media-Werbung für KMU und Unternehmer, ergänzend zur Finanzierungs- und Investmentbegleitung von Sansekai Solution."
+        "title": "Digitale Entwicklung für KMU | Sansekai Solution",
+        "description": "Website-Erstellung, Logo-Design und Website-Migration oder Neuaufbau für KMU und Unternehmer, ergänzend zur Finanzierungs- und Investmentbegleitung von Sansekai Solution."
       }
     },
     "businessPage": {
-      "badge": "Unternehmensentwicklung",
-      "title": "Unternehmensentwicklung",
+      "badge": "Digitale Entwicklung",
+      "title": "Digitale Entwicklung",
       "subtitle": "Alles, damit Ihr Unternehmen gesehen wird",
       "desc": "Über die Finanzierung hinaus hilft Ihnen SANSEKAI Solution, die Präsenz aufzubauen, die Kunden gewinnt: eine Website, die verkauft, eine Identität, die bleibt, und Kampagnen, die die Richtigen erreichen.",
       "websiteTitle": "Website-Erstellung",
       "websiteDesc": "Eine Website rund um das, was Ihr Unternehmen tatsächlich verkauft — schnell auf jedem Gerät und auffindbar.",
       "logoTitle": "Logo-Design",
       "logoDesc": "Ein Zeichen, das auf Ladenfront, Rechnung und Handybildschirm funktioniert, mit allen Dateien für jeden Einsatz.",
-      "adsTitle": "Werbekampagnen in sozialen Netzwerken",
-      "adsDesc": "Kampagnen für die Menschen mit der höchsten Kaufwahrscheinlichkeit, gemessen am Ertrag statt an Impressionen.",
+      "migrationTitle": "Website-Migration oder Neuaufbau",
+      "migrationDesc": "Sie haben bereits eine Website und möchten sie optisch oder strukturell verändern.",
       "ctaTitle": "Bereit, Ihre Präsenz auszubauen?",
       "ctaDesc": "Sagen Sie uns, was Sie aufbauen — wir melden uns innerhalb von 24 Stunden.",
       "ctaButton": "Sprechen wir darüber",
@@ -914,11 +914,11 @@ export const translations = {
         "Vektor- und Bilddateien für Druck und Web",
         "Farb- und Typografie-Regeln für einen einheitlichen Auftritt"
       ],
-      "adsFeatures": [
-        "Kampagnen auf den Plattformen, die Ihre Kunden nutzen",
-        "Zielgruppen aus Ihrem Kundenprofil",
-        "Anzeigentexte und Motive je Platzierung",
-        "Auswertung nach Kosten pro Anfrage, nicht nach Impressionen"
+      "migrationFeatures": [
+        "Ihre bestehenden Seiten und Inhalte werden übernommen",
+        "Eine visuelle Überarbeitung, ohne bei null zu beginnen",
+        "Ein neuer Hoster oder eine neue Technologie, in Ihrem Tempo",
+        "Weiterleitungen, damit Ihr erreichtes Ranking bestehen bleibt"
       ]
     }
   }

@@ -18,7 +18,7 @@ enum LeadService: string
     {
         return match ($this) {
             self::Financement => 'Demande de financement',
-            self::Developpement => "Développement d'entreprise",
+            self::Developpement => 'Développement Digital',
             self::Contact => 'Message de contact',
         };
     }

@@ -3,7 +3,7 @@ import { Lock, Mail, Shield } from "lucide-react";
 import { Navbar } from "@/components/site/navbar";
 import { Footer } from "@/components/site/footer";
 import { CookieBanner } from "@/components/site/cookie-banner";
-import { ContactForm } from "@/components/site/contact-form";
+import { FinancingForm } from "@/components/site/financing-form";
 import { MotionReveal } from "@/components/ui/motion-reveal";
 import { getSiteContent } from "@/lib/content";
 import { getLocale } from "@/lib/i18n/server";
@@ -82,7 +82,13 @@ export default async function ContactPage() {
               </MotionReveal>
 
               <MotionReveal x={20}>
-                <ContactForm content={content} />
+                {/* The financing form, posting to the contact route: the same
+                    dossier, filed under Contact with a CON- reference. */}
+                <FinancingForm
+                  content={content}
+                  locale={locale}
+                  endpoint="/api/leads/contact"
+                />
               </MotionReveal>
             </div>
           </div>

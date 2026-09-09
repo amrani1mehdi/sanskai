@@ -8,7 +8,7 @@
  * same three forms, from the inside.
  *
  * Built field-for-field off the site's own components — `financing-form.tsx`,
- * `contact-form.tsx` and the enquiry block in `business-services.tsx` — in
+ * `financing-form.tsx` and the enquiry block in `business-services.tsx` — in
  * their order, including the upload slots and the two yes/no questions the
  * financing form asks. It posts to the same endpoints they do, so a lead
  * entered here is validated by exactly the rules that validate a lead entered
@@ -41,7 +41,7 @@ const SHAPES: { id: Shape; label: string; hint: string }[] = [
   {
     id: "developpement",
     label: SERVICES[1].shortLabel,
-    hint: "L'encart Développement d'entreprise — une prestation par demande.",
+    hint: "L'encart Développement Digital — une prestation par demande.",
   },
   {
     id: CONTACT.id as Shape,

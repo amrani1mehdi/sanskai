@@ -83,6 +83,10 @@ export function LeadDetail({ id }: { id: string }) {
 
   const service = SERVICE_BY_ID[lead.service];
 
+  /* Financement and Contact submit the same form, so they carry the same
+     figures and are read the same way. See `LeadInformation`. */
+  const isDossier = lead.service === "financement" || lead.service === "contact";
+
   return (
     <div className="container mx-auto px-4 py-8 lg:py-10">
       <Link
@@ -135,7 +139,7 @@ export function LeadDetail({ id }: { id: string }) {
 
         {/* Panneau latéral */}
         <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
-          {lead.service === "financement" ? <Eligibility lead={lead} /> : null}
+          {isDossier ? <Eligibility lead={lead} /> : null}
 
           <section className="rounded-xl border border-border bg-card p-6">
             <h2 className="mb-4 font-display text-base font-bold text-foreground">
@@ -176,7 +180,7 @@ export function LeadDetail({ id }: { id: string }) {
             </h2>
             <dl className="space-y-3 text-sm">
               <SummaryRow label="Service" value={service.label} />
-              {lead.service === "financement" ? (
+              {isDossier ? (
                 <>
                   <SummaryRow label="Montant demandé" value={formatAmount(lead.montant)} />
                   <SummaryRow
@@ -288,8 +292,18 @@ function ActionBar({
  * than disappearing.
  */
 function LeadInformation({ lead }: { lead: Lead }) {
-  const isFinancement = lead.service === "financement";
   const isContact = lead.service === "contact";
+
+  /*
+   * Financement and Contact submit the same form, so they are read the same
+   * way. Développement is the one that asks a short set and picks a
+   * sub-service instead.
+   *
+   * Contact messages taken before the page changed forms have none of these
+   * columns filled. They show as "Non renseigné", which is this panel's rule
+   * everywhere: a field that was offered and left blank is worth seeing.
+   */
+  const isDossier = lead.service === "financement" || isContact;
 
   return (
     <section className="rounded-xl border border-border bg-card p-6">
@@ -310,11 +324,11 @@ function LeadInformation({ lead }: { lead: Lead }) {
 
       <FieldGroup icon={Building2} title="Entreprise">
         <Field label="Nom de l'entreprise" value={lead.entreprise} />
-        {/* Only the contact form asks for it. Shown on a contact lead even when
-            blank — it was offered and skipped — and hidden entirely on the
-            other two, where an empty row would just be noise. */}
+        {/* The contact form used to ask for it and no longer does. Still shown
+            on a contact lead, because the ones taken before the change carry
+            it; hidden on the other two, which never asked. */}
         {isContact ? <Field label="SIREN" value={lead.siren} /> : null}
-        {isFinancement ? (
+        {isDossier ? (
           <>
             <Field
               label="Date de création"
@@ -329,7 +343,7 @@ function LeadInformation({ lead }: { lead: Lead }) {
       </FieldGroup>
 
       <FieldGroup icon={Paperclip} title="Demande">
-        {isFinancement ? (
+        {isDossier ? (
           <>
             <Field label="Montant réclamé" value={formatAmount(lead.montant)} />
             <Field label="Chiffre d'affaires mensuel" value={lead.chiffreAffaire} />

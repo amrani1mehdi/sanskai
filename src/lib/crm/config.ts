@@ -157,7 +157,7 @@ export type PrestationConfig = {
 };
 
 /**
- * The three sub-services on the Développement d'entreprise page. The enquiry
+ * The three sub-services on the Développement Digital page. The enquiry
  * form is a single select, so a lead carries exactly one.
  *
  * Neutral, like every other category: which sub-service a lead asked for is
@@ -180,9 +180,9 @@ export const PRESTATIONS: PrestationConfig[] = [
     chip: "border-border bg-secondary text-muted-foreground",
   },
   {
-    id: "campagne_publicitaire",
-    label: "Campagne publicitaire sur les réseaux",
-    shortLabel: "Campagne pub",
+    id: "migration_site",
+    label: "Migration ou reconstruction de site web",
+    shortLabel: "Migration",
     bar: "bg-muted-foreground",
     chip: "border-border bg-secondary text-muted-foreground",
   },
@@ -211,7 +211,7 @@ export const SERVICES: ServiceConfig[] = [
   },
   {
     id: "developpement",
-    label: "Développement d'entreprise",
+    label: "Développement Digital",
     shortLabel: "Développement",
     source: "/developpement-entreprise",
     prestations: PRESTATIONS,

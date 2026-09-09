@@ -52,15 +52,48 @@ class WebsiteLeadController extends Controller
      */
     public function financement(StoreFinancingLeadRequest $request): JsonResponse
     {
+        $lead = $this->storeDossier(
+            $request,
+            LeadService::Financement,
+            'Demande reçue via le formulaire de financement',
+        );
+
+        Log::info('Lead de financement enregistré', [
+            'lead_id' => $lead->id,
+            'reference' => $lead->reference,
+            'documents' => $lead->documents()->count(),
+            'eligible' => $lead->eligible_age && $lead->eligible_revenue,
+        ]);
+
+        return $this->created($lead);
+    }
+
+    /**
+     * The dossier both public forms submit.
+     *
+     * /financement and /contact render the same form and post the same payload;
+     * only the service they file under differs. One method builds the row so
+     * the two can never disagree about what a submitted field means — a field
+     * added to the form is stored the same way whichever page it came from.
+     *
+     * The lead, its files and its first activity entry go in one transaction: a
+     * dossier that exists without the documents it was accepted on would be
+     * worse than no dossier at all.
+     */
+    private function storeDossier(
+        StoreFinancingLeadRequest $request,
+        LeadService $service,
+        string $activity,
+    ): Lead {
         $data = $request->validated();
         $store = new DocumentStore;
 
-        $lead = $this->createWithReference(
-            LeadService::Financement,
+        return $this->createWithReference(
+            $service,
             fn (string $reference) => tap(
                 Lead::create([
                     'reference' => $reference,
-                    'service' => LeadService::Financement,
+                    'service' => $service,
                     'status' => LeadStatus::Nouveau,
 
                     'nom' => $data['nom'],
@@ -91,7 +124,7 @@ class WebsiteLeadController extends Controller
                     'eligible_age' => Eligibility::companyAge($data['dateCreation']),
                     'eligible_revenue' => Eligibility::revenue($data['chiffreAffaire']),
                 ]),
-                function (Lead $lead) use ($request, $store): void {
+                function (Lead $lead) use ($request, $store, $activity): void {
                     foreach (self::UPLOAD_FIELDS as $field => $kind) {
                         if (! $request->hasFile($field)) {
                             continue;
@@ -105,23 +138,11 @@ class WebsiteLeadController extends Controller
                         }
                     }
 
-                    $lead->recordActivity(
-                        ActivityKind::Creation,
-                        'Demande reçue via le formulaire de financement',
-                    );
+                    $lead->recordActivity(ActivityKind::Creation, $activity);
                 },
             ),
             $store,
         );
-
-        Log::info('Lead de financement enregistré', [
-            'lead_id' => $lead->id,
-            'reference' => $lead->reference,
-            'documents' => $lead->documents()->count(),
-            'eligible' => $lead->eligible_age && $lead->eligible_revenue,
-        ]);
-
-        return $this->created($lead);
     }
 
     /** POST /api/v1/website/leads/developpement */
@@ -164,82 +185,30 @@ class WebsiteLeadController extends Controller
     /**
      * POST /api/v1/website/leads/contact
      *
-     * The /contact form: a question, not a dossier. No uploads, no eligibility
-     * gate, and only the company, name and email are required — everything the
-     * back office needs to call someone back.
+     * The /contact page renders the financing form, so this takes the financing
+     * payload — the whole dossier, its four upload slots and the eligibility
+     * gate. It used to take a much lighter set, on the reasoning that somebody
+     * writing in is asking a question rather than opening a dossier.
+     *
+     * The service is what still separates the two: this files under Contact
+     * with a CON- reference, so the board keeps counting them apart.
      */
     public function contact(StoreContactLeadRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        [$prenom, $nom] = self::splitName($data['nomComplet']);
-        $store = new DocumentStore;
-
-        $lead = $this->createWithReference(
+        $lead = $this->storeDossier(
+            $request,
             LeadService::Contact,
-            fn (string $reference) => tap(
-                Lead::create([
-                    'reference' => $reference,
-                    'service' => LeadService::Contact,
-                    'status' => LeadStatus::Nouveau,
-
-                    'nom' => $nom,
-                    'prenom' => $prenom,
-                    'email' => $data['email'],
-                    'telephone' => $data['telephone'] ?? null,
-
-                    'entreprise' => $data['entreprise'],
-                    'siren' => $data['siren'] ?? null,
-
-                    'message' => $data['message'] ?? null,
-                ]),
-                function (Lead $lead) use ($request, $store): void {
-                    // Same transaction as the row, so a failed insert never
-                    // leaves an invoice on disk with nothing pointing at it.
-                    foreach (Arr::wrap($request->file('factures', [])) as $file) {
-                        $store->put($lead, $file, DocumentKind::Facture);
-                    }
-
-                    $lead->recordActivity(
-                        ActivityKind::Creation,
-                        'Message reçu via le formulaire de contact',
-                    );
-                },
-            ),
-            $store,
+            'Demande reçue via le formulaire de contact',
         );
 
-        Log::info('Message de contact enregistré', [
+        Log::info('Lead de contact enregistré', [
             'lead_id' => $lead->id,
             'reference' => $lead->reference,
-            'factures' => $lead->documents()->count(),
+            'documents' => $lead->documents()->count(),
+            'eligible' => $lead->eligible_age && $lead->eligible_revenue,
         ]);
 
         return $this->created($lead);
-    }
-
-    /**
-     * Splits "Mahdi Amrani" into a first and last name.
-     *
-     * The contact form asks for one field, the CRM stores two, and something
-     * has to bridge them. First token is the given name, the rest is the family
-     * name — right for most French entries and wrong for some, which is why the
-     * whole string is preserved across the two columns rather than truncated:
-     * nothing the visitor typed is lost, even when the split lands oddly.
-     *
-     * A single word becomes the family name with an empty given name, since
-     * "Amrani" is far more likely to be a surname than a forename here.
-     *
-     * @return array{0: string, 1: string}
-     */
-    private static function splitName(string $full): array
-    {
-        $parts = preg_split('/\s+/u', trim($full), 2, PREG_SPLIT_NO_EMPTY) ?: [];
-
-        return match (count($parts)) {
-            0 => ['', ''],
-            1 => ['', $parts[0]],
-            default => [$parts[0], $parts[1]],
-        };
     }
 
     /**

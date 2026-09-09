@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\DocumentKind;
-use App\Http\Requests\Api\StoreContactLeadRequest;
 use App\Http\Requests\Api\StoreFinancingLeadRequest;
 use App\Models\Lead;
 use App\Models\LeadDocument;
@@ -260,6 +259,41 @@ class WebsiteLeadTest extends TestCase
     }
 
     #[Test]
+    public function it_stores_the_migration_sub_service(): void
+    {
+        $this->postJson('/api/v1/website/leads/developpement', [
+            'service' => 'migration_site',
+            'nom' => 'Bertrand',
+            'prenom' => 'Alice',
+            'email' => 'alice@example.fr',
+            'telephone' => '0788214015',
+            'entreprise' => 'Bertrand Immobilier',
+        ])->assertCreated();
+
+        $this->assertSame('migration_site', Lead::first()->prestation->value);
+    }
+
+    /**
+     * A page held open from before the third sub-service was renamed still posts
+     * the name it knew. The enquiry is real, so it is read as the current
+     * sub-service rather than rejected as an invalid choice.
+     */
+    #[Test]
+    public function it_accepts_the_retired_name_for_the_migration_sub_service(): void
+    {
+        $this->postJson('/api/v1/website/leads/developpement', [
+            'service' => 'campagne_publicitaire',
+            'nom' => 'Bertrand',
+            'prenom' => 'Alice',
+            'email' => 'alice@example.fr',
+            'telephone' => '0788214015',
+            'entreprise' => 'Bertrand Immobilier',
+        ])->assertCreated();
+
+        $this->assertSame('migration_site', Lead::first()->prestation->value);
+    }
+
+    #[Test]
     public function it_rejects_an_unknown_sub_service(): void
     {
         $this->postJson('/api/v1/website/leads/developpement', [
@@ -272,15 +306,11 @@ class WebsiteLeadTest extends TestCase
     }
 
     #[Test]
-    public function it_stores_a_contact_message(): void
+    public function it_stores_a_contact_lead_as_a_full_dossier(): void
     {
-        $this->postJson('/api/v1/website/leads/contact', [
-            'entreprise' => 'Atelier Marchand SARL',
-            'siren' => '812 345 678',
-            'nomComplet' => 'Julien Marchand',
-            'email' => 'j.marchand@example.fr',
-            'message' => 'Bonjour, je souhaite un rappel.',
-        ])
+        // /contact renders the financing form, so it posts the financing
+        // payload. Only the service it lands under separates the two.
+        $this->post('/api/v1/website/leads/contact', $this->financingPayload())
             ->assertCreated()
             ->assertJsonPath('data.reference', 'CON-'.now()->year.'-0001')
             ->assertJsonPath('data.status', 'nouveau');
@@ -288,74 +318,42 @@ class WebsiteLeadTest extends TestCase
         $lead = Lead::firstOrFail();
 
         $this->assertSame('contact', $lead->service->value);
+        $this->assertSame('Marchand', $lead->nom);
+        $this->assertSame('Julien', $lead->prenom);
         $this->assertSame('Atelier Marchand SARL', $lead->entreprise);
-        $this->assertSame('812 345 678', $lead->siren);
-        $this->assertSame('Bonjour, je souhaite un rappel.', $lead->message);
+
+        // The columns the old contact form never filled.
+        $this->assertSame('69003', $lead->code_postal);
+        $this->assertSame('Lyon', $lead->ville);
+        $this->assertSame('75000', $lead->montant);
+        $this->assertSame('48000', $lead->chiffre_affaire);
+        $this->assertSame('2020-04-14', $lead->date_creation->toDateString());
+
         // The trail opens on submission, like the other two forms.
         $this->assertSame(1, $lead->activities()->count());
     }
 
     #[Test]
-    public function it_splits_the_full_name_into_a_first_and_last_name(): void
+    public function a_contact_lead_carries_the_dossier_uploads(): void
     {
-        $cases = [
-            'Julien Marchand' => ['Julien', 'Marchand'],
-            // Everything after the first token stays together.
-            'Marie Claire Dupont-Fontaine' => ['Marie', 'Claire Dupont-Fontaine'],
-            // A single word is a surname, not a forename.
-            'Marchand' => ['', 'Marchand'],
-            // Stray whitespace must not become part of a name.
-            '  Julien   Marchand  ' => ['Julien', 'Marchand'],
-        ];
-
-        foreach ($cases as $full => [$prenom, $nom]) {
-            $this->postJson('/api/v1/website/leads/contact', [
-                'entreprise' => 'X',
-                'nomComplet' => $full,
-                'email' => 'a@b.fr',
-            ])->assertCreated();
-
-            $lead = Lead::latest('id')->firstOrFail();
-
-            $this->assertSame($prenom, $lead->prenom, "prenom for '{$full}'");
-            $this->assertSame($nom, $lead->nom, "nom for '{$full}'");
-        }
-    }
-
-    #[Test]
-    public function a_contact_message_needs_a_company_a_name_and_an_email(): void
-    {
-        // The message itself is optional — a blank one still says who to call.
-        $this->postJson('/api/v1/website/leads/contact', [])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['entreprise', 'nomComplet', 'email']);
-
-        $this->postJson('/api/v1/website/leads/contact', [
-            'entreprise' => 'X',
-            'nomComplet' => 'Julien Marchand',
-            'email' => 'j@example.fr',
-        ])->assertCreated();
-    }
-
-    #[Test]
-    public function a_contact_message_can_carry_invoices(): void
-    {
-        $this->post('/api/v1/website/leads/contact', [
-            'entreprise' => 'Atelier Marchand SARL',
-            'nomComplet' => 'Julien Marchand',
-            'email' => 'j@example.fr',
-            'factures' => [
-                UploadedFile::fake()->create('facture-01.pdf', 12, 'application/pdf'),
-                UploadedFile::fake()->create('facture-02.pdf', 12, 'application/pdf'),
-            ],
-        ])->assertCreated();
+        $this->post('/api/v1/website/leads/contact', $this->financingPayload([
+            'pieceIdentite' => UploadedFile::fake()->create('cni.pdf', 12, 'application/pdf'),
+        ]))->assertCreated();
 
         $lead = Lead::firstOrFail();
 
-        $this->assertSame(
-            2,
-            $lead->documents()->where('kind', DocumentKind::Facture)->count(),
-        );
+        foreach ([
+            DocumentKind::PieceIdentite,
+            DocumentKind::Kbis,
+            DocumentKind::ReleveBancaire,
+            DocumentKind::Comptable,
+        ] as $kind) {
+            $this->assertSame(
+                1,
+                $lead->documents()->where('kind', $kind)->count(),
+                "expected one {$kind->value}",
+            );
+        }
 
         foreach ($lead->documents as $document) {
             Storage::disk('documents-test')->assertExists($document->path);
@@ -363,50 +361,49 @@ class WebsiteLeadTest extends TestCase
     }
 
     #[Test]
-    public function invoices_are_optional_on_a_contact_message(): void
+    public function a_contact_lead_is_validated_like_a_financing_one(): void
     {
-        $this->postJson('/api/v1/website/leads/contact', [
-            'entreprise' => 'X', 'nomComplet' => 'A B', 'email' => 'a@b.fr',
-        ])->assertCreated();
-
-        $this->assertSame(0, Lead::firstOrFail()->documents()->count());
-    }
-
-    #[Test]
-    public function it_rejects_more_invoices_than_the_ceiling(): void
-    {
-        $tooMany = array_map(
-            fn (int $n) => UploadedFile::fake()->create("facture-{$n}.pdf", 12, 'application/pdf'),
-            range(1, StoreContactLeadRequest::MAX_INVOICES + 1),
-        );
-
-        $this->post('/api/v1/website/leads/contact', [
-            'entreprise' => 'X',
-            'nomComplet' => 'A B',
-            'email' => 'a@b.fr',
-            'factures' => $tooMany,
-        ])
+        $this->postJson('/api/v1/website/leads/contact', [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors('factures');
+            ->assertJsonValidationErrors([
+                'nom', 'prenom', 'telephone', 'email',
+                'entreprise', 'dateCreation', 'codePostal', 'ville',
+                'chiffreAffaire', 'montant',
+            ]);
     }
 
     #[Test]
-    public function a_rejected_invoice_stops_the_whole_message(): void
+    public function a_contact_lead_faces_the_same_eligibility_gate(): void
     {
-        $this->post('/api/v1/website/leads/contact', [
-            'entreprise' => 'X',
-            'nomComplet' => 'A B',
-            'email' => 'a@b.fr',
-            'factures' => [
-                UploadedFile::fake()->create('facture.pdf', 12, 'application/pdf'),
+        // The gate is the financing form's, and /contact renders that form, so
+        // the two answer identically rather than one quietly letting more in.
+        $this->postJson('/api/v1/website/leads/contact', $this->financingPayload([
+            'dateCreation' => now()->subMonths(2)->toDateString(),
+            'chiffreAffaire' => '500',
+            'kbis' => null,
+            'relevesBancaires' => null,
+            'documentsComptables' => null,
+        ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['dateCreation', 'chiffreAffaire']);
+
+        $this->assertSame(0, Lead::count());
+    }
+
+    #[Test]
+    public function a_rejected_upload_stops_the_whole_contact_lead(): void
+    {
+        $this->post('/api/v1/website/leads/contact', $this->financingPayload([
+            'documentsComptables' => [
+                UploadedFile::fake()->create('bilan.pdf', 12, 'application/pdf'),
                 UploadedFile::fake()->create('virus.exe', 12, 'application/x-msdownload'),
             ],
-        ])
+        ]))
             ->assertStatus(422)
-            ->assertJsonValidationErrors('factures.1');
+            ->assertJsonValidationErrors('documentsComptables.1');
 
-        // Validation runs before anything is written, so neither the message
-        // nor the acceptable file survives a rejected sibling.
+        // Validation runs before anything is written, so neither the lead nor
+        // the acceptable file survives a rejected sibling.
         $this->assertSame(0, Lead::count());
         $this->assertEmpty(Storage::disk('documents-test')->allFiles());
     }
@@ -414,12 +411,11 @@ class WebsiteLeadTest extends TestCase
     #[Test]
     public function contact_references_are_numbered_separately_from_the_others(): void
     {
-        // Each service counts its own sequence, so a contact message does not
+        // Each service counts its own sequence, so a contact lead does not
         // consume a FIN- number and leave a gap in the financing dossiers.
         $this->post('/api/v1/website/leads/financement', $this->financingPayload());
 
-        $this->postJson('/api/v1/website/leads/contact', [
-            'entreprise' => 'X', 'nomComplet' => 'A B', 'email' => 'a@b.fr',
-        ])->assertJsonPath('data.reference', 'CON-'.now()->year.'-0001');
+        $this->post('/api/v1/website/leads/contact', $this->financingPayload())
+            ->assertJsonPath('data.reference', 'CON-'.now()->year.'-0001');
     }
 }

@@ -34,7 +34,7 @@ export type TrustItem = {
 export type Advantage = { title: string; description: string };
 
 export type BusinessService = {
-  icon: "website" | "logo" | "ads";
+  icon: "website" | "logo" | "migration";
   title: string;
   description: string;
   /** What the service actually covers, listed on the card. */
@@ -133,6 +133,13 @@ export function getSiteContent(locale: Locale) {
         { label: getBlogCopy(locale).navLabel, href: localeHref(locale, "/blog") },
       ] as NavLink[],
       cta: { label: t.nav.requestFinancing, href: localeHref(locale, "/financement") },
+      /* The same destination as the business link above. The drawer promotes it
+         out of the list and sets it under the financing button; the desktop bar
+         has room to keep it a link. */
+      ctaSecondary: {
+        label: t.nav.business,
+        href: localeHref(locale, "/developpement-entreprise"),
+      },
     },
 
     hero: {
@@ -318,10 +325,10 @@ export function getSiteContent(locale: Locale) {
           features: t.businessPage.logoFeatures,
         },
         {
-          icon: "ads",
-          title: t.businessPage.adsTitle,
-          description: t.businessPage.adsDesc,
-          features: t.businessPage.adsFeatures,
+          icon: "migration",
+          title: t.businessPage.migrationTitle,
+          description: t.businessPage.migrationDesc,
+          features: t.businessPage.migrationFeatures,
         },
       ] satisfies BusinessService[],
       requestService: t.businessPage.requestService,

@@ -6,12 +6,28 @@ use App\Enums\Prestation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/** Validation for a Développement d'entreprise enquiry. No uploads. */
+/** Validation for a Développement Digital enquiry. No uploads. */
 class StoreDevelopmentLeadRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * A sub-service posted under an old name is read as the current one.
+     *
+     * Done before validation rather than after, so the enquiry passes the enum
+     * rule instead of being rejected as an invalid choice. See
+     * `Prestation::LEGACY_VALUES` for why a stale name still arrives.
+     */
+    protected function prepareForValidation(): void
+    {
+        $service = $this->input('service');
+
+        if (is_string($service)) {
+            $this->merge(['service' => Prestation::normalise($service)]);
+        }
     }
 
     /** @return array<string, mixed> */

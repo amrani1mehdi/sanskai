@@ -5,9 +5,9 @@ import {
   ArrowRight,
   CircleCheck,
   Loader2,
-  Megaphone,
   Monitor,
   Palette,
+  RefreshCw,
   Send,
   TriangleAlert,
 } from "lucide-react";
@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 const SERVICE_ICONS = {
   website: Monitor,
   logo: Palette,
-  ads: Megaphone,
+  migration: RefreshCw,
 } as const;
 
 /**
@@ -37,7 +37,7 @@ const SERVICE_ICONS = {
 const SERVICE_VALUES = {
   website: "site_web",
   logo: "logo",
-  ads: "campagne_publicitaire",
+  migration: "migration_site",
 } as const;
 
 const inputClass =
