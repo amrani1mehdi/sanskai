@@ -34,7 +34,13 @@ import { cn } from "@/lib/utils";
 
 type Panel = "profil" | "motDePasse" | "admins" | null;
 
-export function AccountMenu() {
+/**
+ * `placement` is where the menu goes, not a preference. The gear renders twice:
+ * in the top bar below `lg`, and at the foot of the rail from `lg`. Dropping
+ * downwards from the foot of the rail opens the menu below the viewport, where
+ * the shell's `overflow-hidden` cuts it off.
+ */
+export function AccountMenu({ placement = "down" }: { placement?: "down" | "up" }) {
   const router = useRouter();
   const { leads } = useCrm();
 
@@ -84,11 +90,18 @@ export function AccountMenu() {
       </button>
 
       {open ? (
-        /* Downwards: the bar it hangs from is at the top of the screen now, and
-           a menu opening up from it would leave the page. */
         <div
           role="menu"
-          className="absolute top-full right-0 z-50 mt-2 w-56 border border-border bg-card p-1 shadow-[0_8px_24px_-12px_rgba(24,24,27,0.35)]"
+          className={cn(
+            "absolute z-50 w-56 border border-border bg-card p-1 shadow-[0_8px_24px_-12px_rgba(24,24,27,0.35)]",
+            placement === "up"
+              ? /* Upwards, and rightwards over the board: the rail's foot is on
+                   the bottom edge of the screen, and the rail itself is
+                   narrower than the menu, so a right-aligned menu would run
+                   off the left edge instead. */
+                "bottom-full left-0 mb-2"
+              : "top-full right-0 mt-2",
+          )}
         >
           <button
             type="button"

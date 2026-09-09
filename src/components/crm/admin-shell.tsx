@@ -275,7 +275,7 @@ function Rail({
           <span className="min-w-0 flex-1 truncate text-xs font-medium">
             {CURRENT_ADMIN}
           </span>
-          <AccountMenu />
+          <AccountMenu placement="up" />
         </span>
       </div>
     </nav>
