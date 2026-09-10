@@ -56,7 +56,7 @@ export async function GET() {
     "",
     `- [Home](${abs("/")}): what the company does, and who it is for.`,
     `- [Financing](${abs("/financement")}): cash-flow and order financing, and the request form.`,
-    `- [Business development](${abs("/developpement-entreprise")}): websites, branding and growth work.`,
+    `- [Business development](${abs("/developpement-digital")}): websites, branding and growth work.`,
     `- [Expertise](${abs("/expertise")}): how the company works and in which markets.`,
     `- [Contact](${abs("/contact")}): how to reach the team.`,
     "",

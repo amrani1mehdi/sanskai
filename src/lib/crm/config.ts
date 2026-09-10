@@ -213,7 +213,7 @@ export const SERVICES: ServiceConfig[] = [
     id: "developpement",
     label: "Développement Digital",
     shortLabel: "Développement",
-    source: "/developpement-entreprise",
+    source: "/developpement-digital",
     prestations: PRESTATIONS,
   },
 ];

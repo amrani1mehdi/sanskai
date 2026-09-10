@@ -18,6 +18,37 @@ const nextConfig: NextConfig = {
    * when it starts).
    */
   allowedDevOrigins: ["192.168.100.135"],
+
+  /**
+   * The business page moved from `/developpement-entreprise` when the offer was
+   * renamed Développement Digital.
+   *
+   * Permanent (308), because the old address is in Google's index, in the
+   * sitemap it has already submitted, and in whatever anyone has linked or
+   * bookmarked. Dropping it would spend the ranking the page has earned and
+   * 404 every one of those visitors.
+   *
+   * One entry per locale: the App Router has no built-in locale handling here,
+   * so a prefix is matched only if it is written out. French is unprefixed and
+   * is the first.
+   */
+  redirects: async () => [
+    {
+      source: "/developpement-entreprise",
+      destination: "/developpement-digital",
+      permanent: true,
+    },
+    {
+      source: "/en/developpement-entreprise",
+      destination: "/en/developpement-digital",
+      permanent: true,
+    },
+    {
+      source: "/de/developpement-entreprise",
+      destination: "/de/developpement-digital",
+      permanent: true,
+    },
+  ],
 };
 
 export default nextConfig;

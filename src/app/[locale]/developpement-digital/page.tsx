@@ -17,11 +17,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: businessDevelopment.meta.title,
     description: businessDevelopment.meta.description,
-    alternates: localeAlternates(locale, "/developpement-entreprise"),
+    alternates: localeAlternates(locale, "/developpement-digital"),
     openGraph: {
       title: businessDevelopment.meta.title,
       description: businessDevelopment.meta.description,
-      url: localeHref(locale, "/developpement-entreprise"),
+      url: localeHref(locale, "/developpement-digital"),
       type: "website",
     },
   };

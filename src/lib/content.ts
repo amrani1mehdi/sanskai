@@ -133,7 +133,7 @@ export function getSiteContent(locale: Locale) {
 
     nav: {
       links: [
-        { label: t.nav.business, href: localeHref(locale, "/developpement-entreprise") },
+        { label: t.nav.business, href: localeHref(locale, "/developpement-digital") },
         /* The blog. Its label comes from `@/lib/blog/copy` rather than from
            `t`, because the articles section postdates the i18next bundle this
            file reshapes and adding to that bundle would break the one thing it
@@ -146,7 +146,7 @@ export function getSiteContent(locale: Locale) {
          has room to keep it a link. */
       ctaSecondary: {
         label: t.nav.business,
-        href: localeHref(locale, "/developpement-entreprise"),
+        href: localeHref(locale, "/developpement-digital"),
       },
     },
 
@@ -159,7 +159,7 @@ export function getSiteContent(locale: Locale) {
       primaryCta: { label: t.hero.ctaFinancing, href: localeHref(locale, "/financement") },
       secondaryCta: {
         label: t.nav.business,
-        href: localeHref(locale, "/developpement-entreprise"),
+        href: localeHref(locale, "/developpement-digital"),
       },
       backgroundImage: "/images/hero-bg.jpg",
     },
@@ -179,7 +179,7 @@ export function getSiteContent(locale: Locale) {
         title: t.services.business.title,
         description: t.services.business.desc,
         cta: t.services.business.cta,
-        href: localeHref(locale, "/developpement-entreprise"),
+        href: localeHref(locale, "/developpement-digital"),
       },
     ] satisfies Solution[],
 
@@ -266,7 +266,7 @@ export function getSiteContent(locale: Locale) {
           title: t.footer.services,
           links: [
             { label: t.nav.cashflow, href: localeHref(locale, "/financement") },
-            { label: t.nav.business, href: localeHref(locale, "/developpement-entreprise") },
+            { label: t.nav.business, href: localeHref(locale, "/developpement-digital") },
             { label: getBlogCopy(locale).navLabel, href: localeHref(locale, "/blog") },
           ] as NavLink[],
         },
@@ -312,7 +312,7 @@ export function getSiteContent(locale: Locale) {
       ],
     },
 
-    /** /developpement-entreprise — business development page. */
+    /** /developpement-digital — business development page. */
     businessDevelopment: {
       meta: t.meta.business,
       badge: t.businessPage.badge,

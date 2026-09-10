@@ -29,7 +29,7 @@ const STATIC_PAGES: {
 }[] = [
   { path: "/", changeFrequency: "monthly", priority: 1 },
   { path: "/financement", changeFrequency: "monthly", priority: 0.9 },
-  { path: "/developpement-entreprise", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/developpement-digital", changeFrequency: "monthly", priority: 0.9 },
   { path: "/expertise", changeFrequency: "monthly", priority: 0.7 },
   { path: "/contact", changeFrequency: "yearly", priority: 0.6 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.8 },
