@@ -106,6 +106,14 @@ function toBullets(value: string): string[] {
     .filter(Boolean);
 }
 
+/** Splits a copy block into its paragraphs, blank lines discarded. */
+function toParagraphs(value: string): string[] {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 export function getSiteContent(locale: Locale) {
   const t = translations[locale];
   const year = new Date().getFullYear();
@@ -310,7 +318,9 @@ export function getSiteContent(locale: Locale) {
       badge: t.businessPage.badge,
       title: t.businessPage.title,
       subtitle: t.businessPage.subtitle,
-      desc: t.businessPage.desc,
+      /* One value, one paragraph per line — the same shape the hero reads its
+         bullets from, so a second paragraph is a newline rather than a key. */
+      desc: toParagraphs(t.businessPage.desc),
       services: [
         {
           icon: "website",

@@ -49,9 +49,16 @@ export default async function DeveloppementEntreprisePage() {
               <h2 className="font-display text-xl md:text-2xl font-semibold text-accent mb-4">
                 {businessDevelopment.subtitle}
               </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                {businessDevelopment.desc}
-              </p>
+              <div className="max-w-2xl space-y-4">
+                {businessDevelopment.desc.map((paragraph) => (
+                  <p
+                    key={paragraph}
+                    className="text-lg text-muted-foreground leading-relaxed"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </MotionReveal>
           </div>
         </section>
