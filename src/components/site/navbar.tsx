@@ -17,6 +17,15 @@ import { cn } from "@/lib/utils";
 const drawerCta =
   "gold-gradient inline-flex w-full items-center justify-center gap-2 rounded-md px-6 py-3 text-center text-sm font-semibold text-accent-foreground shadow-[var(--shadow-gold)] transition hover:opacity-90";
 
+/**
+ * The same pair in the desktop bar, side by side. One string for both, so
+ * Développement Digital cannot end up a shade or a pixel off the financing
+ * button it sits beside. `whitespace-nowrap` because two buttons share the bar
+ * now, and a label that wraps turns one of them into a two-line block.
+ */
+const barCta =
+  "gold-gradient whitespace-nowrap rounded-md px-6 py-3 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-gold)] transition-opacity hover:opacity-90";
+
 export function Navbar({
   content,
   locale,
@@ -66,32 +75,43 @@ export function Navbar({
             </span>
           </Link>
 
-          {/* Desktop */}
-          <nav className="hidden items-center gap-6 md:flex">
-            {nav.links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm text-foreground/80 transition-colors hover:text-accent"
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Desktop, from `lg`. With two buttons in the bar it needs about a
+              thousand pixels: rendered at 800 the links ran into the brand name,
+              and at 900 the name broke onto two lines. Below that the drawer
+              takes over, and it already sets the same pair one above the other. */}
+          <nav className="hidden items-center gap-6 lg:flex">
+            {/* Développement Digital is a button at the end of the bar, so it is
+                left out of the plain links here — the same place offered twice
+                reads as two destinations. Matched on href, as in the drawer. */}
+            {nav.links
+              .filter((link) => link.href !== nav.ctaSecondary.href)
+              .map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm text-foreground/80 transition-colors hover:text-accent"
+                >
+                  {link.label}
+                </Link>
+              ))}
             <LanguageSwitcher locale={locale} alternates={alternates} />
 
-            <Link
-              href={nav.cta.href}
-              className="gold-gradient rounded-md px-6 py-3 text-sm font-semibold text-accent-foreground shadow-[var(--shadow-gold)] transition-opacity hover:opacity-90"
-            >
-              {nav.cta.label}
-            </Link>
+            {/* The pair, side by side. Financing keeps the far edge it had. */}
+            <div className="flex items-center gap-3">
+              <Link href={nav.ctaSecondary.href} className={barCta}>
+                {nav.ctaSecondary.label}
+              </Link>
+              <Link href={nav.cta.href} className={barCta}>
+                {nav.cta.label}
+              </Link>
+            </div>
           </nav>
 
           {/* Mobile trigger */}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="inline-flex size-10 items-center justify-center rounded-md text-foreground md:hidden"
+            className="inline-flex size-10 items-center justify-center rounded-md text-foreground lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
           >
@@ -102,7 +122,7 @@ export function Navbar({
 
       {/* Mobile panel */}
       {open ? (
-        <div className="border-t border-border bg-brand-cream md:hidden">
+        <div className="border-t border-border bg-brand-cream lg:hidden">
           <div className="container mx-auto flex flex-col gap-1 px-4 py-4">
             {/* Everything except the destination the drawer ends on: it is a
                 button down there, and a link up here as well would be the same
