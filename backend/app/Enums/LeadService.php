@@ -3,7 +3,7 @@
 namespace App\Enums;
 
 /**
- * The three ways an enquiry reaches the CRM.
+ * The ways an enquiry reaches the CRM.
  *
  * Fixed domain values owned by the code, not rows in a table: adding one is a
  * deploy either way, and a lookup table would only add a join.
@@ -13,6 +13,9 @@ enum LeadService: string
     case Financement = 'financement';
     case Developpement = 'developpement';
     case Contact = 'contact';
+    /* The client sheet handed out at trade shows, filled in on the page a
+       stand's QR code opens. */
+    case Salon = 'salon';
 
     public function label(): string
     {
@@ -20,6 +23,7 @@ enum LeadService: string
             self::Financement => 'Demande de financement',
             self::Developpement => 'Développement Digital',
             self::Contact => 'Message de contact',
+            self::Salon => 'Fiche salon',
         };
     }
 
@@ -32,6 +36,7 @@ enum LeadService: string
             // the old address redirects here.
             self::Developpement => '/developpement-digital',
             self::Contact => '/contact',
+            self::Salon => '/fiche-client',
         };
     }
 
@@ -42,6 +47,7 @@ enum LeadService: string
             self::Financement => 'FIN',
             self::Developpement => 'DEV',
             self::Contact => 'CON',
+            self::Salon => 'SAL',
         };
     }
 }

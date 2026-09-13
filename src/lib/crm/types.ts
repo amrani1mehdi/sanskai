@@ -25,8 +25,8 @@ export type LeadStatus =
   /** Contact messages only; `nouveau` is its unanswered counterpart. */
   | "repondu";
 
-/** The three ways an enquiry reaches the CRM. `prestations` detail the second. */
-export type ServiceId = "financement" | "developpement" | "contact";
+/** The ways an enquiry reaches the CRM. `prestations` detail the second. */
+export type ServiceId = "financement" | "developpement" | "contact" | "salon";
 
 /**
  * Sub-offers bundled under Développement Digital. The enquiry form is a single
@@ -142,6 +142,25 @@ export type Lead = {
   siteWebUrl?: string;
   reseaux?: boolean;
   reseauxOu?: string;
+
+  /**
+   * The trade-show client sheet's answers that have no column of their own.
+   * Only on a `salon` lead. Choices are stored as their values — see
+   * `lib/leads/salon.ts` for the labels.
+   */
+  details?: {
+    secteur: string | null;
+    emailEntreprise: string | null;
+    anciennete: string | null;
+    salaries: string | null;
+    fonction: string | null;
+    telephoneFixe: string | null;
+    besoins: string[];
+    besoinAutre: string | null;
+    motifs: string[];
+    motifAutre: string | null;
+    delai: string | null;
+  };
 
   message?: string;
 

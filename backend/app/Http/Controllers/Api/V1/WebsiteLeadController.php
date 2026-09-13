@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreContactLeadRequest;
 use App\Http\Requests\Api\StoreDevelopmentLeadRequest;
 use App\Http\Requests\Api\StoreFinancingLeadRequest;
+use App\Http\Requests\Api\StoreSalonLeadRequest;
 use App\Models\Lead;
 use App\Support\DocumentStore;
 use App\Support\Eligibility;
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * The website's two submission endpoints.
+ * The website's submission endpoints.
  *
  * Public in the sense that no user is signed in — the caller is the Next.js
  * server holding the shared API key, never a browser.
@@ -209,6 +210,112 @@ class WebsiteLeadController extends Controller
         ]);
 
         return $this->created($lead);
+    }
+
+    /**
+     * POST /api/v1/website/leads/salon
+     *
+     * The client sheet handed out at trade shows, filled in on the page a stand's
+     * QR code opens. Its own service, with an SAL- reference, so prospects met at
+     * an event are counted and followed apart from people who found the site.
+     *
+     * Most of the sheet fits columns that already exist. What does not — sector,
+     * company age, headcount, the contact's role and landline, the needs ticked
+     * and the financing detail — goes to `details`. The financing answers are
+     * kept only when financing is among the needs: left over from a box ticked
+     * and then unticked, they would describe a request nobody made.
+     */
+    public function salon(StoreSalonLeadRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        [$prenom, $nom] = self::splitName($data['nomDirigeant']);
+
+        $besoins = array_values($data['besoins']);
+        $financement = in_array('financement', $besoins, true);
+        $motifs = $financement ? array_values($data['motifs'] ?? []) : [];
+        $montant = $financement ? ($data['montant'] ?? null) : null;
+
+        $lead = $this->createWithReference(
+            LeadService::Salon,
+            fn (string $reference) => tap(
+                Lead::create([
+                    'reference' => $reference,
+                    'service' => LeadService::Salon,
+                    'status' => LeadStatus::Nouveau,
+
+                    'nom' => $nom,
+                    'prenom' => $prenom,
+                    'email' => $data['email'],
+                    'telephone' => $data['mobile'],
+
+                    'entreprise' => $data['entreprise'],
+                    'ville' => $data['ville'] ?? null,
+                    // Unknown rather than "no" when left blank: the sheet does
+                    // not ask whether they have a site, only where it is.
+                    'site_web' => filled($data['siteWebUrl'] ?? null) ? true : null,
+                    'site_web_url' => $data['siteWebUrl'] ?? null,
+
+                    'montant' => $montant,
+                    'montant_cents' => filled($montant) ? self::toCents($montant) : null,
+
+                    'details' => [
+                        'secteur' => $data['secteur'] ?? null,
+                        'emailEntreprise' => $data['emailEntreprise'] ?? null,
+                        'anciennete' => $data['anciennete'] ?? null,
+                        'salaries' => $data['salaries'] ?? null,
+                        'fonction' => $data['fonction'] ?? null,
+                        'telephoneFixe' => $data['fixe'] ?? null,
+                        'besoins' => $besoins,
+                        'besoinAutre' => in_array('autre', $besoins, true)
+                            ? ($data['besoinAutre'] ?? null)
+                            : null,
+                        'motifs' => $motifs,
+                        'motifAutre' => in_array('autre', $motifs, true)
+                            ? ($data['motifAutre'] ?? null)
+                            : null,
+                        'delai' => $financement ? ($data['delai'] ?? null) : null,
+                    ],
+                ]),
+                fn (Lead $lead) => $lead->recordActivity(
+                    ActivityKind::Creation,
+                    'Fiche reçue via le formulaire salon',
+                ),
+            ),
+        );
+
+        Log::info('Fiche salon enregistrée', [
+            'lead_id' => $lead->id,
+            'reference' => $lead->reference,
+            'besoins' => $besoins,
+        ]);
+
+        return $this->created($lead);
+    }
+
+    /**
+     * Splits "Claire Martin" into a first and last name.
+     *
+     * The sheet asks for one "Nom du dirigeant", the CRM stores two, and
+     * something has to bridge them. First token is the given name, the rest is
+     * the family name — right for most French entries and wrong for some, which
+     * is why the whole string is kept across the two columns rather than
+     * truncated: nothing the visitor typed is lost, even when the split lands
+     * oddly.
+     *
+     * A single word becomes the family name with an empty given name, since a
+     * lone "Martin" is far more likely to be a surname than a forename.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private static function splitName(string $full): array
+    {
+        $parts = preg_split('/\s+/u', trim($full), 2, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return match (count($parts)) {
+            0 => ['', ''],
+            1 => ['', $parts[0]],
+            default => [$parts[0], $parts[1]],
+        };
     }
 
     /**

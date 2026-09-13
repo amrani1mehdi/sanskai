@@ -216,6 +216,15 @@ export const SERVICES: ServiceConfig[] = [
     source: "/developpement-digital",
     prestations: PRESTATIONS,
   },
+  {
+    /* Prospects met at trade shows, filling in the client sheet a stand's QR
+       code opens. A service of its own so they are counted and followed apart
+       from people who found the site by themselves. */
+    id: "salon",
+    label: "Fiche salon",
+    shortLabel: "Salon",
+    source: "/fiche-client",
+  },
 ];
 
 /**

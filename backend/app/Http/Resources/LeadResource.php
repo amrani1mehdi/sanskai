@@ -106,6 +106,17 @@ class LeadResource extends JsonResource
                 ],
             ]),
 
+            /* The trade-show sheet: the amount when financing was one of the
+               needs, and the answers that have no column of their own. */
+            $this->mergeWhen($this->service === LeadService::Salon, fn () => [
+                'montant' => $this->montant,
+                'montantValeur' => $this->montant_cents !== null
+                    ? $this->montant_cents / 100
+                    : null,
+                'siteWebUrl' => $this->site_web_url,
+                'details' => $this->details,
+            ]),
+
             'message' => $this->message,
 
             'documentCount' => $this->whenCounted('documents'),

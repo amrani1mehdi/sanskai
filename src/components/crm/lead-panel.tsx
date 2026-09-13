@@ -30,6 +30,7 @@ import { DocumentViewer } from "@/components/crm/document-viewer";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { DOCUMENT_LABELS, SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
 import { PrestationChip } from "@/components/crm/prestation-chip";
+import { salonSheet, type SheetRow } from "@/lib/crm/salon-sheet";
 import {
   formatAmount,
   formatCompanyAge,
@@ -312,7 +313,9 @@ export function LeadPanel({
         {/* A contact message asks for nothing in particular — it has no
             sub-service and none of the funding questions, so the section
             would be a heading over one "Non renseigné". */}
-        {lead.service !== "contact" ? (
+        {lead.service === "salon" ? (
+          <SalonSheetSection lead={lead} />
+        ) : lead.service !== "contact" ? (
           <section>
             <Label>Demande</Label>
             <dl className="mt-1 space-y-1.5 text-sm">
@@ -559,6 +562,36 @@ export function LeadPanel({
         }}
       />
     </aside>
+  );
+}
+
+/**
+ * What a trade-show sheet carries beyond the fields above: the answers with no
+ * column of their own, in the sheet's order. Read-only, like the rest of what
+ * was submitted.
+ *
+ * In place of the "Demande" block rather than beside it — a sheet has no
+ * sub-service and none of the dossier's funding questions, so that block would
+ * be a heading over "Non renseigné".
+ */
+function SalonSheetSection({ lead }: { lead: Parameters<typeof salonSheet>[0] }) {
+  const sheet = salonSheet(lead);
+
+  const rows = (list: SheetRow[]) =>
+    list.map((row) => (
+      <Row key={row.label} label={row.label} value={row.value ?? "Non renseigné"} />
+    ));
+
+  return (
+    <section>
+      <Label>Fiche salon</Label>
+      <dl className="mt-1 space-y-1.5 text-sm">
+        {rows(sheet.entreprise)}
+        {rows(sheet.contact)}
+        <Row label="Besoin principal" value={sheet.besoins ?? "Non renseigné"} />
+        {sheet.financement ? rows(sheet.financement) : null}
+      </dl>
+    </section>
   );
 }
 

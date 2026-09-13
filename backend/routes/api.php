@@ -29,8 +29,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
     /*
-     * Website -> CRM. Open by design: these three endpoints take a form from
-     * the public site, and the browser has no credential to offer.
+     * Website -> CRM. Open by design: these endpoints take a form from the
+     * public site, and the browser has no credential to offer.
      *
      * The throttle is therefore the only guard. Six submissions a minute per IP
      * is far above what a human filling in a financing form can do, and far
@@ -48,6 +48,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::post('contact', [WebsiteLeadController::class, 'contact'])
                 ->name('contact');
         });
+
+    /*
+     * The trade-show client sheet, on a looser limit of its own.
+     *
+     * It is filled in at a stand, and the phones there reach the API through the
+     * same venue Wi-Fi or the same mobile carrier — one address as far as a
+     * per-IP limit can tell. Six a minute would turn prospects away exactly when
+     * the stand is busiest. Thirty still stops a script.
+     */
+    Route::middleware(['throttle:30,1'])
+        ->post('website/leads/salon', [WebsiteLeadController::class, 'salon'])
+        ->name('website.leads.salon');
 
     /*
      * The blog, as the public site reads it.

@@ -23,6 +23,8 @@ use Illuminate\Support\Str;
     'chiffre_affaire', 'chiffre_affaire_cents', 'montant', 'montant_cents',
     'code_commercial', 'site_web', 'site_web_url', 'reseaux', 'reseaux_ou',
     'message', 'eligible_age', 'eligible_revenue',
+    // The trade-show sheet's answers that have no column of their own.
+    'details',
 ])]
 class Lead extends Model
 {
@@ -41,6 +43,7 @@ class Lead extends Model
             'reseaux' => 'boolean',
             'eligible_age' => 'boolean',
             'eligible_revenue' => 'boolean',
+            'details' => 'array',
         ];
     }
 

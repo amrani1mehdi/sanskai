@@ -99,6 +99,8 @@ type ApiLead = {
   siteWebUrl?: string | null;
   reseaux?: boolean | null;
   reseauxOu?: string | null;
+  /** Only on a trade-show sheet. */
+  details?: Lead["details"] | null;
   message: string | null;
   documentCount?: number;
   noteCount?: number;
@@ -174,6 +176,8 @@ export function toLead(lead: ApiLead): Lead {
     siteWebUrl: lead.siteWebUrl ?? undefined,
     reseaux: lead.reseaux ?? undefined,
     reseauxOu: lead.reseauxOu ?? undefined,
+
+    details: lead.details ?? undefined,
 
     message: lead.message ?? undefined,
 

@@ -461,7 +461,9 @@ function KanbanCard({
           ) : null}
         </div>
 
-        {lead.service === "financement" ? (
+        {/* The amount is the first thing read off a funding request. A salon
+            sheet carries one only when financing was among its needs. */}
+        {lead.service === "financement" || (lead.service === "salon" && lead.montant) ? (
           <p className="mt-2.5 font-mono text-[17px] font-semibold text-foreground tabular-nums">
             {formatAmount(lead.montant)}
           </p>

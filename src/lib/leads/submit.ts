@@ -17,7 +17,7 @@
  */
 const PUBLIC_API = process.env.NEXT_PUBLIC_CRM_API_URL?.replace(/\/+$/, "");
 
-export type LeadEndpoint = "financement" | "developpement" | "contact";
+export type LeadEndpoint = "financement" | "developpement" | "contact" | "salon";
 
 /** True when the browser posts to the API itself rather than through this app. */
 export function postsDirect(): boolean {
