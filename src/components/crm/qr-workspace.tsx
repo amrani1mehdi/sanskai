@@ -1,12 +1,17 @@
 "use client";
 
 /**
- * QR codes — one for the site, one for each public form.
+ * QR codes — one for the site, one for the client sheet handed out at trade
+ * shows.
  *
- * They go on flyers, business cards and shop windows, so each has to open the
- * right page on a phone with nothing typed: the home page, or a form already
- * scrolled into view. Nothing is stored — a code is a function of its URL, so it
- * is drawn fresh on every visit and always matches the page it names.
+ * They go on flyers, stands and business cards, so each has to open the right
+ * page on a phone with nothing typed. Nothing is stored — a code is a function of
+ * its URL, so it is drawn fresh on every visit and always matches the page it
+ * names.
+ *
+ * Deliberately two and not one per form. The site's own forms are reached from
+ * the site; the only form worth a code of its own is the one that starts on
+ * paper, at a stand, with nobody near a keyboard.
  */
 
 import { useEffect, useState } from "react";
@@ -19,17 +24,10 @@ type Target = {
   id: string;
   label: string;
   description: string;
-  /** Path on the public site, with the anchor the page sets on its form. */
+  /** Path on the public site. */
   path: string;
 };
 
-/*
- * Paths come from the CRM config's `source` — the same field the lead panel
- * prints as "depuis /…" — so a page that moves takes its code with it. The
- * anchors are the ones each page puts on its form; without them a phone lands
- * on the page's heading and the form is a scroll away, which on a flyer scan
- * is where people give up.
- */
 const TARGETS: Target[] = [
   {
     id: "site",
@@ -38,22 +36,13 @@ const TARGETS: Target[] = [
     path: "/",
   },
   {
-    id: "financement",
-    label: SERVICE_BY_ID.financement.label,
-    description: "Ouvre le formulaire de financement",
-    path: `${SERVICE_BY_ID.financement.source}#formulaire`,
-  },
-  {
-    id: "developpement",
-    label: SERVICE_BY_ID.developpement.label,
-    description: "Ouvre le formulaire de demande",
-    path: `${SERVICE_BY_ID.developpement.source}#devis`,
-  },
-  {
-    id: "contact",
-    label: "Contact",
-    description: "Ouvre le formulaire de contact",
-    path: `${SERVICE_BY_ID.contact.source}#formulaire`,
+    id: "fiche-client",
+    label: "Fiche client",
+    description: "Ouvre la fiche client / prospect du salon",
+    /* From the CRM config's `source`, the same field the lead panel prints as
+       "depuis /…", so if the page moves its code moves with it. The page is the
+       form, so there is no anchor to jump to. */
+    path: SERVICE_BY_ID.salon.source,
   },
 ];
 
@@ -81,14 +70,15 @@ export function QrWorkspace() {
             QR codes
           </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Un code pour le site et un pour chaque formulaire. Ils pointent vers{" "}
+            Un code pour le site et un pour la fiche client du salon. Ils pointent
+            vers{" "}
             <span className="font-mono">{QR_BASE_URL.replace(/^https?:\/\//, "")}</span>.
           </p>
         </div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6">
-        <ul className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+        <ul className="grid max-w-3xl gap-4 sm:grid-cols-2">
           {TARGETS.map((target) => (
             <QrCard key={target.id} target={target} />
           ))}

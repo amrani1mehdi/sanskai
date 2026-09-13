@@ -128,11 +128,7 @@ export default async function FinancementPage() {
               </MotionReveal>
 
               <MotionReveal x={20}>
-                {/* Where a QR code lands: on the form itself rather than the
-                    section, because on a phone the form sits below the text. */}
-                <div id="formulaire" className="scroll-mt-28">
-                  <FinancingForm content={content} locale={locale} />
-                </div>
+                <FinancingForm content={content} locale={locale} />
               </MotionReveal>
             </div>
           </div>
