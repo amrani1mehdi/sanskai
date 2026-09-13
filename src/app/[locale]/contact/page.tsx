@@ -84,11 +84,15 @@ export default async function ContactPage() {
               <MotionReveal x={20}>
                 {/* The financing form, posting to the contact route: the same
                     dossier, filed under Contact with a CON- reference. */}
-                <FinancingForm
-                  content={content}
-                  locale={locale}
-                  service="contact"
-                />
+                {/* Where a QR code lands, as on /financement: the form, not the
+                    section, because on a phone the form sits below the text. */}
+                <div id="formulaire" className="scroll-mt-28">
+                  <FinancingForm
+                    content={content}
+                    locale={locale}
+                    service="contact"
+                  />
+                </div>
               </MotionReveal>
             </div>
           </div>

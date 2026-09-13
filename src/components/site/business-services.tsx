@@ -246,7 +246,10 @@ export function BusinessServices({ content }: { content: SiteContent }) {
         </div>
       </section>
 
-      <section id="devis" className="section-padding bg-secondary">
+      {/* `#devis` is where the QR code for this form lands. The margin keeps the
+          section clear of the fixed header, which would otherwise sit on top of
+          the heading a scan arrives at. */}
+      <section id="devis" className="section-padding scroll-mt-24 bg-secondary">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <MotionReveal y={20}>

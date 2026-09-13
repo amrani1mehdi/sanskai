@@ -13,6 +13,7 @@
 import { translations } from "@/lib/i18n/translations";
 import { getBlogCopy } from "@/lib/blog/copy";
 import { localeHref, type Locale } from "@/lib/i18n/config";
+import { SITE_URL } from "@/lib/site-url";
 
 export type NavLink = { label: string; href: string };
 
@@ -121,7 +122,7 @@ export function getSiteContent(locale: Locale) {
   return {
     meta: {
       ...t.meta.home,
-      url: "https://sansekaisolution.com",
+      url: SITE_URL,
     },
 
     brand: {

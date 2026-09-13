@@ -17,7 +17,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Menu, Newspaper, Users, X } from "lucide-react";
+import { ArrowUpRight, Menu, Newspaper, QrCode, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountMenu } from "@/components/crm/account-menu";
 import { SansekaiMark } from "@/components/crm/sansekai-mark";
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 const SECTIONS = [
   { href: "/admin/leads", label: "Leads", icon: Users },
   { href: "/admin/blog", label: "Articles", icon: Newspaper },
+  { href: "/admin/qr-codes", label: "QR codes", icon: QrCode },
 ] as const;
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
