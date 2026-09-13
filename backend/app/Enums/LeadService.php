@@ -28,7 +28,9 @@ enum LeadService: string
     {
         return match ($this) {
             self::Financement => '/financement',
-            self::Developpement => '/developpement-entreprise',
+            // Moved from /developpement-entreprise with the offer's rename;
+            // the old address redirects here.
+            self::Developpement => '/developpement-digital',
             self::Contact => '/contact',
         };
     }
