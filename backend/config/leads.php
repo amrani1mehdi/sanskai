@@ -26,4 +26,24 @@ return [
         'email' => env('ADMIN_EMAIL', 'admin@sansekaisolution.com'),
         'password' => env('ADMIN_PASSWORD'),
     ],
+
+    /*
+     * Who is emailed when a website form lands a lead.
+     *
+     * Comma-separated, so the whole team can be told. Empty means nobody is:
+     * no address is assumed, because an alert sent to a mailbox nobody reads
+     * looks exactly like one that was never sent.
+     */
+    'notifications' => [
+        'to' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('LEAD_NOTIFICATION_EMAIL', '')),
+        ))),
+
+        /* Where the email's button opens the lead: `{url}/leads?lead={id}`. */
+        'back_office_url' => rtrim(
+            (string) env('BACK_OFFICE_URL', 'https://sansekaisolution.com/admin'),
+            '/',
+        ),
+    ],
 ];

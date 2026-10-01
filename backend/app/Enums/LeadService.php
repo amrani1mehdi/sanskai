@@ -16,6 +16,9 @@ enum LeadService: string
     /* The client sheet handed out at trade shows, filled in on the page a
        stand's QR code opens. */
     case Salon = 'salon';
+    /* A cabinet starting a collaboration, sending the documents the
+       partnership needs from the /devenir-partenaire page. */
+    case Partenaire = 'partenaire';
 
     public function label(): string
     {
@@ -24,6 +27,7 @@ enum LeadService: string
             self::Developpement => 'Développement Digital',
             self::Contact => 'Message de contact',
             self::Salon => 'Fiche salon',
+            self::Partenaire => 'Partenaire',
         };
     }
 
@@ -37,6 +41,7 @@ enum LeadService: string
             self::Developpement => '/developpement-digital',
             self::Contact => '/contact',
             self::Salon => '/fiche-client',
+            self::Partenaire => '/devenir-partenaire',
         };
     }
 
@@ -48,6 +53,7 @@ enum LeadService: string
             self::Developpement => 'DEV',
             self::Contact => 'CON',
             self::Salon => 'SAL',
+            self::Partenaire => 'PAR',
         };
     }
 }

@@ -117,6 +117,12 @@ class LeadResource extends JsonResource
                 'details' => $this->details,
             ]),
 
+            /* A partner's answers with no column of their own: whether they are
+               independent, and the billing address beside the contract one. */
+            $this->mergeWhen($this->service === LeadService::Partenaire, fn () => [
+                'details' => $this->details,
+            ]),
+
             'message' => $this->message,
 
             'documentCount' => $this->whenCounted('documents'),

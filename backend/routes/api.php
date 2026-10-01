@@ -47,6 +47,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                 ->name('developpement');
             Route::post('contact', [WebsiteLeadController::class, 'contact'])
                 ->name('contact');
+            // A cabinet sending its onboarding papers — one person at a desk,
+            // so the ordinary limit fits it as well as it fits financing.
+            Route::post('partenaire', [WebsiteLeadController::class, 'partenaire'])
+                ->name('partenaire');
         });
 
     /*

@@ -130,7 +130,9 @@ How many files each slot holds:
 The same rule is enforced on the admin upload endpoint: posting a second
 document to a single-file slot returns **422** on `kind`, and the existing one
 has to be deleted first. That is deliberate — two Kbis on a dossier with nothing
-saying which is current is worse than an explicit delete-then-add.
+saying which is current is worse than an explicit delete-then-add. The one
+exception there is `piece_identite`, which takes a recto and a verso as two
+files (the financing form itself still sends one).
 
 Uploads: PDF / JPG / PNG. The size ceiling is the **smaller** of
 `leads.max_upload_kb` (10 MB) and PHP's own `upload_max_filesize`.
@@ -224,14 +226,41 @@ posting:
 | Création de LOGO | `logo` |
 | Campagne publicitaire sur les réseaux | `campagne_publicitaire` |
 
+### Partner form → `leads`
+
+`POST /v1/website/leads/partenaire`, `multipart/form-data`. A cabinet starting a
+collaboration sends the papers it needs, from `/devenir-partenaire`. References
+are `PAR-2026-0001`.
+
+| API field | Column | Required | Notes |
+|---|---|---|---|
+| `entreprise` | `entreprise` | yes | Nom du cabinet |
+| `nom` | `nom` | yes | |
+| `prenom` | `prenom` | yes | |
+| `telephone` | `telephone` | yes | |
+| `independant` | `details.independant` | yes | boolean, `1` / `0` |
+| `emailContrat` | `email` | yes | The address to put on contracts |
+| `emailFacturation` | `details.emailFacturation` | yes | |
+| `kbis` | `lead_documents` | yes | kind `kbis`, one file |
+| `pieceIdentite[]` | `lead_documents` | yes | kind `piece_identite`, **one or two files** (recto/verso) |
+| `attestationEmployeur` | `lead_documents` | if `independant` is false | kind `attestation_employeur`, one file; ignored when independent |
+| `attestationHebergement` | `lead_documents` | yes | kind `attestation_hebergement`, one file |
+| `rib` | `lead_documents` | yes | kind `rib`, one file |
+
+**Here the documents are required**, the opposite of the financing dossier. The
+collaboration is already agreed and the form exists only to collect its papers,
+so a submission without them is not a lead worth keeping. Uploads follow the
+same PDF / JPG / PNG types and size ceiling as the financing form, and are
+written in the same transaction as the lead.
+
 ### Enumerations
 
 Identical to the front end's `lib/crm/config.ts`:
 
 - **status** — service enquiries: `nouveau`, `a_examiner`, `qualifie`, `en_cours`, `approuve`, `refuse`. Contact messages: `nouveau` (shown as "Non répondu") and `repondu`. A lead carries its own `statusOptions`, and `PATCH` refuses a status that does not apply to its service.
-- **service** — `financement`, `developpement`, `contact`
+- **service** — `financement`, `developpement`, `contact`, `salon`, `partenaire`
 - **prestation** — `site_web`, `logo`, `campagne_publicitaire`
-- **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `facture`, `autre`
+- **document kind** — `piece_identite`, `kbis`, `releve_bancaire`, `comptable`, `facture`, `attestation_employeur`, `attestation_hebergement`, `rib`, `autre`
 - **activity kind** — `creation`, `statut`, `note`, `assignation`, `appel`, `email`, `document`
 
 ---

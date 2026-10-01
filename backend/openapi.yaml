@@ -399,6 +399,128 @@ paths:
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
+  /v1/website/leads/partenaire:
+    post:
+      tags: [Website]
+      summary: Submit a partner's onboarding documents
+      operationId: submitPartnerLead
+      description: |
+        Creates a `partenaire` lead (PAR- reference) from the
+        `/devenir-partenaire` form: a cabinet starting a collaboration sends the
+        papers it needs. The lead, its files and its activity trail are written
+        in one transaction.
+
+        Unlike the financing dossier, **the documents are required** — the form
+        exists only to collect them. `attestationEmployeur` is required when
+        `independant` is false and ignored (not stored) when it is true.
+
+        `emailContrat` becomes the lead's `email`; `independant` and
+        `emailFacturation` are stored in `details`.
+
+        Rate limited to **6 requests per minute per IP**.
+      security: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - entreprise
+                - nom
+                - prenom
+                - telephone
+                - independant
+                - emailContrat
+                - emailFacturation
+                - kbis
+                - pieceIdentite
+                - attestationHebergement
+                - rib
+              properties:
+                entreprise:
+                  type: string
+                  maxLength: 190
+                  description: Nom du cabinet.
+                  example: Cabinet Durand Conseil
+                nom:
+                  type: string
+                  maxLength: 120
+                  example: Durand
+                prenom:
+                  type: string
+                  maxLength: 120
+                  example: Sophie
+                telephone:
+                  type: string
+                  maxLength: 40
+                  example: 06 42 18 77 03
+                independant:
+                  type: boolean
+                  description: Sent as `1` / `0` in multipart.
+                emailContrat:
+                  type: string
+                  format: email
+                  maxLength: 190
+                  description: The address to put on contracts; stored as the lead's email.
+                emailFacturation:
+                  type: string
+                  format: email
+                  maxLength: 190
+                kbis:
+                  type: string
+                  format: binary
+                  description: One file. PDF, JPG or PNG, same size ceiling as the financing form.
+                pieceIdentite:
+                  type: array
+                  minItems: 1
+                  maxItems: 2
+                  description: >
+                    Identity card, recto/verso as one or two files. Send repeated
+                    `pieceIdentite[]` parts.
+                  items:
+                    type: string
+                    format: binary
+                attestationEmployeur:
+                  type: string
+                  format: binary
+                  description: Required when `independant` is false; ignored otherwise.
+                attestationHebergement:
+                  type: string
+                  format: binary
+                rib:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Partner received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SubmissionReceipt"
+              example:
+                data:
+                  id: 301
+                  reference: PAR-2026-0001
+                  status: nouveau
+                  createdAt: "2026-09-17T10:00:00+00:00"
+        "422":
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+              example:
+                message: Le champ attestation d'employeur est obligatoire.
+                errors:
+                  attestationEmployeur:
+                    - Le champ attestation d'employeur est obligatoire.
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
   # ------------------------------------------------------------------- Auth --
   /v1/auth/token:
     delete:
@@ -776,10 +898,11 @@ paths:
       description: |
         For an admin adding a piece that arrived later, by email say.
 
-        One file per call. `piece_identite`, `kbis` and `releve_bancaire` hold a
-        single document each: posting a second one to a slot that is already
-        filled is refused with a 422 on `kind`, and the existing document has to
-        be deleted first. `comptable` and `autre` stack as many as needed.
+        One file per call. `kbis`, `releve_bancaire`, `attestation_employeur`,
+        `attestation_hebergement` and `rib` hold a single document each: posting
+        a second one to a slot that is already filled is refused with a 422 on
+        `kind`, and the existing document has to be deleted first.
+        `piece_identite` (recto/verso), `comptable`, `facture` and `autre` stack.
       requestBody:
         required: true
         content:
@@ -1141,12 +1264,13 @@ components:
     LeadService:
       type: string
       description: >
-        How the enquiry reached the CRM. References are prefixed FIN-, DEV- and
-        CON- respectively. `financement` and `developpement` are services the
-        company sells; `contact` is a message from the /contact form and is
-        deliberately not one — the dashboard, the service filter and the
-        pipeline all exclude it.
-      enum: [financement, developpement, contact]
+        How the enquiry reached the CRM. References are prefixed FIN-, DEV-,
+        CON-, SAL- and PAR- respectively. `financement` and `developpement` are
+        services the company sells; `contact` is a message from the /contact
+        form and is deliberately not one — the dashboard, the service filter and
+        the pipeline all exclude it. `salon` is the trade-show client sheet and
+        `partenaire` a cabinet's onboarding documents.
+      enum: [financement, developpement, contact, salon, partenaire]
 
     LeadStatus:
       type: string
@@ -1169,10 +1293,12 @@ components:
       type: string
       description: >
         The financing form's four upload slots, the contact form's invoices,
-        and a catch-all. All are optional. `piece_identite`, `kbis` and
-        `releve_bancaire` hold one document each; `comptable`, `facture` and
-        `autre` hold several.
-      enum: [piece_identite, kbis, releve_bancaire, comptable, facture, autre]
+        the partner form's papers, and a catch-all. Optional on the financing
+        dossier, required on the partner form. `kbis`, `releve_bancaire`,
+        `attestation_employeur`, `attestation_hebergement` and `rib` hold one
+        document each; `piece_identite` (recto/verso), `comptable`, `facture`
+        and `autre` hold several.
+      enum: [piece_identite, kbis, releve_bancaire, comptable, facture, attestation_employeur, attestation_hebergement, rib, autre]
 
     ActivityKind:
       type: string

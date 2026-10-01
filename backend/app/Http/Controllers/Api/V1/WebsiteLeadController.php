@@ -11,7 +11,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreContactLeadRequest;
 use App\Http\Requests\Api\StoreDevelopmentLeadRequest;
 use App\Http\Requests\Api\StoreFinancingLeadRequest;
+use App\Http\Requests\Api\StorePartnerLeadRequest;
 use App\Http\Requests\Api\StoreSalonLeadRequest;
+use App\Mail\NewLeadReceived;
 use App\Models\Lead;
 use App\Support\DocumentStore;
 use App\Support\Eligibility;
@@ -20,6 +22,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 /**
@@ -36,6 +39,20 @@ class WebsiteLeadController extends Controller
         'kbis' => DocumentKind::Kbis,
         'relevesBancaires' => DocumentKind::ReleveBancaire,
         'documentsComptables' => DocumentKind::Comptable,
+    ];
+
+    /**
+     * The partner form's upload fields and the slot each fills.
+     *
+     * `pieceIdentite` is a list here — recto and verso — where the financing
+     * form sends one file; `Arr::wrap` below takes either.
+     */
+    private const PARTNER_UPLOAD_FIELDS = [
+        'kbis' => DocumentKind::Kbis,
+        'pieceIdentite' => DocumentKind::PieceIdentite,
+        'attestationEmployeur' => DocumentKind::AttestationEmployeur,
+        'attestationHebergement' => DocumentKind::AttestationHebergement,
+        'rib' => DocumentKind::Rib,
     ];
 
     /**
@@ -65,6 +82,8 @@ class WebsiteLeadController extends Controller
             'documents' => $lead->documents()->count(),
             'eligible' => $lead->eligible_age && $lead->eligible_revenue,
         ]);
+
+        $this->announce($lead);
 
         return $this->created($lead);
     }
@@ -180,6 +199,8 @@ class WebsiteLeadController extends Controller
             'prestation' => $lead->prestation?->value,
         ]);
 
+        $this->announce($lead);
+
         return $this->created($lead);
     }
 
@@ -208,6 +229,8 @@ class WebsiteLeadController extends Controller
             'documents' => $lead->documents()->count(),
             'eligible' => $lead->eligible_age && $lead->eligible_revenue,
         ]);
+
+        $this->announce($lead);
 
         return $this->created($lead);
     }
@@ -289,6 +312,76 @@ class WebsiteLeadController extends Controller
             'besoins' => $besoins,
         ]);
 
+        $this->announce($lead);
+
+        return $this->created($lead);
+    }
+
+    /**
+     * POST /api/v1/website/leads/partenaire
+     *
+     * A cabinet starting a collaboration sends the papers it needs: Kbis,
+     * identity card, proof of address, RIB, and an employer's attestation when
+     * the partner is an employee. Its own service, with a PAR- reference, so
+     * partners are followed apart from prospects.
+     *
+     * Two addresses come with it. The contract address is the partner's, and is
+     * the lead's email; billing can be somebody else's, and goes to `details`
+     * with the independent/employee answer.
+     *
+     * Only validated files are stored: an attestation picked and then made
+     * moot by answering "independent" is excluded by the request, so
+     * `validated()` is what the loop reads, not the raw request.
+     */
+    public function partenaire(StorePartnerLeadRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $store = new DocumentStore;
+
+        $lead = $this->createWithReference(
+            LeadService::Partenaire,
+            fn (string $reference) => tap(
+                Lead::create([
+                    'reference' => $reference,
+                    'service' => LeadService::Partenaire,
+                    'status' => LeadStatus::Nouveau,
+
+                    'nom' => $data['nom'],
+                    'prenom' => $data['prenom'],
+                    'email' => $data['emailContrat'],
+                    'telephone' => $data['telephone'],
+                    'entreprise' => $data['entreprise'],
+
+                    'details' => [
+                        'independant' => (bool) $data['independant'],
+                        'emailFacturation' => $data['emailFacturation'],
+                    ],
+                ]),
+                function (Lead $lead) use ($data, $store): void {
+                    foreach (self::PARTNER_UPLOAD_FIELDS as $field => $kind) {
+                        foreach (Arr::wrap($data[$field] ?? []) as $file) {
+                            $store->put($lead, $file, $kind);
+                        }
+                    }
+
+                    $lead->recordActivity(
+                        ActivityKind::Creation,
+                        'Documents reçus via le formulaire partenaire',
+                    );
+                },
+            ),
+            $store,
+        );
+
+        Log::info('Dossier partenaire enregistré', [
+            'lead_id' => $lead->id,
+            'reference' => $lead->reference,
+            'documents' => $lead->documents()->count(),
+            'independant' => $lead->details['independant'] ?? null,
+        ]);
+
+        $this->announce($lead);
+
         return $this->created($lead);
     }
 
@@ -365,6 +458,36 @@ class WebsiteLeadController extends Controller
                 throw $e;
             }
         }
+    }
+
+    /**
+     * Emails the team that a lead just landed.
+     *
+     * Deferred until the response has gone: the visitor's confirmation should
+     * not wait on a mail server, and a mail server that is down must not turn a
+     * lead that was saved into an error on their screen. A failure is logged
+     * instead — the lead is on the board whether or not the email went.
+     */
+    private function announce(Lead $lead): void
+    {
+        $recipients = config('leads.notifications.to');
+
+        if ($recipients === []) {
+            return;
+        }
+
+        defer(function () use ($lead, $recipients): void {
+            try {
+                Mail::to($recipients)->send(new NewLeadReceived($lead));
+            } catch (Throwable $e) {
+                Log::error('Notification de lead non envoyée', [
+                    'lead_id' => $lead->id,
+                    'reference' => $lead->reference,
+                    'exception' => $e::class,
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 
     /**

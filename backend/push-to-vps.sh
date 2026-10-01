@@ -35,7 +35,9 @@ cd "$HERE"
 # What a code deploy consists of. Everything absent from this list stays as it
 # is on the server, which is the point: an over-broad copy is how a deploy eats
 # an uploaded document or a .env.
-PATHS=(app config routes database/migrations database/seeders bootstrap/app.php artisan)
+# `resources/views` holds the email templates and the API docs page: code the
+# app renders, so a deploy that skips it ships a mail that cannot be drawn.
+PATHS=(app config routes resources/views database/migrations database/seeders bootstrap/app.php artisan)
 
 for p in "${PATHS[@]}"; do
     [ -e "$p" ] || fail "Missing $p — refusing to ship a partial tree."
