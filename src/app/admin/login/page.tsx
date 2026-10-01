@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/crm/login-form";
 import { SansekaiMark } from "@/components/crm/sansekai-mark";
+import { returnTo } from "@/lib/crm/return-to";
 import { isSignedIn } from "@/lib/crm/session";
 
 export const metadata: Metadata = {
@@ -9,9 +10,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: PageProps<"/admin/login">) {
+  /* Set by the gate when it turned someone away from a particular page. */
+  const { next } = await searchParams;
+  const destination = returnTo(typeof next === "string" ? next : null);
+
   // Already signed in: no reason to show the form again.
-  if (await isSignedIn()) redirect("/admin");
+  if (await isSignedIn()) redirect(destination);
 
   return (
     <div className="admin-theme flex min-h-screen justify-center bg-background px-6 py-16 sm:items-center sm:py-12">
@@ -49,7 +54,7 @@ export default async function LoginPage() {
         </p>
 
         <div className="mt-7">
-          <LoginForm />
+          <LoginForm next={destination} />
         </div>
 
         <hr className="mt-10 border-t border-border" />

@@ -22,6 +22,7 @@ import { NotesPanel } from "@/components/crm/notes-panel";
 import { PrestationChip } from "@/components/crm/prestation-chip";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
+import { partnerSheet } from "@/lib/crm/partner-sheet";
 import { salonSheet } from "@/lib/crm/salon-sheet";
 import {
   formatAmount,
@@ -293,8 +294,10 @@ function ActionBar({
  * than disappearing.
  */
 function LeadInformation({ lead }: { lead: Lead }) {
-  /* A trade-show sheet has blocks of its own; see `SalonInformation`. */
+  /* A trade-show sheet and a partner's form have blocks of their own; see
+     `SalonInformation` and `PartnerInformation`. */
   if (lead.service === "salon") return <SalonInformation lead={lead} />;
+  if (lead.service === "partenaire") return <PartnerInformation lead={lead} />;
 
   const isContact = lead.service === "contact";
 
@@ -420,6 +423,53 @@ function SalonInformation({ lead }: { lead: Lead }) {
               <Field key={row.label} label={row.label} value={row.value} />
             ))
           : null}
+      </FieldGroup>
+    </section>
+  );
+}
+
+/**
+ * A partner's onboarding form, in its own blocks.
+ *
+ * Not the dossier layout, whose date de création, code postal and chiffre
+ * d'affaires this form never asks. The documents it collects are listed in the
+ * Documents panel further down the page, like any lead's.
+ */
+function PartnerInformation({ lead }: { lead: Lead }) {
+  const sheet = partnerSheet(lead);
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6">
+      <h2 className="mb-5 font-display text-base font-bold text-foreground">
+        Partenaire
+      </h2>
+
+      <FieldGroup icon={Building2} title="Cabinet">
+        <Field label="Nom du cabinet" value={lead.entreprise} wide />
+      </FieldGroup>
+
+      <FieldGroup icon={User} title="Contact">
+        <Field label="Nom" value={lead.nom} />
+        <Field label="Prénom" value={lead.prenom} />
+        <Field
+          label="Téléphone"
+          value={lead.telephone}
+          href={lead.telephone ? `tel:${lead.telephone.replace(/\s/g, "")}` : undefined}
+        />
+        {sheet.statut.map((row) => (
+          <Field key={row.label} label={row.label} value={row.value} />
+        ))}
+      </FieldGroup>
+
+      <FieldGroup icon={Mail} title="Adresses e-mail">
+        {sheet.emails.map((row) => (
+          <Field
+            key={row.label}
+            label={row.label}
+            value={row.value}
+            href={row.value ? `mailto:${row.value}` : undefined}
+          />
+        ))}
       </FieldGroup>
     </section>
   );

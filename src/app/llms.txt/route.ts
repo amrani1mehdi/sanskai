@@ -59,6 +59,7 @@ export async function GET() {
     `- [Business development](${abs("/developpement-digital")}): websites, branding and growth work.`,
     `- [Expertise](${abs("/expertise")}): how the company works and in which markets.`,
     `- [Contact](${abs("/contact")}): how to reach the team.`,
+    `- [Become a partner](${abs("/devenir-partenaire")}): where partner firms send the documents that start a collaboration.`,
     "",
     "## Articles",
     "",

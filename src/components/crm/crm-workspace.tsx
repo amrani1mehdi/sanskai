@@ -14,7 +14,7 @@
  * here too, and the service filter is what narrows the board to them.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, SlidersHorizontal, TriangleAlert, X } from "lucide-react";
 import { KanbanBoard } from "@/components/crm/kanban-board";
 import { Select } from "@/components/crm/select";
@@ -53,7 +53,12 @@ function fold(value: string): string {
     .toLowerCase();
 }
 
-export function CrmWorkspace() {
+export function CrmWorkspace({
+  openLeadId = null,
+}: {
+  /** A lead to open on arrival — `?lead=` on the address, from its email. */
+  openLeadId?: string | null;
+}) {
   const {
     leads: all,
     hydrated,
@@ -66,7 +71,28 @@ export function CrmWorkspace() {
   const [service, setService] = useState<ServiceFilter>("tous");
   const [prestation, setPrestation] = useState<PrestationFilter>("tous");
   const [period, setPeriod] = useState<DateRange>(ANY_DATE);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(openLeadId);
+
+  /*
+   * Arriving with a lead to open, once the board has loaded.
+   *
+   * The panel is already open — `selectedId` starts on it — so what is left is
+   * what a click on the card would also do: mark it seen. Then `?lead=` comes
+   * off the address, or closing the panel and refreshing would open it again.
+   * Once only, which the ref keeps to: the lead list keeps refreshing itself.
+   */
+  const pendingLink = useRef(openLeadId);
+
+  useEffect(() => {
+    if (!hydrated || pendingLink.current === null) return;
+
+    const linked = all.find((lead) => lead.id === pendingLink.current);
+    pendingLink.current = null;
+
+    if (linked && linked.seenAt === null) markSeen(linked.id);
+
+    window.history.replaceState(null, "", window.location.pathname);
+  }, [hydrated, all, markSeen]);
   /* Set when a card is opened from its paperclip, so the panel scrolls to the
      pieces rather than making you hunt for them. */
   const [focus, setFocus] = useState<"documents" | undefined>(undefined);

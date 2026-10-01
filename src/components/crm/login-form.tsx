@@ -12,8 +12,11 @@ import { cn } from "@/lib/utils";
  * them with the CRM for a token and keeps it in an httpOnly cookie — the
  * password never reaches the API from the browser directly, and the token never
  * reaches the browser at all.
+ *
+ * `next` is where to go once signed in — already checked by the page to be an
+ * address inside the back office.
  */
-export function LoginForm() {
+export function LoginForm({ next = "/admin" }: { next?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +45,7 @@ export function LoginForm() {
 
       // refresh() first, so the guard re-evaluates with the cookie just set.
       router.refresh();
-      router.replace("/admin");
+      router.replace(next);
     } catch {
       setError("Le CRM est injoignable. Vérifiez que l'API est démarrée.");
       setPending(false);

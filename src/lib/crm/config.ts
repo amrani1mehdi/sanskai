@@ -225,6 +225,15 @@ export const SERVICES: ServiceConfig[] = [
     shortLabel: "Salon",
     source: "/fiche-client",
   },
+  {
+    /* Cabinets starting a collaboration, sending the documents the contract
+       needs. Their own service, with PAR- references, so onboarding partners
+       are followed apart from companies asking for something. */
+    id: "partenaire",
+    label: "Partenaire",
+    shortLabel: "Partenaire",
+    source: "/devenir-partenaire",
+  },
 ];
 
 /**
@@ -260,10 +269,12 @@ export const SERVICE_BY_ID = Object.fromEntries(
 ) as Record<ServiceId, ServiceConfig>;
 
 /**
- * One entry per upload slot on the financing form, in the form's own order.
+ * One entry per upload slot on the public forms, the financing form's first,
+ * in the forms' own order.
  *
- * Every slot is optional, and only the accounting one takes several files —
- * see `DocumentKind` in the API, which is what enforces both rules.
+ * Which slots are required and which take several files is the API's to
+ * enforce — see `DocumentKind` there. The identity slot takes a recto and a
+ * verso.
  */
 export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
   piece_identite: "Pièce d'identité",
@@ -271,6 +282,9 @@ export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
   releve_bancaire: "Relevé bancaire des 6 derniers mois",
   comptable: "Informations financières / comptables",
   facture: "Facture",
+  attestation_employeur: "Attestation d'employeur",
+  attestation_hebergement: "Attestation d'hébergement",
+  rib: "RIB",
   autre: "Autre document",
 };
 

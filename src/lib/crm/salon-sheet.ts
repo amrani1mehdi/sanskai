@@ -37,7 +37,8 @@ function ticked(
 const text = (value: string | null | undefined) => value ?? undefined;
 
 export function salonSheet(lead: Lead) {
-  const details = lead.details;
+  /* A partner's details share the field; only a sheet's carry `besoins`. */
+  const details = lead.details && "besoins" in lead.details ? lead.details : undefined;
   const wantsFinancing = details?.besoins.includes("financement") ?? false;
 
   return {

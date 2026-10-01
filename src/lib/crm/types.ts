@@ -26,7 +26,12 @@ export type LeadStatus =
   | "repondu";
 
 /** The ways an enquiry reaches the CRM. `prestations` detail the second. */
-export type ServiceId = "financement" | "developpement" | "contact" | "salon";
+export type ServiceId =
+  | "financement"
+  | "developpement"
+  | "contact"
+  | "salon"
+  | "partenaire";
 
 /**
  * Sub-offers bundled under Développement Digital. The enquiry form is a single
@@ -36,7 +41,7 @@ export type PrestationId = "site_web" | "logo" | "migration_site";
 
 /**
  * The four upload slots on the financing form, the contact form's invoices,
- * and a catch-all.
+ * the partner form's own three, and a catch-all.
  */
 export type DocumentKind =
   | "piece_identite"
@@ -44,7 +49,37 @@ export type DocumentKind =
   | "releve_bancaire"
   | "comptable"
   | "facture"
+  | "attestation_employeur"
+  | "attestation_hebergement"
+  | "rib"
   | "autre";
+
+/**
+ * The trade-show client sheet's answers that have no column of their own.
+ * Choices are stored as their values — see `lib/leads/salon.ts` for the labels.
+ */
+export type SalonDetails = {
+  secteur: string | null;
+  emailEntreprise: string | null;
+  anciennete: string | null;
+  salaries: string | null;
+  fonction: string | null;
+  telephoneFixe: string | null;
+  besoins: string[];
+  besoinAutre: string | null;
+  motifs: string[];
+  motifAutre: string | null;
+  delai: string | null;
+};
+
+/**
+ * The partner form's two answers with no column of their own. The contract
+ * address is not here: it is the lead's own `email`.
+ */
+export type PartnerDetails = {
+  independant: boolean | null;
+  emailFacturation: string | null;
+};
 
 export type LeadDocument = {
   id: string;
@@ -144,23 +179,11 @@ export type Lead = {
   reseauxOu?: string;
 
   /**
-   * The trade-show client sheet's answers that have no column of their own.
-   * Only on a `salon` lead. Choices are stored as their values — see
-   * `lib/leads/salon.ts` for the labels.
+   * What a form collects that has no column of its own — a trade-show sheet's
+   * answers, or a partner's status and billing address. Only on a `salon` or a
+   * `partenaire` lead; the two shapes are told apart by their fields.
    */
-  details?: {
-    secteur: string | null;
-    emailEntreprise: string | null;
-    anciennete: string | null;
-    salaries: string | null;
-    fonction: string | null;
-    telephoneFixe: string | null;
-    besoins: string[];
-    besoinAutre: string | null;
-    motifs: string[];
-    motifAutre: string | null;
-    delai: string | null;
-  };
+  details?: SalonDetails | PartnerDetails;
 
   message?: string;
 

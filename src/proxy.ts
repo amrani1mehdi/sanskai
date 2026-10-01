@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { DEFAULT_LOCALE, LOCALES } from "@/lib/i18n/config";
+import { ADMIN_URL_HEADER } from "@/lib/crm/return-to";
 
 /**
  * Puts the language into the route without putting it into the URL.
@@ -75,6 +76,16 @@ function fold(segment: string): string {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  /* The back office has no locale and no rewrites. It passes through here for
+     one reason: to note the address it was asked for, which its sign-in gate
+     cannot otherwise see. */
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    const headers = new Headers(request.headers);
+    headers.set(ADMIN_URL_HEADER, `${pathname}${request.nextUrl.search}`);
+
+    return NextResponse.next({ request: { headers } });
+  }
+
   /* Sent to the canonical spelling before anything else looks at the path, so
      the address bar settles on one form and only one is ever indexed. */
   const segments = pathname.split("/");
@@ -117,8 +128,12 @@ export const config = {
    * because rewriting them under a locale would look for routes that do not
    * exist. `sitemap.xml`, `robots.txt` and `llms.txt` in particular must stay
    * exactly where crawlers expect them.
+   *
+   * The back office is matched on its own line instead, only so its address
+   * can be noted for the sign-in gate — see the first branch of `proxy`.
    */
   matcher: [
     "/((?!api|admin|_next|sitemap\\.xml|robots\\.txt|llms\\.txt|images|favicon\\.ico|.*\\.[\\w]+$).*)",
+    "/admin/:path*",
   ],
 };

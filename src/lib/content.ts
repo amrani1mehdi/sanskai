@@ -12,10 +12,20 @@
 
 import { translations } from "@/lib/i18n/translations";
 import { getBlogCopy } from "@/lib/blog/copy";
+import { getPartnerCopy } from "@/lib/leads/partner-copy";
 import { localeHref, type Locale } from "@/lib/i18n/config";
 import { SITE_URL } from "@/lib/site-url";
 
-export type NavLink = { label: string; href: string };
+export type NavLink = {
+  label: string;
+  href: string;
+  /**
+   * Left out of the desktop bar below `xl`. The bar is full from `lg` with its
+   * two buttons, and a link that does not fit there is still in the drawer
+   * and the footer.
+   */
+  wideOnly?: boolean;
+};
 
 export type Solution = {
   id: string;
@@ -140,6 +150,16 @@ export function getSiteContent(locale: Locale) {
            file reshapes and adding to that bundle would break the one thing it
            is good for — being diffable against the live site's. */
         { label: getBlogCopy(locale).navLabel, href: localeHref(locale, "/blog") },
+        /* For cabinets, not for the companies the rest of the bar speaks to,
+           so a plain link rather than a third button — and only from `xl` in
+           the desktop bar, which has no room for it between 1024 and 1280
+           pixels. Its label comes from the partner copy for the blog's reason
+           above. */
+        {
+          label: getPartnerCopy(locale).navLabel,
+          href: localeHref(locale, "/devenir-partenaire"),
+          wideOnly: true,
+        },
       ] as NavLink[],
       cta: { label: t.nav.requestFinancing, href: localeHref(locale, "/financement") },
       /* The same destination as the business link above. The drawer promotes it
@@ -269,6 +289,10 @@ export function getSiteContent(locale: Locale) {
             { label: t.nav.cashflow, href: localeHref(locale, "/financement") },
             { label: t.nav.business, href: localeHref(locale, "/developpement-digital") },
             { label: getBlogCopy(locale).navLabel, href: localeHref(locale, "/blog") },
+            {
+              label: getPartnerCopy(locale).navLabel,
+              href: localeHref(locale, "/devenir-partenaire"),
+            },
           ] as NavLink[],
         },
       ],

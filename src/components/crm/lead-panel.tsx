@@ -30,6 +30,7 @@ import { DocumentViewer } from "@/components/crm/document-viewer";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { DOCUMENT_LABELS, SERVICE_BY_ID, stagesFor } from "@/lib/crm/config";
 import { PrestationChip } from "@/components/crm/prestation-chip";
+import { partnerSheet } from "@/lib/crm/partner-sheet";
 import { salonSheet, type SheetRow } from "@/lib/crm/salon-sheet";
 import {
   formatAmount,
@@ -315,6 +316,8 @@ export function LeadPanel({
             would be a heading over one "Non renseigné". */}
         {lead.service === "salon" ? (
           <SalonSheetSection lead={lead} />
+        ) : lead.service === "partenaire" ? (
+          <PartnerSheetSection lead={lead} />
         ) : lead.service !== "contact" ? (
           <section>
             <Label>Demande</Label>
@@ -590,6 +593,29 @@ function SalonSheetSection({ lead }: { lead: Parameters<typeof salonSheet>[0] })
         {rows(sheet.contact)}
         <Row label="Besoin principal" value={sheet.besoins ?? "Non renseigné"} />
         {sheet.financement ? rows(sheet.financement) : null}
+      </dl>
+    </section>
+  );
+}
+
+/**
+ * What a partner's form carries beyond the fields above: whether they work
+ * independently, and the two addresses the contract and the invoices go to.
+ *
+ * In place of the "Demande" block, for the reason a trade-show sheet is: a
+ * partner asks for no sub-service and none of the funding questions. The
+ * documents themselves are listed under Pièces jointes, like any lead's.
+ */
+function PartnerSheetSection({ lead }: { lead: Parameters<typeof partnerSheet>[0] }) {
+  const sheet = partnerSheet(lead);
+
+  return (
+    <section>
+      <Label>Partenaire</Label>
+      <dl className="mt-1 space-y-1.5 text-sm">
+        {[...sheet.statut, ...sheet.emails].map((row) => (
+          <Row key={row.label} label={row.label} value={row.value ?? "Non renseigné"} />
+        ))}
       </dl>
     </section>
   );

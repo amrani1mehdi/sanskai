@@ -14,13 +14,15 @@ export const SITE_URL = (
 /**
  * Where the back office's QR codes send a scan.
  *
- * Deliberately not `SITE_URL`. The domain still serves the previous site — every
- * path on it returns that site's home page — so a code built on it opens the
- * wrong site, and never the form it is printed beside. The Vercel address is
- * where this site actually runs.
+ * The domain, now that it serves this site: `sansekaisolution.com/fiche-client`
+ * is what a stand's flyer should say, and it outlives any hosting move.
  *
- * A printed code cannot be updated, so this address has to keep resolving for
- * as long as the flyers are in circulation: renaming or removing the Vercel
- * project would break every one of them.
+ * Written out rather than read from `SITE_URL`. A printed code cannot be
+ * updated, so its address must not change with an environment variable — and
+ * the domain has to stay renewed for as long as flyers are in circulation.
+ *
+ * Codes printed before the switch point at sansekai-solution-theta.vercel.app,
+ * which still serves the site: renaming or removing the Vercel project would
+ * break those.
  */
-export const QR_BASE_URL = "https://sansekai-solution-theta.vercel.app";
+export const QR_BASE_URL = "https://sansekaisolution.com";
