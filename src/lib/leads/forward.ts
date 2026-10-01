@@ -20,7 +20,7 @@ import { apiBaseUrl } from "@/lib/crm/session";
  */
 export async function forwardToCrm(
   request: Request,
-  endpoint: "financement" | "developpement" | "contact" | "salon",
+  endpoint: "financement" | "developpement" | "contact" | "salon" | "partenaire",
 ): Promise<Response> {
   const headers: HeadersInit = { Accept: "application/json" };
 

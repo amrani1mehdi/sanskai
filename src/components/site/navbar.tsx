@@ -89,7 +89,10 @@ export function Navbar({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-foreground/80 transition-colors hover:text-accent"
+                  className={cn(
+                    "text-sm text-foreground/80 transition-colors hover:text-accent",
+                    link.wideOnly && "hidden xl:inline",
+                  )}
                 >
                   {link.label}
                 </Link>

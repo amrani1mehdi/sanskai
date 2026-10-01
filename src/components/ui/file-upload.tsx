@@ -33,7 +33,16 @@ function isAccepted(file: File): boolean {
 type FileUploadProps = {
   /** The action, e.g. "Upload ID document" — this is the button's own text. */
   label: string;
-  /** Marks the field as not required, so nobody is left guessing. */
+  /**
+   * What the slot is for, when `label` does not say — a form whose slots all
+   * read "Click to choose a file" names each document in a heading above. Given
+   * to assistive technology, which cannot see that heading.
+   */
+  accessibleName?: string;
+  /**
+   * The tag at the end of the button: "Optional" on a slot that may be left
+   * empty, "Required" on one that may not — so nobody is left guessing.
+   */
   optionalLabel: string;
   hint: string;
   removeLabel: string;
@@ -66,6 +75,7 @@ function formatSize(bytes: number): string {
  */
 export function FileUpload({
   label,
+  accessibleName,
   optionalLabel,
   hint,
   removeLabel,
@@ -152,7 +162,7 @@ export function FileUpload({
         accept={[...ACCEPTED_UPLOAD_TYPES, ...ACCEPTED_UPLOAD_EXTENSIONS].join(",")}
         className="sr-only"
         aria-describedby={shown ? errorId : undefined}
-        aria-label={label}
+        aria-label={accessibleName ?? label}
         onChange={(event) => {
           const chosen = Array.from(event.target.files ?? []);
           if (chosen.length) accept(chosen);
@@ -196,6 +206,12 @@ export function FileUpload({
         <button
           type="button"
           onClick={open}
+          aria-label={
+            accessibleName
+              ? `${accessibleName} — ${files.length > 0 ? (addMoreLabel ?? label) : label}`
+              : undefined
+          }
+          aria-describedby={shown ? errorId : undefined}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg border border-dashed px-4 py-3.5 text-left transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
