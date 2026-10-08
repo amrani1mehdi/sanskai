@@ -116,17 +116,20 @@ class PartnerLeadTest extends TestCase
         $this->assertSame('compta@durand-conseil.fr', $resource['details']['emailFacturation']);
     }
 
+    /*
+     * The attestation is optional like every other paper, so an employee who
+     * has not got hold of theirs yet is still a partner worth recording.
+     */
     #[Test]
-    public function an_employee_must_send_their_employers_attestation(): void
+    public function an_employee_may_apply_before_their_attestation_arrives(): void
     {
         $payload = $this->submission(['independant' => '0']);
         unset($payload['attestationEmployeur']);
 
         $this->post(self::ENDPOINT, $payload, ['Accept' => 'application/json'])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('attestationEmployeur');
+            ->assertCreated();
 
-        $this->assertSame(0, Lead::count());
+        $this->assertSame(1, Lead::count());
     }
 
     #[Test]
@@ -157,17 +160,38 @@ class PartnerLeadTest extends TestCase
     }
 
     #[Test]
-    public function every_paper_is_required(): void
+    public function the_contact_details_are_required_but_the_papers_are_not(): void
     {
         $this->postJson(self::ENDPOINT, [])
             ->assertStatus(422)
             ->assertJsonValidationErrors([
                 'entreprise', 'nom', 'prenom', 'telephone', 'independant',
                 'emailContrat', 'emailFacturation',
+            ])
+            ->assertJsonMissingValidationErrors([
                 'kbis', 'pieceIdentite', 'attestationHebergement', 'rib',
             ]);
 
         $this->assertSame(0, Lead::count());
+    }
+
+    /*
+     * A cabinet that applies without its papers is a partner to chase the
+     * documents from, not a form to refuse. The lead is created and simply
+     * carries none — the back office can attach what is missing later.
+     */
+    #[Test]
+    public function it_accepts_a_partner_who_sends_no_papers_at_all(): void
+    {
+        $bare = array_diff_key($this->submission(), array_flip([
+            'kbis', 'pieceIdentite', 'attestationEmployeur',
+            'attestationHebergement', 'rib',
+        ]));
+
+        $this->post(self::ENDPOINT, $bare, ['Accept' => 'application/json'])
+            ->assertCreated();
+
+        $this->assertSame(0, Lead::firstOrFail()->documents()->count());
     }
 
     #[Test]

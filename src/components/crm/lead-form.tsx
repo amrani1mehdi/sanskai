@@ -458,7 +458,7 @@ export function LeadForm({
                 onChange={answer("siteWeb", "siteWebUrl")}
               />
               {values.siteWeb === "yes" ? (
-                <Field id="siteWebUrl" label="Adresse du site" type="url" placeholder="https://" value={values.siteWebUrl} onChange={set("siteWebUrl")} error={errors.siteWebUrl} required />
+                <Field id="siteWebUrl" label="Adresse du site" type="text" placeholder="mon-site.fr" value={values.siteWebUrl} onChange={set("siteWebUrl")} error={errors.siteWebUrl} required />
               ) : null}
 
               <YesNo

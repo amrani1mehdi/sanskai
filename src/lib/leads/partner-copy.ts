@@ -41,8 +41,8 @@ export type PartnerCopy = {
       choose: string;
       /** Once the recto is in, the identity slot asks for the verso. */
       addBack: string;
-      /** The tag on a slot that must be filled. */
-      required: string;
+      /** The tag on a slot that may be left empty. */
+      optional: string;
     };
     fileRequired: string;
     choiceRequired: string;
@@ -72,12 +72,12 @@ const COPY: Record<Locale, PartnerCopy> = {
         lastName: "Nom *",
         firstName: "Prénom *",
         phone: "Téléphone *",
-        kbis: "Extrait de Kbis *",
+        kbis: "Extrait de Kbis",
         independent: "Êtes-vous indépendant ? *",
-        employerCertificate: "Salarié : Attestation d'employeur *",
-        identityCard: "Carte d'identité recto/verso (1 ou 2 documents) *",
-        housingCertificate: "Attestation d'hébergement *",
-        rib: "RIB *",
+        employerCertificate: "Salarié : Attestation d'employeur",
+        identityCard: "Carte d'identité recto/verso (1 ou 2 documents)",
+        housingCertificate: "Attestation d'hébergement",
+        rib: "RIB",
         contractEmail: "Adresse e-mail à faire figurer sur les contrats *",
         billingEmail: "Adresse e-mail de facturation *",
         emailPlaceholder: "john.doe@gmail.com",
@@ -85,7 +85,7 @@ const COPY: Record<Locale, PartnerCopy> = {
       upload: {
         choose: "Cliquez pour choisir un fichier ou glissez-le ici",
         addBack: "Ajouter le verso",
-        required: "Obligatoire",
+        optional: "Optionnel",
       },
       fileRequired: "Ajoutez ce document.",
       choiceRequired: "Choisissez Oui ou Non.",
@@ -114,12 +114,12 @@ const COPY: Record<Locale, PartnerCopy> = {
         lastName: "Last name *",
         firstName: "First name *",
         phone: "Phone *",
-        kbis: "Kbis extract (company registration) *",
+        kbis: "Kbis extract (company registration)",
         independent: "Are you self-employed? *",
-        employerCertificate: "Employee: certificate of employment *",
-        identityCard: "ID card, front and back (1 or 2 documents) *",
-        housingCertificate: "Certificate of accommodation *",
-        rib: "Bank details (RIB) *",
+        employerCertificate: "Employee: certificate of employment",
+        identityCard: "ID card, front and back (1 or 2 documents)",
+        housingCertificate: "Certificate of accommodation",
+        rib: "Bank details (RIB)",
         contractEmail: "Email address to appear on contracts *",
         billingEmail: "Billing email address *",
         emailPlaceholder: "john.doe@gmail.com",
@@ -127,7 +127,7 @@ const COPY: Record<Locale, PartnerCopy> = {
       upload: {
         choose: "Click to choose a file or drag it here",
         addBack: "Add the back side",
-        required: "Required",
+        optional: "Optional",
       },
       fileRequired: "Add this document.",
       choiceRequired: "Choose Yes or No.",
@@ -155,12 +155,12 @@ const COPY: Record<Locale, PartnerCopy> = {
         lastName: "Nachname *",
         firstName: "Vorname *",
         phone: "Telefon *",
-        kbis: "Kbis-Auszug (Handelsregisterauszug) *",
+        kbis: "Kbis-Auszug (Handelsregisterauszug)",
         independent: "Sind Sie selbstständig? *",
-        employerCertificate: "Angestellt: Arbeitgeberbescheinigung *",
-        identityCard: "Personalausweis Vorder- und Rückseite (1 oder 2 Dokumente) *",
-        housingCertificate: "Unterkunftsbescheinigung *",
-        rib: "Bankverbindung (RIB) *",
+        employerCertificate: "Angestellt: Arbeitgeberbescheinigung",
+        identityCard: "Personalausweis Vorder- und Rückseite (1 oder 2 Dokumente)",
+        housingCertificate: "Unterkunftsbescheinigung",
+        rib: "Bankverbindung (RIB)",
         contractEmail: "E-Mail-Adresse für die Verträge *",
         billingEmail: "E-Mail-Adresse für die Rechnungsstellung *",
         emailPlaceholder: "john.doe@gmail.com",
@@ -168,7 +168,7 @@ const COPY: Record<Locale, PartnerCopy> = {
       upload: {
         choose: "Klicken Sie, um eine Datei auszuwählen, oder ziehen Sie sie hierher",
         addBack: "Rückseite hinzufügen",
-        required: "Pflichtfeld",
+        optional: "Optional",
       },
       fileRequired: "Bitte fügen Sie dieses Dokument hinzu.",
       choiceRequired: "Bitte wählen Sie Ja oder Nein.",

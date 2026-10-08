@@ -384,9 +384,9 @@ export function FinancingForm({
         {values.siteWeb === "yes" ? (
           <Field
             label={form.websiteUrl}
-            type="url"
+            type="text"
             inputMode="url"
-            placeholder="https://"
+            placeholder="mon-site.fr"
             value={values.siteWebUrl}
             error={fieldErrors.siteWebUrl}
             onChange={set("siteWebUrl")}

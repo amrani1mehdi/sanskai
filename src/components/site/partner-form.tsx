@@ -117,9 +117,6 @@ export function PartnerForm({
     event.preventDefault();
     if (sending) return;
 
-    const missing = (slot: Slot) =>
-      uploads[slot].length === 0 ? copy.fileRequired : undefined;
-
     /*
      * Checked here rather than left to the browser's own `required`, whose
      * message comes out in the language the browser was installed in. The API
@@ -131,12 +128,7 @@ export function PartnerForm({
       nom: checkRequired(values.nom, form),
       prenom: checkRequired(values.prenom, form),
       telephone: checkPhone(values.telephone, form),
-      kbis: missing("kbis"),
       independant: independant === "" ? copy.choiceRequired : undefined,
-      attestationEmployeur: employee ? missing("attestationEmployeur") : undefined,
-      pieceIdentite: missing("pieceIdentite"),
-      attestationHebergement: missing("attestationHebergement"),
-      rib: missing("rib"),
       emailContrat: checkEmail(values.emailContrat, form),
       emailFacturation: checkEmail(values.emailFacturation, form),
     });
@@ -155,14 +147,24 @@ export function PartnerForm({
     // The API reads it as a boolean; multipart carries everything as text.
     body.set("independant", independant);
 
-    body.set("kbis", uploads.kbis[0]);
+    /*
+     * Every document is optional: a cabinet that applies without its Kbis is a
+     * partner to chase the file from, not a form to refuse. Each slot is sent
+     * only when it holds one — an empty slot is absent from the request rather
+     * than present and carrying the string "undefined".
+     */
+    if (uploads.kbis[0]) body.set("kbis", uploads.kbis[0]);
     // Recto and verso, or both sides in one file.
     for (const file of uploads.pieceIdentite) {
       body.append("pieceIdentite[]", file);
     }
-    if (employee) body.set("attestationEmployeur", uploads.attestationEmployeur[0]);
-    body.set("attestationHebergement", uploads.attestationHebergement[0]);
-    body.set("rib", uploads.rib[0]);
+    if (employee && uploads.attestationEmployeur[0]) {
+      body.set("attestationEmployeur", uploads.attestationEmployeur[0]);
+    }
+    if (uploads.attestationHebergement[0]) {
+      body.set("attestationHebergement", uploads.attestationHebergement[0]);
+    }
+    if (uploads.rib[0]) body.set("rib", uploads.rib[0]);
 
     setSending(true);
     setError(null);
@@ -396,7 +398,7 @@ function DocumentSlot({
       <FileUpload
         label={copy.upload.choose}
         accessibleName={label.replace(/\s*\*$/, "")}
-        optionalLabel={copy.upload.required}
+        optionalLabel={copy.upload.optional}
         hint={form.fileHint}
         removeLabel={form.removeFile}
         tooLargeMessage={form.fileTooLarge}

@@ -49,8 +49,8 @@ class StorePartnerLeadRequest extends FormRequest
             'emailContrat' => ['required', 'email:rfc', 'max:190'],
             'emailFacturation' => ['required', 'email:rfc', 'max:190'],
 
-            'kbis' => ['required', ...$file],
-            'pieceIdentite' => ['required', 'array', 'min:1', 'max:'.self::MAX_IDENTITY_FILES],
+            'kbis' => ['nullable', ...$file],
+            'pieceIdentite' => ['nullable', 'array', 'max:'.self::MAX_IDENTITY_FILES],
             'pieceIdentite.*' => $file,
             /*
              * Only an employee has an employer to ask. `exclude_if` drops the
@@ -58,9 +58,9 @@ class StorePartnerLeadRequest extends FormRequest
              * so a file picked before switching the answer is neither checked
              * nor stored.
              */
-            'attestationEmployeur' => ['exclude_if:independant,true', 'required', ...$file],
-            'attestationHebergement' => ['required', ...$file],
-            'rib' => ['required', ...$file],
+            'attestationEmployeur' => ['exclude_if:independant,true', 'nullable', ...$file],
+            'attestationHebergement' => ['nullable', ...$file],
+            'rib' => ['nullable', ...$file],
         ];
     }
 

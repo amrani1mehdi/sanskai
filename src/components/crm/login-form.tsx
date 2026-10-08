@@ -76,7 +76,6 @@ export function LoginForm({ next = "/admin" }: { next?: string }) {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="admin@sansekaisolution.com"
           className={field}
         />
       </div>
